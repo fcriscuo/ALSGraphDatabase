@@ -62,7 +62,7 @@ specified path
 
     @Override
     public void accept(@Nonnull Path path) {
-        var duration = Stopwatches.start().apply(); // start a stopwatch
+        Duration duration = Stopwatches.start().apply(); // start a stopwatch
         new CsvRecordStreamSupplier(path).get().map(PathwayRecord::new)
                 .filter(homoSapiensPredicate)// only human entries
                 .forEach(pathwayRecordConsumer);
