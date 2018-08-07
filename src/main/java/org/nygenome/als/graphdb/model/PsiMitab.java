@@ -18,9 +18,9 @@ import java.util.regex.Pattern;
 
 @Log4j
 @Data
-// builder no longer included with data annotation
+// builder no longer included with lombok data annotation
 @Builder
-public class PsiMitab {
+public class PsiMitab  extends ModelObject{
   private String intearctorAId;
   private String interactorBId;
   private List<String> altIdAList;
@@ -56,12 +56,10 @@ public class PsiMitab {
   private List<String> featureListA;
   private List<String> featureListB;
 
-  private static Function<String,List<String>> parseStringOnPipeFunction = (s)->
-      Arrays.asList( s.split(Pattern.quote("|")));
 
   public static  PsiMitab parseCSVRecord (@Nonnull CSVRecord record) {
     return PsiMitab.builder()
-        .intearctorAId(record.get("#ID(s) interactor A"))
+        .intearctorAId(record.get("#ID(s) interactor A")) // n.b. # sign
         .interactorBId(record.get("ID(s) interactor B"))
         .altIdAList(parseStringOnPipeFunction.apply(record.get("Alt. ID(s) interactor A")))
         .altIdBList(parseStringOnPipeFunction.apply(record.get("Alt. ID(s) interactor B")))
@@ -69,52 +67,58 @@ public class PsiMitab {
         .aliasBList(parseStringOnPipeFunction.apply(record.get("Alias(es) interactor B")))
         .firstAuthorList(parseStringOnPipeFunction.apply(record.get("Publication 1st author(s)")))
         .publicationIdList(parseStringOnPipeFunction.apply(record.get("Publication Identifier(s)")))
+        .taxonmyAList(parseStringOnPipeFunction.apply(record.get("Taxid interactor A")))
+        .taxonmyBList(parseStringOnPipeFunction.apply(record.get("Taxid interactor B")))
+        .sourceDtabaseList(parseStringOnPipeFunction.apply("Source database(s)"))
+        .databaseIdentifierList(parseStringOnPipeFunction.apply("Interaction identifier(s)"))
         .interactionTypeList(parseStringOnPipeFunction.apply(record.get("Interaction type(s)")))
+        .biologicalRoleAList(parseStringOnPipeFunction.apply("Biological role(s) interactor A"))
+        .biologicalRoleBList(parseStringOnPipeFunction.apply("Biological role(s) interactor B"))
+        .experimentalRoleAList(parseStringOnPipeFunction.apply("Experimental role(s) interactor A"))
+        .experimentalRoleBList(parseStringOnPipeFunction.apply("Experimental role(s) interactor B"))
+        .typeAList(parseStringOnPipeFunction.apply("Type(s) interactor A"))
+        .typeBList(parseStringOnPipeFunction.apply("Type(s) interactor B"))
+        .xrefAList(parseStringOnPipeFunction.apply("Xref(s) interactor A"))
+        .xrefBList(parseStringOnPipeFunction.apply("Xref(s) interactor B"))
+        .xrefInteractionList(parseStringOnColonFunction.apply("Interaction Xref(s)"))
+        .annotationAList(parseStringOnPipeFunction.apply("Annotation(s) interactor A"))
+        .annotationBList(parseStringOnPipeFunction.apply("Annotation(s) interactor B"))
+        .annotationInteractionList(parseStringOnPipeFunction.apply("Interaction annotation(s)"))
+        .hostTaxonomyList(parseStringOnPipeFunction.apply("Host organism(s)"))
+        .featureListA(parseStringOnPipeFunction.apply("Feature(s) interactor A"))
+        .featureListB(parseStringOnPipeFunction.apply("Feature(s) interactor B"))
+        .negative(Boolean.valueOf(record.get("Negative")))
         .build();
 
   }
 
-  /*
+  public static Function<CSVRecord,PsiMitab> parseCsvRecordFunction = (record) ->
+      PsiMitab.parseCSVRecord(record);
+
+  /*  available parameters
   Interaction detection method(s)
-  Taxid interactor A
-  Taxid interactor B
-  Source database(s)
-  Interaction identifier(s)
   Confidence value(s)
   Expansion method(s)
-  Biological role(s) interactor A
-  Biological role(s) interactor B
-  Experimental role(s) interactor A
-  Experimental role(s) interactor B
-  Type(s) interactor A
-  Type(s) interactor B
-  Xref(s) interactor A
-  Xref(s) interactor B
-  Interaction Xref(s)
-  Annotation(s) interactor A
-  Annotation(s) interactor B
-  Interaction annotation(s)
-  Host organism(s)
   Interaction parameter(s)
-  Negative
-  Feature(s) interactor A
-  Feature(s) interactor B
   Stoichiometry(s) interactor A
   Stoichiometry(s) interactor B
   Identification method participant A
   Identification method participant B
    */
 
+  /* main method for stand alone testing
+   */
   public static void main(String[] args) {
-    System.out.println(">>>>>");
-
     try {
       new TsvRecordStreamSupplier(Paths.get("/tmp/intact_negative.txt")).get()
           .limit(50)
-          .forEach(record -> {
-            PsiMitab psi = PsiMitab.parseCSVRecord(record);
-            System.out.println(psi.getIntearctorAId() + " to " + psi.getInteractorBId());
+          .map(parseCsvRecordFunction)
+          .forEach(psi -> {
+            log.info(">>>>> " +psi.getIntearctorAId() + " to " + psi.getInteractorBId() +"  negative = " +psi.getNegative());
             psi.getAltIdAList().forEach((altA)-> log.info("alt id A: " +altA));
+            psi.getPublicationIdList().forEach(pub-> log.info("Publication: " +pub));
+            psi.getFeatureListA().forEach(featA -> log.info("feature A: " + featA));
+            psi.getFeatureListB().forEach(featB -> log.info("feature B: " + featB));
           });
 
     } catch (Exception e) {

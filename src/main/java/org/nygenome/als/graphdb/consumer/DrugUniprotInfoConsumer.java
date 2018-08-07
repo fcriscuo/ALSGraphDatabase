@@ -5,7 +5,6 @@ import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.EmbeddedGraph;
 import scala.Tuple2;
-
 import java.nio.file.Path;
 import java.util.Map;
 
