@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.List;
+
 import org.parboiled.common.Preconditions;
 import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
 
@@ -24,6 +26,13 @@ public class Utils {
 
 
 	}
+
+	// return the
+	static public RelTypes convertStringListToRelType (List<String> stringList) {
+		return (stringList.size()>0) ? convertStringToRelType(stringList.get(0))
+				: RelTypes.eNoEvent;
+	}
+
 	static public RelTypes convertStringToRelType(String string) {
 
 		if (string.toUpperCase().trim().equals("BIOMARKER"))

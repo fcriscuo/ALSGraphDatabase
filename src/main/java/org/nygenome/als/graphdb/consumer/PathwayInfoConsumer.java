@@ -4,9 +4,12 @@ import com.twitter.util.Duration;
 import com.twitter.util.Stopwatches;
 import java.util.function.Consumer;
 import org.apache.commons.csv.CSVRecord;
+
+import lombok.extern.log4j.Log4j;
 import org.nygenome.als.graphdb.EmbeddedGraph;
 import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
+import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
@@ -23,18 +26,19 @@ Source  tsv file columns: UniProt_ID
                           Species
 
  */
+@Log4j
+public class PathwayInfoConsumer extends GraphDataConsumer implements Consumer<Path>{
 
-public class PathwayInfoConsumer extends GraphDataConsumer {
-
-private Predicate<PathwayRecord> homoSapiensPredicate = (record) ->
-        record.getSpecies().equalsIgnoreCase("homo sapiens");
-
+  private void createPathwayNode(String szPathwayId, String szPathwayName) {
+    pathwayMap.put(szPathwayId, EmbeddedGraph.getGraphInstance()
+        .createNode(EmbeddedGraph.LabelTypes.Pathway));
+    pathwayMap.get(szPathwayId).setProperty("PathwayName", szPathwayName);
+    log.info("Createad Pathway Node: " +szPathwayName);
+  }
 /*
-Consumer that will persist the pathway data into the graph database
-
+Private Consumer that will persist the pathway data into the graph database
  */
 private Consumer<PathwayRecord> pathwayRecordConsumer = (record) ->{
-
    if (!vPathwayMap.containsKey(record.getUniprotReactomeIdTuple())) {
        if(!pathwayMap.containsKey(record.getUniprotId())){
            // create a protein node
@@ -55,6 +59,7 @@ private Consumer<PathwayRecord> pathwayRecordConsumer = (record) ->{
    }
 
 };
+
 /*
 Public Consumer get method to process the UniProtReactome tsv file at a
 specified path
@@ -63,10 +68,10 @@ specified path
     @Override
     public void accept(@Nonnull Path path) {
         Duration duration = Stopwatches.start().apply(); // start a stopwatch
-        new CsvRecordStreamSupplier(path).get().map(PathwayRecord::new)
+        new TsvRecordStreamSupplier(path).get().map(PathwayRecord::new)
                 .filter(homoSapiensPredicate)// only human entries
                 .forEach(pathwayRecordConsumer);
-        log.ifInfo(() ->"Processing pathway file " +path.toString()
+        log.info("Processing pathway file " +path.toString()
             +" required " +duration.inSeconds() +" seconds" );
 
     }

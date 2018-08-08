@@ -4,6 +4,7 @@ package org.nygenome.als.graphdb;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Suppliers;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
@@ -13,6 +14,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
 import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 
@@ -53,7 +55,8 @@ public enum EmbeddedGraph
 			try {
 				Stopwatch stopwatch = Stopwatch.createStarted();
 				System.out.println("readPathwayInfo");
-				protNet.readPathwayInfo();
+        FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
+            .ifPresent(new PathwayInfoConsumer());
 			//	System.out.println("readDataFromIntact");
     		//	protNet.readDataFromIntact();
 //				System.out.println("readHumanTissueAtlasInfo");
@@ -86,6 +89,7 @@ public enum EmbeddedGraph
 		graphDb.shutdown();
 
 	}
+
 
 
 }

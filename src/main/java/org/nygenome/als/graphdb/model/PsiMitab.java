@@ -13,6 +13,7 @@ import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -65,6 +66,7 @@ public class PsiMitab  extends ModelObject{
         .altIdBList(parseStringOnPipeFunction.apply(record.get("Alt. ID(s) interactor B")))
         .aliasAList(parseStringOnPipeFunction.apply(record.get("Alias(es) interactor A")))
         .aliasBList(parseStringOnPipeFunction.apply(record.get("Alias(es) interactor B")))
+        .detectionMethodList(parseStringOnPipeFunction.apply(record.get("Interaction detection method(s)")))
         .firstAuthorList(parseStringOnPipeFunction.apply(record.get("Publication 1st author(s)")))
         .publicationIdList(parseStringOnPipeFunction.apply(record.get("Publication Identifier(s)")))
         .taxonmyAList(parseStringOnPipeFunction.apply(record.get("Taxid interactor A")))
@@ -88,15 +90,17 @@ public class PsiMitab  extends ModelObject{
         .featureListA(parseStringOnPipeFunction.apply("Feature(s) interactor A"))
         .featureListB(parseStringOnPipeFunction.apply("Feature(s) interactor B"))
         .negative(Boolean.valueOf(record.get("Negative")))
+        .interactionParameterList(parseStringOnPipeFunction.apply(record.get("Interaction parameter(s)")))
         .build();
 
   }
+
+
 
   public static Function<CSVRecord,PsiMitab> parseCsvRecordFunction = (record) ->
       PsiMitab.parseCSVRecord(record);
 
   /*  available parameters
-  Interaction detection method(s)
   Confidence value(s)
   Expansion method(s)
   Interaction parameter(s)
@@ -115,10 +119,7 @@ public class PsiMitab  extends ModelObject{
           .map(parseCsvRecordFunction)
           .forEach(psi -> {
             log.info(">>>>> " +psi.getIntearctorAId() + " to " + psi.getInteractorBId() +"  negative = " +psi.getNegative());
-            psi.getAltIdAList().forEach((altA)-> log.info("alt id A: " +altA));
-            psi.getPublicationIdList().forEach(pub-> log.info("Publication: " +pub));
-            psi.getFeatureListA().forEach(featA -> log.info("feature A: " + featA));
-            psi.getFeatureListB().forEach(featB -> log.info("feature B: " + featB));
+            log.info(psi.toString());
           });
 
     } catch (Exception e) {

@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public abstract class GraphDataConsumer   implements Consumer<Path> {
     //private static final Logger log = Logger.getLogger(GraphDataConsumer.class);
@@ -20,6 +21,7 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
     protected final String COMMA_DELIM = ",";  // comma delimited file
     protected final String strNoInfo = "NA";
     protected final String strApostrophe = "`";
+    protected final String HUMAN_SPECIES = "homo sapiens";
     protected Logger log = Logger.get(GraphDataConsumer.class);
 
     public  enum EnsemblType_e {
@@ -30,6 +32,8 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
         eKaneko, eDisGeNet, ePPI
     }
 
+    protected Predicate<PathwayInfoConsumer.PathwayRecord> homoSapiensPredicate = (record) ->
+        record.getSpecies().equalsIgnoreCase(HUMAN_SPECIES);
 
     protected Map<String, Node> proteintMap = new HashMap<String, Node>();
     protected Map<String, Node> diseaseMap = new HashMap<String, Node>();
@@ -48,10 +52,12 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
     protected Map<Tuple2<String,String>, Relationship> vGEOComponentsRelMap = new HashMap<Tuple2<String,String>, Relationship>();
     protected Map<Tuple2<String,String>, Relationship> vSeqSimMap = new HashMap<Tuple2<String,String>, Relationship>();
 
+
+
     protected void createProteinNode(String strProteinId, String szUniprotId,
                                    String szEnsembleTranscript, String szProteinName,
                                    String szGeneSymbol, String szEnsembl) {
-        log.ifInfo(() -> "createProteinNode invoked for protein  " +szProteinName);
+        log.ifInfo(() -> "createProteinNode invoked for uniprot protein id  " +szUniprotId);
 
         proteintMap.put(szUniprotId, EmbeddedGraph.getGraphInstance()
                 .createNode(EmbeddedGraph.LabelTypes.Protein));
@@ -86,11 +92,7 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
         tissueMap.get(szTissueName).setProperty("TissueName", szTissueName);
     }
 
-    protected void createPathwayNode(String szPathwayId, String szPathwayName) {
-        pathwayMap.put(szPathwayId, EmbeddedGraph.getGraphInstance()
-                .createNode(EmbeddedGraph.LabelTypes.Pathway));
-        pathwayMap.get(szPathwayId).setProperty("PathwayName", szPathwayName);
-    }
+
 
     protected void createGEOStudyNode(String szGEOStudyName) {
         GEOStudyMap.put(szGEOStudyName, EmbeddedGraph.getGraphInstance()
