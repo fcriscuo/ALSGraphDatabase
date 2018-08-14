@@ -7,6 +7,8 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.parboiled.common.Preconditions;
 import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
@@ -23,11 +25,11 @@ public class Utils {
 				.sorted(Comparator.reverseOrder())
 				.map(Path::toFile)
 				.forEach(File::delete);
-
-
 	}
 
-	// return the
+
+
+	// return the relationship type based on the first element of the String
 	static public RelTypes convertStringListToRelType (List<String> stringList) {
 		return (stringList.size()>0) ? convertStringToRelType(stringList.get(0))
 				: RelTypes.eNoEvent;

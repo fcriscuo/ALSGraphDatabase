@@ -14,6 +14,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.nygenome.als.graphdb.consumer.IntactDataConsumer;
 import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
 import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -55,10 +56,13 @@ public enum EmbeddedGraph
 			try {
 				Stopwatch stopwatch = Stopwatch.createStarted();
 				System.out.println("readPathwayInfo");
-        FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
+        FrameworkPropertyService.INSTANCE
+            .getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
             .ifPresent(new PathwayInfoConsumer());
-			//	System.out.println("readDataFromIntact");
-    		//	protNet.readDataFromIntact();
+        System.out.println("read protein-protein interaction file");
+        FrameworkPropertyService.INSTANCE
+            .getOptionalPathProperty("PPI_INTACT_FILE")
+            .ifPresent(new IntactDataConsumer());
 //				System.out.println("readHumanTissueAtlasInfo");
 //				protNet.readHumanTissueAtlasInfo();
 //				System.out.println("readDataFromDisGeNETFile");

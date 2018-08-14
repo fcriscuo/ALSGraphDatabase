@@ -57,7 +57,7 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
     protected void createProteinNode(String strProteinId, String szUniprotId,
                                    String szEnsembleTranscript, String szProteinName,
                                    String szGeneSymbol, String szEnsembl) {
-        log.ifInfo(() -> "createProteinNode invoked for uniprot protein id  " +szUniprotId);
+      log.info("createProteinNode invoked for uniprot protein id  " +szUniprotId);
 
         proteintMap.put(szUniprotId, EmbeddedGraph.getGraphInstance()
                 .createNode(EmbeddedGraph.LabelTypes.Protein));

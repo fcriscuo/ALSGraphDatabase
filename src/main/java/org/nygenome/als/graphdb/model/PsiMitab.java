@@ -3,25 +3,44 @@ package org.nygenome.als.graphdb.model;
 
 
 import org.apache.commons.csv.CSVRecord;
+import org.apache.spark.sql.Encoder;
+import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 
 import javax.annotation.Nonnull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.log4j.Log4j;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
-import java.util.regex.Pattern;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Log4j
 @Data
 // builder no longer included with lombok data annotation
 @Builder
-public class PsiMitab  extends ModelObject{
+public class PsiMitab  extends ModelObject {
+
+  private static final String INTACT_HEADER_STRING = "#ID(s) interactor A\tID(s) interactor B\tAlt. ID(s) interactor A"
+      + "\tAlt. ID(s) interactor B\tAlias(es) interactor A\tAlias(es) interactor B"
+      + "\tInteraction detection method(s)\tPublication 1st author(s)\tPublication Identifier(s)"
+      + "\tTaxid interactor A\tTaxid interactor B\tInteraction type(s)\tSource database(s)"
+      + "\tInteraction identifier(s)\tConfidence value(s)\tExpansion method(s)\tBiological role(s) interactor A"
+      + "\tBiological role(s) interactor B\tExperimental role(s) interactor A\tExperimental role(s) interactor B"
+      + "\tType(s) interactor A\tType(s) interactor B\tXref(s) interactor A\tXref(s) interactor B\tInteraction Xref(s)"
+      + "\tAnnotation(s) interactor A\tAnnotation(s) interactor B\tInteraction annotation(s)\tHost organism(s)"
+      + "\tInteraction parameter(s)\tCreation date\tUpdate date\tChecksum(s) interactor A\tChecksum(s) interactor B"
+      + "\tInteraction Checksum(s)\tNegative\tFeature(s) interactor A\tFeature(s) interactor B"
+      + "\tStoichiometry(s) interactor A\tStoichiometry(s) interactor B\tIdentification method participant A"
+      + "\tIdentification method participant B";
+
   private String intearctorAId;
   private String interactorBId;
   private List<String> altIdAList;
@@ -94,8 +113,19 @@ public class PsiMitab  extends ModelObject{
         .build();
 
   }
+  public static Supplier<StructType> schemaSupplier = () -> {
+// Generate the schema based on the string of schema
+    List<StructField> fields = Arrays.asList(INTACT_HEADER_STRING.split("\t"))
+        .stream()
+        .map(heading -> DataTypes.createStructField(heading,
+            DataTypes.StringType, true))
+        .collect(Collectors.toList());
+    return DataTypes.createStructType(fields);
+  };
 
 
+  public static Supplier<Encoder<PsiMitab> > encoderSupplier = ()->
+      Encoders.bean(PsiMitab.class);
 
   public static Function<CSVRecord,PsiMitab> parseCsvRecordFunction = (record) ->
       PsiMitab.parseCSVRecord(record);
@@ -114,7 +144,7 @@ public class PsiMitab  extends ModelObject{
    */
   public static void main(String[] args) {
     try {
-      new TsvRecordStreamSupplier(Paths.get("/tmp/intact_negative.txt")).get()
+      new TsvRecordStreamSupplier(Paths.get("/data/als/intact_negative.txt")).get()
           .limit(50)
           .map(parseCsvRecordFunction)
           .forEach(psi -> {
@@ -125,6 +155,11 @@ public class PsiMitab  extends ModelObject{
     } catch (Exception e) {
       e.printStackTrace();
     }
+    StructType schema = PsiMitab.schemaSupplier.get();
+   Arrays.asList(schema.fieldNames()).forEach(System.out::println);
+
+   Encoder<PsiMitab> encoder = PsiMitab.encoderSupplier.get();
+   System.out.println(encoder.toString());
 
   }
   }

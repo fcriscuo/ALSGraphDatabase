@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public abstract class ModelObject {
 
@@ -21,4 +22,7 @@ public abstract class ModelObject {
 
   public static Predicate<String> humanSpeciesPredicate = (species)->
            species.equals(HUMAN_SPECIES);
+
+  static public Function<List<String>, String>  reduceListToStringFunction = (list)->
+      list.stream().collect(Collectors.joining("|"));
 }

@@ -61,7 +61,7 @@ private Consumer<PathwayRecord> pathwayRecordConsumer = (record) ->{
 };
 
 /*
-Public Consumer get method to process the UniProtReactome tsv file at a
+Public Consumer get method to process the UniProt-Reactome tsv file at a
 specified path
  */
 
