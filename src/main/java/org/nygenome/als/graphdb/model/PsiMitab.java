@@ -3,8 +3,10 @@ package org.nygenome.als.graphdb.model;
 
 
 import org.apache.commons.csv.CSVRecord;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -15,7 +17,6 @@ import lombok.Data;
 import lombok.extern.log4j.Log4j;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -75,6 +76,43 @@ public class PsiMitab  extends ModelObject {
   private Boolean negative;
   private List<String> featureListA;
   private List<String> featureListB;
+
+
+  public static MapFunction<Row,PsiMitab> parseDatasetRowFunction = (row) ->
+      PsiMitab.builder()
+         .intearctorAId(row.getAs("#ID(s) interactor A")) // n.b. # sign
+         .interactorBId(row.getAs("ID(s) interactor B"))
+         .altIdAList(parseStringOnPipeFunction.apply(row.getAs("Alt. ID(s) interactor A")))
+         .altIdBList(parseStringOnPipeFunction.apply(row.getAs("Alt. ID(s) interactor B")))
+         .aliasAList(parseStringOnPipeFunction.apply(row.getAs("Alias(es) interactor A")))
+         .aliasBList(parseStringOnPipeFunction.apply(row.getAs("Alias(es) interactor B")))
+         .detectionMethodList(parseStringOnPipeFunction.apply(row.getAs("Interaction detection method(s)")))
+         .firstAuthorList(parseStringOnPipeFunction.apply(row.getAs("Publication 1st author(s)")))
+         .publicationIdList(parseStringOnPipeFunction.apply(row.getAs("Publication Identifier(s)")))
+         .taxonmyAList(parseStringOnPipeFunction.apply(row.getAs("Taxid interactor A")))
+         .taxonmyBList(parseStringOnPipeFunction.apply(row.getAs("Taxid interactor B")))
+         .sourceDtabaseList(parseStringOnPipeFunction.apply("Source database(s)"))
+         .databaseIdentifierList(parseStringOnPipeFunction.apply("Interaction identifier(s)"))
+         .interactionTypeList(parseStringOnPipeFunction.apply(row.getAs("Interaction type(s)")))
+         .biologicalRoleAList(parseStringOnPipeFunction.apply("Biological role(s) interactor A"))
+         .biologicalRoleBList(parseStringOnPipeFunction.apply("Biological role(s) interactor B"))
+         .experimentalRoleAList(parseStringOnPipeFunction.apply("Experimental role(s) interactor A"))
+         .experimentalRoleBList(parseStringOnPipeFunction.apply("Experimental role(s) interactor B"))
+         .typeAList(parseStringOnPipeFunction.apply("Type(s) interactor A"))
+         .typeBList(parseStringOnPipeFunction.apply("Type(s) interactor B"))
+         .xrefAList(parseStringOnPipeFunction.apply("Xref(s) interactor A"))
+         .xrefBList(parseStringOnPipeFunction.apply("Xref(s) interactor B"))
+         .xrefInteractionList(parseStringOnColonFunction.apply("Interaction Xref(s)"))
+         .annotationAList(parseStringOnPipeFunction.apply("Annotation(s) interactor A"))
+         .annotationBList(parseStringOnPipeFunction.apply("Annotation(s) interactor B"))
+         .annotationInteractionList(parseStringOnPipeFunction.apply("Interaction annotation(s)"))
+         .hostTaxonomyList(parseStringOnPipeFunction.apply("Host organism(s)"))
+         .featureListA(parseStringOnPipeFunction.apply("Feature(s) interactor A"))
+         .featureListB(parseStringOnPipeFunction.apply("Feature(s) interactor B"))
+         .negative(Boolean.valueOf(row.getAs("Negative")))
+         .interactionParameterList(parseStringOnPipeFunction.apply(row.getAs("Interaction parameter(s)")))
+         .build();
+
 
 
   public static  PsiMitab parseCSVRecord (@Nonnull CSVRecord record) {

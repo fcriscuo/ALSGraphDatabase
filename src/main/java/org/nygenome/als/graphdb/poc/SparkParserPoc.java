@@ -4,6 +4,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.ForeachFunction;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
@@ -16,7 +17,9 @@ import org.apache.spark.sql.streaming.DataStreamReader;
 import com.twitter.logging.Logger;
 
 import javax.annotation.Nonnull;
+import org.nygenome.als.graphdb.model.ModelObject;
 import org.nygenome.als.graphdb.model.PsiMitab;
+import org.nygenome.als.graphdb.service.LocalSparkSessionSupplier;
 import scala.Function1;
 
 import java.nio.file.Path;
@@ -38,19 +41,16 @@ public class SparkParserPoc {
   }
 
   private Consumer<String> tsvFileConsumer = (fileName) -> {
-    SparkSession spark = SparkSession
-        .builder()
-        .appName("Java Spark SQL data sources example")
-        .config("spark.master", "local")
-        .getOrCreate();
+    SparkSession spark = LocalSparkSessionSupplier.INSTANCE.get();
+
+    Encoder encoder = PsiMitab.encoderSupplier.get();
 
     Dataset<Row>ds = spark.read()
-       .format("csv")
+        .format("csv")
        .schema(PsiMitab.schemaSupplier.get())
        .option("header", "true")
        .option("mode","DROPMALFORMED")
        .option("delimiter", "\t")
-      // .option("inferSchema","true")
        .load(fileName);
 
     ForeachFunction<Row> processRow = (row) -> {
@@ -58,30 +58,18 @@ public class SparkParserPoc {
       System.out.println("ID B: " + idB);
     };
 
+    ForeachFunction<PsiMitab> processPpi = (ppi) -> {
+      System.out.println("+++++++++++++++PPI ++++++++++++++++++++++");
+      System.out.println("Protein A: " +ppi.getIntearctorAId());
+      System.out.println("Protein B: " +ppi.getInteractorBId());
+      System.out.println("Publications: " + ModelObject.reduceListToStringFunction.apply(ppi.getPublicationIdList()));
+    };
 
-    Encoder encoder = PsiMitab.encoderSupplier.get();
+
     Arrays.asList(ds.columns()).forEach(System.out::println);
     ds.limit(20)
-        .foreach(processRow);
-
-      // .load(fileName);
-//   dsr
-//       .toDF()
-//       .limit(20)
-//      .collectAsList()
-//       .forEach(row -> {
-//         String idB = row.getAs("ID(s) interactor B");
-//         System.out.println("ID B: " + idB);
-//       });
-
-
-
-
-
-   // System.out.println(fileName + " contains " +dsr.count() +" records");
-    //Arrays.asList(dsr.columns()).forEach(System.out::println);
-
-
+        .map(PsiMitab.parseDatasetRowFunction, encoder)
+        .foreach(processPpi);
   };
 
   public static void main(String[] args) {

@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -27,7 +30,24 @@ public class Utils {
 				.forEach(File::delete);
 	}
 
-
+/*
+Public function to parse the first line of a specified tsv file
+into an array of Strings
+Intended for resolving column headings
+ */
+	static public Function<Path,String[]> resolveColumnHeadingsFunction = (path) -> {
+		List<String> headingList = new ArrayList<>();
+		try {
+			 Files.lines(path)
+					.findFirst()
+					.ifPresent( line ->
+						headingList.addAll(Arrays.asList(line.split("\t")
+					)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+			return headingList.toArray(new String[0]);
+	};
 
 	// return the relationship type based on the first element of the String
 	static public RelTypes convertStringListToRelType (List<String> stringList) {
@@ -88,5 +108,13 @@ public class Utils {
 			return RelTypes.PPI_PREDICTED_INTERACTION;
 
 		return RelTypes.eNoEvent;
+	}
+
+	public static void main(String[] args) {
+		Path testPath = Paths.get("/data/als/intact/heading_intact.txt");
+		Arrays.asList(Utils.resolveColumnHeadingsFunction.apply(testPath))
+				.forEach(System.out::println);
+
+
 	}
 }
