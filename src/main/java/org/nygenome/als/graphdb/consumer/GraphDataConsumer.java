@@ -3,9 +3,12 @@ package org.nygenome.als.graphdb.consumer;
 
 
 import com.twitter.logging.Logger;
+
+import javax.annotation.Nonnull;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.EmbeddedGraph;
+import org.nygenome.als.graphdb.model.HumanTissueAtlas;
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -109,6 +112,11 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
     }
 
     //createEnsemblTissueAssociation
+
+  protected void createEnsemblTissueAssociation(@Nonnull HumanTissueAtlas ht ) {
+
+  }
+
     protected void createEnsemblTissueAssociation(String[] tokens){
         String[] szTissueTokens = tokens[2].split("[:;]");
 

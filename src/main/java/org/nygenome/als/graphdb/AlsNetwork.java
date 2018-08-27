@@ -55,7 +55,7 @@ public class AlsNetwork {
 	}
 
 	public void readDataFromIntact() throws IOException {
-		FrameworkPropertyService.INSTANCE.getOptionalPathProperty("PPI_INTACT_FILE")
+		FrameworkPropertyService.INSTANCE.getOptionalPathProperty("PPI_INTACT_DIR")
 				.ifPresent(new IntactDataConsumer());
 	}
 

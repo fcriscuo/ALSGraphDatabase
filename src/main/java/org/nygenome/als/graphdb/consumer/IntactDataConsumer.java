@@ -1,10 +1,16 @@
 package org.nygenome.als.graphdb.consumer;
 
 
+import com.google.common.base.Preconditions;
+
 import org.nygenome.als.graphdb.model.PsiMitab;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.Utils;
 import scala.Tuple2;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
@@ -14,6 +20,7 @@ import java.util.function.Predicate;
 public class IntactDataConsumer extends GraphDataConsumer implements Consumer<Path> {
 
   private static final String HEADINGS_FILE_NAME = "heading_intact.txt";
+  private static final String INTACT_FILE_PREFIX = "intact.txt";
 
   private Predicate<PsiMitab> selfInteractionPredicate = (ppi) ->
       ! ppi.getIntearctorAId().equals(ppi.getInteractorBId());
@@ -28,14 +35,34 @@ public class IntactDataConsumer extends GraphDataConsumer implements Consumer<Pa
   large. Manually split the large file using the split command and process all
   the individual components
   The Path argument must be a directory
+   public TsvRecordStreamSupplier(@Nonnull Path aPath,
+        @Nonnull String...columnHeadings)
    */
   @Override
   public void accept(Path path) {
+    Preconditions.checkArgument(Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS),
+    path.toString() +" is not a directory");
+    String[] columnHeadings = Utils.resolveColumnHeadingsFunction
+        .apply(resolveHeadingFilePathFunction.apply(path));
+    try {
+      Files.walk(path)
+          .filter(filePath -> filePath.getFileName().toString().startsWith(INTACT_FILE_PREFIX))
+          .forEach(filePath -> {
+            System.out.println("Processing intact file: " +filePath.toString());
+            new TsvRecordStreamSupplier(filePath,
+                columnHeadings).get()
+                .map(PsiMitab.parseCsvRecordFunction)
+                .filter(selfInteractionPredicate)
+                .forEach(proteinInteractionConsumer);
+          } );
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
 
-    new TsvRecordStreamSupplier(path).get()
-        .map(PsiMitab.parseCsvRecordFunction)
-        .filter(selfInteractionPredicate)
-        .forEach(proteinInteractionConsumer);
+//    new TsvRecordStreamSupplier(path).get()
+//        .map(PsiMitab.parseCsvRecordFunction)
+//        .filter(selfInteractionPredicate)
+//        .forEach(proteinInteractionConsumer);
   }
 
   private Consumer<Tuple2<String,String>> novelProteinNodesConsumer = (tuple) -> {
@@ -68,7 +95,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements Consumer<Pa
           ppi.reduceListToStringFunction.apply(ppi.getDetectionMethodList()));
       vPPIMap.get(abTuple).setProperty("Reference",
           ppi.reduceListToStringFunction.apply(ppi.getPublicationIdList()));
-      if (ppi.getConfidenceScoreList().size() >0) {
+      if (null != ppi.getConfidenceScoreList() && ppi.getConfidenceScoreList().size() >0) {
         vPPIMap.get(abTuple).setProperty("Confidence_level",
             Double.parseDouble(ppi.getConfidenceScoreList().get(0)));
       }

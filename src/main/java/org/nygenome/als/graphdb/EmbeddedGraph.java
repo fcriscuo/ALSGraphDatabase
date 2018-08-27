@@ -14,6 +14,8 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.consumer.IntactDataConsumer;
 import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
+import org.nygenome.als.graphdb.consumer.UniprotIdConsumer;
+import org.nygenome.als.graphdb.consumer.UniprotIdEnsemblDataConsumer;
 import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 
@@ -53,14 +55,20 @@ public enum EmbeddedGraph
 		try (Transaction tx = graphDb.beginTx()) {
 			try {
 				Stopwatch stopwatch = Stopwatch.createStarted();
+				System.out.println("read uniprot to ensembl mapping");
+				FrameworkPropertyService.INSTANCE
+						.getOptionalPathProperty("UNIPROT_ENSEMBL_TRANSCRIPT_ASSOCIATION_FILE")
+						.ifPresent(new UniprotIdConsumer());
 				System.out.println("readPathwayInfo");
         FrameworkPropertyService.INSTANCE
             .getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
             .ifPresent(new PathwayInfoConsumer());
+				// protein - protein interactions
         System.out.println("read protein-protein interaction file");
         FrameworkPropertyService.INSTANCE
-            .getOptionalPathProperty("PPI_INTACT_FILE")
+            .getOptionalPathProperty("PPI_INTACT_DIR")
             .ifPresent(new IntactDataConsumer());
+        System.out.println("read the Human Tissue Atlas data");
 //				System.out.println("readHumanTissueAtlasInfo");
 //				protNet.readHumanTissueAtlasInfo();
 //				System.out.println("readDataFromDisGeNETFile");
