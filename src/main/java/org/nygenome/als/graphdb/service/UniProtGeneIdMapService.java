@@ -2,12 +2,9 @@ package org.nygenome.als.graphdb.service;
 
 import javax.annotation.Nonnull;
 import lombok.extern.log4j.Log4j;
-import org.eclipse.collections.api.bimap.ImmutableBiMap;
 import org.eclipse.collections.api.map.ImmutableMap;
-import org.eclipse.collections.impl.factory.BiMaps;
 import org.eclipse.collections.impl.factory.Maps;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +13,7 @@ import java.util.function.Supplier;
 
 /*
 Singleton service class that supports bidirectional mapping between
-
+UniProt protein id and gene symbol
  */
 @Log4j
 public enum UniProtGeneIdMapService {
@@ -28,7 +25,6 @@ public enum UniProtGeneIdMapService {
     return (uniProtIdToGenIdMap.containsKey(uniProtId))
         ? Optional.of(uniProtIdToGenIdMap.get(uniProtId))
         : Optional.empty();
-
   }
 
 
@@ -52,7 +48,8 @@ public enum UniProtGeneIdMapService {
 
   public static void main(String[] args) {
     UniProtGeneIdMapService.INSTANCE.resolveGeneIdFromUniProtId("P62158").ifPresent((id) ->
-        log.info("P62158 shold resolve to 801  result is: " +id));
+        log.info("P62158 should resolve to 801  result is: " +id));
+
 
   }
 

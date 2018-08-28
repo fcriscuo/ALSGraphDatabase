@@ -6,9 +6,11 @@ import javax.annotation.Nonnull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.log4j.Log4j;
+import org.nygenome.als.graphdb.service.UniProtMappingService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.function.Function;
 
 @Log4j
@@ -25,6 +27,12 @@ public class HumanTissueAtlas extends ModelObject {
   private String cellType;
   private String level;
   private String reliability;
+  private String ensemblTranscriptId;
+
+  private static String resolveTranscriptId(String geneId) {
+    Optional<UniProtMapping> uniOpt = UniProtMappingService.INSTANCE.resolveUniProtMappingByEnsemblGeneId(geneId);
+    return (uniOpt.isPresent()) ? uniOpt.get().getEnsemblTranscriptId() :"";
+  }
 
   private static HumanTissueAtlas parseCsvRecord (@Nonnull CSVRecord record){
     return HumanTissueAtlas.builder()
@@ -34,6 +42,7 @@ public class HumanTissueAtlas extends ModelObject {
         .cellType(record.get("Cell type"))
         .level(record.get("Level"))
         .reliability(record.get("Reliability"))
+        .ensemblTranscriptId(resolveTranscriptId(record.get("Gene")))
         .build();
   }
 

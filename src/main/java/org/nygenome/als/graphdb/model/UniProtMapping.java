@@ -20,9 +20,9 @@ public class UniProtMapping {
   private String geneSymbol;
 
   public Supplier<Tuple3<String,String,String>> idTuple3Supplier = () ->
-      new Tuple3<>(this.getEnsemblTranscriptId(),
-          this.getEnsemblGeneId(),
-          this.getGeneSymbol());
+      new Tuple3<>(this.getUniProtId(),
+          this.getEnsemblTranscriptId(),
+          this.getEnsemblGeneId());
 
   public static Function<CSVRecord,UniProtMapping> parseCsvRecordFunction = (record) ->
     new UniProtMappingBuilder()

@@ -2,11 +2,9 @@ package org.nygenome.als.graphdb.model;
 
 import org.apache.commons.csv.CSVRecord;
 import org.apache.parquet.Strings;
-
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.log4j.Log4j;
-
 import java.util.Optional;
 import java.util.function.Function;
 
