@@ -8,7 +8,7 @@ import javax.annotation.Nonnull;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.model.HumanTissueAtlas;
+import org.nygenome.als.graphdb.value.HumanTissueAtlas;
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -89,10 +89,12 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
     }
 
 
-    protected void createTissueNode(String szTissueName) {
-        tissueMap.put(szTissueName, EmbeddedGraph.getGraphInstance()
+    protected void createTissueNode(HumanTissueAtlas ht) {
+        String tissueCellType = ht.resolveTissueCellTypeLabel();
+        tissueMap.put(tissueCellType, EmbeddedGraph.getGraphInstance()
                 .createNode(EmbeddedGraph.LabelTypes.Tissue));
-        tissueMap.get(szTissueName).setProperty("TissueName", szTissueName);
+        tissueMap.get(tissueCellType).setProperty("TissueName", ht.tissue());
+        tissueMap.get(tissueCellType).setProperty("CellType", ht.cellType());
     }
 
 
@@ -114,6 +116,16 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
     //createEnsemblTissueAssociation
 
   protected void createEnsemblTissueAssociation(@Nonnull HumanTissueAtlas ht ) {
+        // resolve the protein node
+      if (!proteintMap.containsKey(ht.uniprotId())) {
+          createProteinNode(strNoInfo, ht.uniprotId(), ht.ensemblTranscriptId(),
+              strNoInfo, ht.geneName(), ht.ensemblGeneId());
+      }
+      if (!tissueMap.containsKey(ht.resolveTissueCellTypeLabel())){
+          createTissueNode(ht);
+      }
+      // create protein - tissue relationship
+
 
   }
 

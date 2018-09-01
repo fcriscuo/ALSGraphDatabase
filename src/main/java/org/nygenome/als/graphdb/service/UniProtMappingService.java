@@ -4,30 +4,24 @@ package org.nygenome.als.graphdb.service;
 A singleton service to support
  */
 
-import org.apache.parquet.Strings;
-
+import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-
 import javax.annotation.Nonnull;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.impl.factory.Lists;
 import org.eclipse.collections.impl.factory.Maps;
-import org.nygenome.als.graphdb.model.UniProtMapping;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-
+import org.nygenome.als.graphdb.value.UniProtMapping;
 import java.nio.file.Paths;
 import java.util.HashMap;
-
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
-
 
 public enum UniProtMappingService {
   INSTANCE;
 
-  ImmutableMap<String,UniProtMapping> uniprotMap  = Suppliers.memoize(new UniProtMapSupplier()).get();
+  ImmutableMap<String, UniProtMapping> uniprotMap  = Suppliers.memoize(new UniProtMapSupplier()).get();
 
   public Optional<UniProtMapping> getUniProtMappingByUniprotId(@Nonnull String id) {
     return (uniprotMap.containsKey(id))? Optional.of(uniprotMap.get(id))
@@ -35,20 +29,20 @@ public enum UniProtMappingService {
   }
 
   public Optional<String> resolveGeneNameFromUniprotId (@Nonnull String id) {
-    return (uniprotMap.containsKey(id))? Optional.of(uniprotMap.get(id).getGeneSymbol())
+    return (uniprotMap.containsKey(id))? Optional.of(uniprotMap.get(id).geneSymbol())
         :Optional.empty();
   }
 
   public Optional<UniProtMapping> resolveUniProtMappingByEnsemblGeneId(@Nonnull String ensemblGeneId){
     return uniprotMap
-        .select(uniProtMapping -> uniProtMapping.getEnsemblGeneId().equalsIgnoreCase(ensemblGeneId))
+        .select(uniProtMapping -> uniProtMapping.ensemblGeneId().equalsIgnoreCase(ensemblGeneId))
         .stream()
         .findFirst();
   }
 
   public Optional<UniProtMapping> resolveUniProtMappingByEnsemblTranscriptId(@Nonnull String ensemblTranscriptId){
     return uniprotMap
-        .select(uniProtMapping -> uniProtMapping.getEnsemblTranscriptId().equalsIgnoreCase(ensemblTranscriptId))
+        .select(uniProtMapping -> uniProtMapping.ensemblTranscriptId().equalsIgnoreCase(ensemblTranscriptId))
         .stream()
         .findFirst();
   }
@@ -64,7 +58,7 @@ class UniProtMapSupplier implements Supplier<ImmutableMap<String, UniProtMapping
         .get()
         .filter(record -> !Strings.isNullOrEmpty(record.get("UniProtKB/Swiss-Prot ID")))
         .forEach((record)->
-            tmpMap.put(record.get("UniProtKB/Swiss-Prot ID"),UniProtMapping.parseCsvRecordFunction.apply(record))
+            tmpMap.put(record.get("UniProtKB/Swiss-Prot ID"),UniProtMapping.parseCsvRecordFunction(record))
             );
 
     return Maps.immutable.ofMap(tmpMap);

@@ -187,7 +187,7 @@ public class PsiMitab  extends ModelObject {
           .map(parseCsvRecordFunction)
           .forEach(psi -> {
             log.info(">>>>> " +psi.getIntearctorAId() + " to " + psi.getInteractorBId() +"  negative = " +psi.getNegative());
-            log.info(psi.toString());
+
           });
 
     } catch (Exception e) {
