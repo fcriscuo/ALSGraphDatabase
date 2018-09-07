@@ -1,7 +1,7 @@
 package org.nygenome.als.graphdb.value
 
 import org.apache.commons.csv.CSVRecord
-import org.nygenome.als.graphdb.model.ModelObject
+import scala.collection.JavaConverters._
 
 case class UniProtDrugModel(id:String,name:String, geneName:String,
                             genbankProteinId:String, genbankGeneId:String,
@@ -12,6 +12,7 @@ case class UniProtDrugModel(id:String,name:String, geneName:String,
 
 }
 object UniProtDrugModel extends ValueTrait {
+
   def parseCSVRecord(record:CSVRecord): UniProtDrugModel = {
       UniProtDrugModel(record.get("ID"),  record.get("Name"),
         record.get("Gene Name"), record.get("GenBank Protein ID"),
@@ -19,7 +20,7 @@ object UniProtDrugModel extends ValueTrait {
         record.get("Uniprot Title"), record.get("PDB ID"),
         record.get("GeneCard ID"), record.get("GenAtlas ID"),
         record.get("HGNC ID"), record.get("Species"),
-        ModelObject.parseStringOnSemiColonFunction.apply(record.get("Drug IDs"))
+        parseStringOnSemiColonFunction.apply(record.get("Drug IDs")).asJava
       )
   }
 }
