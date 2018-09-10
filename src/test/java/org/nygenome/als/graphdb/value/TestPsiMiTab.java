@@ -13,7 +13,7 @@ public class TestPsiMiTab {
     try {
       new TsvRecordStreamSupplier(Paths.get("/data/als/intact_negative.txt")).get()
           .limit(50)
-          .map(record  ->PsiMitab.parseCSVRrecord(record))
+          .map(record  ->PsiMitab.parseCSVRecord(record))
           .forEach(psi -> {
             log.info(">>>>> " +psi.intearctorAId() + " to " + psi.interactorBId() +"  negative = " +psi.negative());
            log.info( psi.altIdAList().mkString(" "));

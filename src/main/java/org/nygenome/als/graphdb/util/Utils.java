@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.parquet.Strings;
 import org.parboiled.common.Preconditions;
 import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
 
@@ -48,12 +49,6 @@ Intended for resolving column headings
 		}
 			return headingList.toArray(new String[0]);
 	};
-
-	// return the relationship type based on the first element of the String
-	static public RelTypes convertStringListToRelType (List<String> stringList) {
-		return (stringList.size()>0) ? convertStringToRelType(stringList.get(0))
-				: RelTypes.eNoEvent;
-	}
 
 	static public RelTypes convertStringToRelType(String string) {
 

@@ -3,11 +3,12 @@ package org.nygenome.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 
-import org.nygenome.als.graphdb.model.PsiMitab;
+//import org.nygenome.als.graphdb.model.PsiMitab;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.Utils;
+import org.nygenome.als.graphdb.value.PsiMitab;
 import scala.Tuple2;
-
+import scala.collection.JavaConverters.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -23,12 +24,11 @@ public class IntactDataConsumer extends GraphDataConsumer implements Consumer<Pa
   private static final String INTACT_FILE_PREFIX = "intact.txt";
 
   private Predicate<PsiMitab> selfInteractionPredicate = (ppi) ->
-      ! ppi.getIntearctorAId().equals(ppi.getInteractorBId());
+      ! ppi.intearctorAId().equals(ppi.interactorBId());
 
 
   private Function<Path,Path> resolveHeadingFilePathFunction = (dirPath) ->
     Paths.get(dirPath.toString(),HEADINGS_FILE_NAME);
-
 
   /*
   Process the human intact data. The file provided from IntAct is excessively
@@ -51,18 +51,13 @@ public class IntactDataConsumer extends GraphDataConsumer implements Consumer<Pa
             System.out.println("Processing intact file: " +filePath.toString());
             new TsvRecordStreamSupplier(filePath,
                 columnHeadings).get()
-                .map(PsiMitab.parseCsvRecordFunction)
+                .map(PsiMitab::parseCSVRecord)
                 .filter(selfInteractionPredicate)
                 .forEach(proteinInteractionConsumer);
           } );
     } catch (IOException e) {
       e.printStackTrace();
     }
-
-//    new TsvRecordStreamSupplier(path).get()
-//        .map(PsiMitab.parseCsvRecordFunction)
-//        .filter(selfInteractionPredicate)
-//        .forEach(proteinInteractionConsumer);
   }
 
   private Consumer<Tuple2<String,String>> novelProteinNodesConsumer = (tuple) -> {
@@ -77,27 +72,29 @@ public class IntactDataConsumer extends GraphDataConsumer implements Consumer<Pa
   };
 
   private Consumer<PsiMitab> proteinInteractionConsumer = (ppi) -> {
-    Tuple2<String,String> abTuple = new Tuple2<>(ppi.getIntearctorAId(),ppi.getInteractorBId());
-    Tuple2<String,String> baTuple = new Tuple2<>(ppi.getInteractorBId(), ppi.getIntearctorAId());
+    Tuple2<String,String> abTuple = new Tuple2<>(ppi.intearctorAId(),ppi.interactorBId());
+    Tuple2<String,String> baTuple = new Tuple2<>(ppi.interactorBId(), ppi.intearctorAId());
     if ((!vPPIMap.containsKey(abTuple))
         && (!vPPIMap.containsKey(baTuple))) {
       novelProteinNodesConsumer.accept(abTuple);  // register protein node if novel
       vPPIMap.put(
           abTuple,
           proteintMap
-              .get(ppi.getIntearctorAId())
+              .get(ppi.intearctorAId())
               .createRelationshipTo(
-                  proteintMap.get(ppi.getInteractorBId()),
-                  Utils.convertStringListToRelType (ppi.getInteractionTypeList())));
+                  proteintMap.get(ppi.interactorBId()),
+                  Utils.convertStringToRelType (ppi.interactionTypeList().head())));
       // add interaction properties
-      // detetcion methods
+      // detection methods
       vPPIMap.get(abTuple).setProperty("Interaction_method_detection",
-          ppi.reduceListToStringFunction.apply(ppi.getDetectionMethodList()));
-      vPPIMap.get(abTuple).setProperty("Reference",
-          ppi.reduceListToStringFunction.apply(ppi.getPublicationIdList()));
-      if (null != ppi.getConfidenceScoreList() && ppi.getConfidenceScoreList().size() >0) {
+         ppi.detectionMethodList().mkString("|"));
+
+      vPPIMap.get(abTuple).setProperty("References",
+          ppi.publicationIdList().mkString("|"));
+
+      if (null != ppi.confidenceScoreList() && ppi.confidenceScoreList().size() >0) {
         vPPIMap.get(abTuple).setProperty("Confidence_level",
-            Double.parseDouble(ppi.getConfidenceScoreList().get(0)));
+            Double.parseDouble(ppi.confidenceScoreList().head()));
       }
     }
 

@@ -4,8 +4,7 @@ import org.apache.commons.csv.CSVRecord
 import scala.collection.JavaConverters._
 
 
-
-case class UniProtDrugTarget(drugModelType: String, id:String, name:String, geneName:String,
+case class UniProtDrugTransporter(drugModelType: String, id:String, name:String, geneName:String,
                               genbankProteinId:String, genbankGeneId:String,
                               uniprotId:String, uniprotTitle:String, pdbId:String,
                               geneCardId:String, geneAtlasId:String, hgncId:String,
@@ -13,11 +12,12 @@ case class UniProtDrugTarget(drugModelType: String, id:String, name:String, gene
                            ) {
 
 }
-object UniProtDrugTarget extends ValueTrait {
 
-  def parseCSVRecord(record:CSVRecord): UniProtDrugTarget = {
-    UniProtDrugTarget(
-      "DRUG_TARGET",
+object UniProtDrugTransporter extends ValueTrait {
+
+  def parseCSVRecord(record:CSVRecord): UniProtDrugTransporter = {
+    UniProtDrugTransporter(
+      "DRUG_TRANSPORTER",
       record.get("ID"),  record.get("Name"),
       record.get("Gene Name"), record.get("GenBank Protein ID"),
       record.get("GenBank Gene ID"),record.get("UniProt ID"),
@@ -28,6 +28,10 @@ object UniProtDrugTarget extends ValueTrait {
     )
   }
 }
+
+
+
+
 
 
 
