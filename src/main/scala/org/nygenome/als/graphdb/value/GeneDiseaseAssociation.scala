@@ -1,7 +1,7 @@
 package org.nygenome.als.graphdb.value
 
 import org.apache.commons.csv.CSVRecord
-import org.nygenome.als.graphdb.model.ModelObject
+
 
 
 case class GeneDiseaseAssociation ( geneId:Int, geneSymbol:String, diseaseId:String,

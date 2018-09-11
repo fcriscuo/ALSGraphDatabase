@@ -2,7 +2,6 @@ package org.nygenome.als.graphdb.value
 
 import java.util.Optional
 import org.apache.commons.csv.CSVRecord
-import org.nygenome.als.graphdb.model.ModelObject
 import org.nygenome.als.graphdb.service.UniProtMappingService
 /*
 TSV record header

@@ -7,3 +7,6 @@ a based on the ProteinFramework code (https://github.com/ibalaur/ProteinFramewor
 which is part of the DiseaseNetworks module from the eTRIKS Lab.
 The intention of this project is to modify and extend the original project to 
 be specific for ALS data. 
+
+Data Sources:
+DrugBank: https://www.drugbank.ca/releases/latest

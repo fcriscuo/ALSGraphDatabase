@@ -15,6 +15,11 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer{
     private final EmbeddedGraph.RelTypes eRelType;
     //  DRUG_TARGET_UNIRPOT_FILE = /data/als/drug_target_uniprot_links.csv
     /*
+       case class UniProtDrugCarrier (drugModelType: String, id:String, name:String, geneName:String,
+                              genbankProteinId:String, genbankGeneId:String,
+                              uniprotId:String, uniprotTitle:String, pdbId:String,
+                              geneCardId:String, geneAtlasId:String, hgncId:String,
+                              species:String, drugIdList:java.util.List[String]
 
     ID,Name,Gene Name,GenBank Protein ID,GenBank Gene ID,UniProt ID,Uniprot Title,PDB ID,GeneCard ID,GenAtlas ID,HGNC ID,Species,Drug IDs
 P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,Haemophilus influenzae (strain ATCC 51907 / DSM 11121 / KW20 / Rd),DB00303
