@@ -18,15 +18,15 @@ public class UniprotIdEnsemblDataConsumer extends GraphDataConsumer{
 
     private void processUniprotIdEnsemblData(String[] tokens) {
 
-        if (!proteintMap.containsKey(tokens[0])) {
+        if (!proteinMap.containsKey(tokens[0])) {
             createProteinNode(strNoInfo, tokens[0], strNoInfo,
                     strNoInfo, strNoInfo, strNoInfo);
         }
-        proteintMap.get(tokens[0]).setProperty("EnsemblTranscript",
+        proteinMap.get(tokens[0]).setProperty("EnsemblTranscript",
                 tokens[1]);
-        proteintMap.get(tokens[0])
+        proteinMap.get(tokens[0])
                 .setProperty("ProteinName", tokens[2]);
-        proteintMap.get(tokens[0]).setProperty("GeneSymbol", tokens[3]);
+        proteinMap.get(tokens[0]).setProperty("GeneSymbol", tokens[3]);
     }
 
 }

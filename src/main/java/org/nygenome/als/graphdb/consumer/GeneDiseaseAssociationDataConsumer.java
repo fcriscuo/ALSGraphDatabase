@@ -33,11 +33,11 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
                     tokens[i] = tokens[i].toUpperCase().trim();
                 }
                 String szUniprotId = null;
-                for (Map.Entry<String, Node> eProtein : proteintMap.entrySet()) {
+                for (Map.Entry<String, Node> eProtein : proteinMap.entrySet()) {
                     if (eProtein.getValue().getProperty("ProteinId").toString()
                             .equals(tokens[0])) {
                         szUniprotId = eProtein.getKey();
-                        proteintMap.get(szUniprotId).setProperty("GeneSymbol",
+                        proteinMap.get(szUniprotId).setProperty("GeneSymbol",
                                 tokens[1]);
                         break;
                     }
@@ -50,7 +50,7 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
                     if (!vDiseaseRelMap.containsKey(strPair)) {
                         vDiseaseRelMap
                                 .put(strPair,
-                                        proteintMap
+                                        proteinMap
                                                 .get(szUniprotId)
                                                 .createRelationshipTo(
                                                         diseaseMap

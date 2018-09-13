@@ -18,9 +18,15 @@ protected def isHuman(species:String):Boolean = species.trim().equalsIgnoreCase(
     def asArrayList : java.util.ArrayList[T] = new java.util.ArrayList[T](input.asJava)
   }
 
+  protected var parseDoubleStringFunction: Function[String,Double] = (s:String) => {
+    s.replace(',','.').toDouble
+  }
+
   implicit def asArrayList[T](input: List[T]) = new AsArrayList[T](input)
 
   def isEmpty(x: String) = x == null || x.trim.isEmpty
+
+  def isValidString(x:String):Boolean = x != null && x.trim.length> 0
 
   protected var reduceListToString: Function[List[String], String] =
     (list: List[String]) => list.mkString("|")

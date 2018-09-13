@@ -32,11 +32,12 @@ public enum EmbeddedGraph
 	public static enum RelTypes implements RelationshipType {
 		eNoEvent, IN_PATHWAY, BIOMARKER, THERAPEUTIC, GENETIC_VARIATION, KANEKO_ASSOCIATED, PPI_ASSOCIATION, PPI_COLOCALIZATION,
 		PPI_GENETIC_INTERACTION, PPI_PREDICTED_INTERACTION, TISSUE_ENHANCED, DRUG_TARGET,
-		DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER, PART_OF, DEG_RELATED_TO, SEQ_SIM
+		DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER, PART_OF, DEG_RELATED_TO, SEQ_SIM,
+		GO_CLASSIFICATION, TRANSCRIPT
 	}
 
 	public static enum LabelTypes implements Label {
-		Pathway, Disease, Protein, Tissue, Drug, GEOStudy, GEOComparison, Gene
+		GeneOntology, Transcript, Pathway, Disease, Protein, Tissue, Drug, GEOStudy, GEOComparison, Gene
 	}
 
 	// convenience method to satisfy legacy usages

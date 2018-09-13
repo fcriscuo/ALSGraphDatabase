@@ -7,13 +7,11 @@ import org.apache.commons.csv.CSVRecord;
 
 import lombok.extern.log4j.Log4j;
 import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
-import java.util.function.Predicate;
 
 /*
 Represents a subclass of GraphDataConsumer specific for importing
@@ -51,7 +49,7 @@ private Consumer<PathwayRecord> pathwayRecordConsumer = (record) ->{
 
        vPathwayMap.put(
            record.getUniprotReactomeIdTuple(),
-           proteintMap.get(record.getUniprotId()).createRelationshipTo(
+           proteinMap.get(record.getUniprotId()).createRelationshipTo(
                pathwayMap.get(record.getReactomeId()),
                EmbeddedGraph.RelTypes.IN_PATHWAY));
        vPathwayMap.get(record.getUniprotReactomeIdTuple()).setProperty("Reference",

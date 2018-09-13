@@ -112,12 +112,6 @@
             <version>2.1.13</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/psidev.psi.mi/psimitab -->
-        <dependency>
-            <groupId>psidev.psi.mi</groupId>
-            <artifactId>psimitab</artifactId>
-            <version>1.8.4.2</version>
-        </dependency>
 
         <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
         <dependency>

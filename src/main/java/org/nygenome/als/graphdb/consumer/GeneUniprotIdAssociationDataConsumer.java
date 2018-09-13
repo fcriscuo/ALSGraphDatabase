@@ -16,11 +16,11 @@ public class GeneUniprotIdAssociationDataConsumer extends GraphDataConsumer  {
 
 
     private void processGeneUniprotData(String[] tokens) {
-        if (!proteintMap.containsKey(tokens[3])) {
+        if (!proteinMap.containsKey(tokens[3])) {
             createProteinNode(tokens[0], tokens[3], strNoInfo,
                     tokens[4], strNoInfo, strNoInfo);
         } else {
-            proteintMap.get(tokens[3]).setProperty("ProteinId",
+            proteinMap.get(tokens[3]).setProperty("ProteinId",
                     tokens[0]);
         }
     }

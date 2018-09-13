@@ -26,16 +26,16 @@ public class SeqSimilarityDataConsumer extends GraphDataConsumer {
             Tuple2<String,String> strReverseTuple2 = new Tuple2<String,String>(tokens[4],
                     tokens[1]);
 
-            if (proteintMap.containsKey(tokens[1])
-                    && proteintMap.containsKey(tokens[4])) {
+            if (proteinMap.containsKey(tokens[1])
+                    && proteinMap.containsKey(tokens[4])) {
                 if ((!vSeqSimMap.containsKey(strTuple2))
                         && (!vSeqSimMap.containsKey(strReverseTuple2))
                         && (1 == Integer.parseInt(tokens[10]))) {
                     vSeqSimMap.put(
                             strTuple2,
-                            proteintMap.get(tokens[1])
+                            proteinMap.get(tokens[1])
                                     .createRelationshipTo(
-                                            proteintMap.get(tokens[4]),
+                                            proteinMap.get(tokens[4]),
                                             EmbeddedGraph.RelTypes.SEQ_SIM));
 
                     vSeqSimMap

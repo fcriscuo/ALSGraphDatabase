@@ -8,7 +8,6 @@ import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.Utils;
 import org.nygenome.als.graphdb.value.PsiMitab;
 import scala.Tuple2;
-import scala.collection.JavaConverters.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -61,11 +60,11 @@ public class IntactDataConsumer extends GraphDataConsumer implements Consumer<Pa
   }
 
   private Consumer<Tuple2<String,String>> novelProteinNodesConsumer = (tuple) -> {
-    if (!proteintMap.containsKey(tuple._1())) {
+    if (!proteinMap.containsKey(tuple._1())) {
       createProteinNode(strNoInfo, tuple._1(), strNoInfo,
           strNoInfo, strNoInfo, strNoInfo);
     }
-    if (!proteintMap.containsKey(tuple._2())) {
+    if (!proteinMap.containsKey(tuple._2())) {
       createProteinNode(strNoInfo,tuple._2(), strNoInfo,
           strNoInfo, strNoInfo, strNoInfo);
     }
@@ -79,10 +78,10 @@ public class IntactDataConsumer extends GraphDataConsumer implements Consumer<Pa
       novelProteinNodesConsumer.accept(abTuple);  // register protein node if novel
       vPPIMap.put(
           abTuple,
-          proteintMap
+          proteinMap
               .get(ppi.intearctorAId())
               .createRelationshipTo(
-                  proteintMap.get(ppi.interactorBId()),
+                  proteinMap.get(ppi.interactorBId()),
                   Utils.convertStringToRelType (ppi.interactionTypeList().head())));
       // add interaction properties
       // detection methods
