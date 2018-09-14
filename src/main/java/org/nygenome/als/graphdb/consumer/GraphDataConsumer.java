@@ -65,46 +65,43 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
     protected Map<Tuple2<String,String>,Relationship>  proteinGeneOntologyRelMap = new HashMap<>();
     // Protein -Ensembl Transcript Relationships
    protected Map<Tuple2<String,String>, Relationship> proteinTranscriptRelMap = new HashMap<>();
-    protected Map<Tuple2<String,String>, Relationship> vDiseaseRelMap = new HashMap<Tuple2<String,String>, Relationship>();
+    protected Map<Tuple2<String,String>, Relationship> proteinDiseaseRelMap = new HashMap<Tuple2<String,String>, Relationship>();
     protected Map<Tuple2<String,String>, Relationship> vKanekoRelMap = new HashMap<Tuple2<String,String>, Relationship>();
     protected Map<Tuple2<String,String>, Relationship> proteinDrugRelMap = new HashMap<Tuple2<String,String>, Relationship>();
     protected Map<Tuple2<String,String>, Relationship> vTissueRelMap = new HashMap<Tuple2<String,String>, Relationship>();
-    protected Map<Tuple2<String,String>, Relationship> vPPIMap = new HashMap<Tuple2<String,String>, Relationship>();
+    protected Map<Tuple2<String,String>, Relationship> proteinProteinIntactMap = new HashMap<Tuple2<String,String>, Relationship>();
     protected Map<Tuple2<String,String>, Relationship> vPathwayMap = new HashMap<Tuple2<String,String>, Relationship>();
     protected Map<Tuple3<String,String,String>, Relationship> vGEOGeneRelMap = new HashMap<Tuple3<String,String,String>, Relationship>();
     protected Map<Tuple2<String,String>, Relationship> vGEOComponentsRelMap = new HashMap<Tuple2<String,String>, Relationship>();
     protected Map<Tuple2<String,String>, Relationship> vSeqSimMap = new HashMap<Tuple2<String,String>, Relationship>();
 
 
-    private BiConsumer<Node,Tuple2<String,String>> nodePropertyValueConsumer = (node,propertyTuple) ->{
+    protected BiConsumer<Node,Tuple2<String,String>> nodePropertyValueConsumer = (node,propertyTuple) ->{
         if(UniProtValue.isValidString(propertyTuple._2())){
             node.setProperty(propertyTuple._1(),propertyTuple._2());
         }
     };
 
-    private BiConsumer<Node,Tuple2<String, List<String>>> nodePropertyValueListConsumer = (node,propertyListTuple) ->{
+    protected BiConsumer<Node,Tuple2<String, List<String>>> nodePropertyValueListConsumer = (node,propertyListTuple) ->{
         if(propertyListTuple._2() != null && propertyListTuple._2().size()>0) {
             node.setProperty(propertyListTuple._1(),propertyListTuple._2().head());
         }
     };
 
-
-    private Function<String,Node> registerProteinNodeFuncion = (uniprotId)-> {
-      AsyncLoggingService.logInfo("createProteinNode invoked for uniprot protein id  " +
-          uniprotId);
-      proteinMap.put(uniprotId, EmbeddedGraph.getGraphInstance()
-          .createNode(EmbeddedGraph.LabelTypes.Protein));
+    protected Function<String,Node> resolveProteinNodeFunction = (uniprotId)-> {
+      if (!proteinMap.containsKey(uniprotId)) {
+        AsyncLoggingService.logInfo("createProteinNode invoked for uniprot protein id  " +
+            uniprotId);
+        proteinMap.put(uniprotId, EmbeddedGraph.getGraphInstance()
+            .createNode(LabelTypes.Protein));
+      }
       return proteinMap.get(uniprotId);
     };
 
 
    protected void createProteinNode(UniProtValue upv){
-       String uniprotId = upv.uniprotId();
-       AsyncLoggingService.logInfo("createProteinNode invoked for uniprot protein id  " +
-           uniprotId);
-       proteinMap.put(uniprotId, EmbeddedGraph.getGraphInstance()
-           .createNode(EmbeddedGraph.LabelTypes.Protein));
-       Node node = proteinMap.get(uniprotId);
+
+      Node node =  resolveProteinNodeFunction.apply(upv.uniprotId());
        nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtId", upv.uniprotId()));
        nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
        nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
@@ -117,11 +114,13 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
        Private Function to create a new DrugBank node in the graph and register it
        in the Map
         */
-       private Function<String,Node> registerDrugBankNodeFunction = (dbId) -> {
-         AsyncLoggingService.logInfo("createDrugBankNode invoked for DrunkBank id  " +
-             dbId);
-         drugMap.put(dbId, EmbeddedGraph.getGraphInstance()
-             .createNode(LabelTypes.Drug));
+       protected Function<String,Node> resolveDrugBankNode = (dbId) -> {
+         if (!drugMap.containsKey(dbId)) {
+           AsyncLoggingService.logInfo("createDrugBankNode invoked for DrunkBank id  " +
+               dbId);
+           drugMap.put(dbId, EmbeddedGraph.getGraphInstance()
+               .createNode(LabelTypes.Drug));
+         }
          return  drugMap.get(dbId);
        };
 
@@ -133,7 +132,8 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
        protected void createDrugBankNode(String uniprotId, DrugBankValue dbv){
           String key = dbv.drugBankId();
           if (!drugMap.containsKey(key)) {
-            Node node = registerDrugBankNodeFunction.apply(key);
+            Node node = resolveDrugBankNode.apply(key);
+            nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugId",dbv.drugBankId()));
             nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugName",dbv.drugName()));
             nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugType",dbv.drugType()));
             nodePropertyValueConsumer.accept(node, new Tuple2<>("CASNumber",dbv.casNumber()));
@@ -153,7 +153,7 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
            Node proteinNode = proteinMap.get(uniprotId);
           drug.drugIdList().forEach((id) ->{
              Node drugNode = (drugMap.containsKey(id)) ? drugMap.get(id)
-                 :registerDrugBankNodeFunction.apply(id);
+                 : resolveDrugBankNode.apply(id);
              proteinDrugRelMap.put(new Tuple2<>(uniprotId,id),
                  proteinNode.createRelationshipTo(drugNode,drugRelType));
            });
@@ -170,7 +170,7 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
            Node proteinNode = proteinMap.get(uniprotId);
            drugBankIdList.forEach((id) ->{
              Node drugNode = (drugMap.containsKey(id)) ? drugMap.get(id)
-                 :registerDrugBankNodeFunction.apply(id);
+                 : resolveDrugBankNode.apply(id);
              proteinDrugRelMap.put(new Tuple2<>(uniprotId,id),
                  proteinNode.createRelationshipTo(drugNode,drugRelType));
              });

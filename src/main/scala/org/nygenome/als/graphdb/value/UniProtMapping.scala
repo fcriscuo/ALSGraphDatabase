@@ -2,7 +2,7 @@ package org.nygenome.als.graphdb.value
 
 import org.apache.commons.csv.CSVRecord
 
-case class UniProtMapping(val uniPotId:String, val ensemblGeneId:String, val ensemblTranscriptId:String,
+case class UniProtMapping(val uniProtId:String, val ensemblGeneId:String, val ensemblTranscriptId:String,
                           val geneSymbol:String){
 
 }

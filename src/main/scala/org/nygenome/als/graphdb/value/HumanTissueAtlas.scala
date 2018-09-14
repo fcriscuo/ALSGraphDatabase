@@ -24,7 +24,7 @@ object HumanTissueAtlas extends ValueTrait {
 private def resolveUniprotId(geneId: String): String = {
   val uniOpt: Optional[UniProtMapping] = UniProtMappingService.INSTANCE.resolveUniProtMappingByEnsemblGeneId(geneId)
   return if ((uniOpt.isPresent)) {
-    uniOpt.get.uniPotId
+    uniOpt.get.uniProtId
   }
   else {
     ""

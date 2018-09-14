@@ -1,11 +1,19 @@
 package org.nygenome.als.graphdb.consumer;
 
 
-import org.apache.log4j.Logger;
+import com.google.common.base.Preconditions;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.lib.FunctionLib;
+import org.nygenome.als.graphdb.EmbeddedGraph;
+import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
+import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.service.UniProtMappingService;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.Utils;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
+import org.nygenome.als.graphdb.value.GeneDiseaseAssociation;
 import scala.Tuple2;
 import java.nio.file.Path;
 import java.util.Map;
@@ -16,64 +24,66 @@ Data mapped to data structures for entry into Neo4j database
  */
 
 public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
-    private static final Logger log = Logger.getLogger(GraphDataConsumer.class);
 
-    @Override
-    public void accept(Path path) {
-        FunctionLib.generateLineStreamFromPath(path)
-                .skip(1L)   // skip the header
-                .map((line -> line.split(TAB_DELIM)))
-                .forEach(this::processGeneDiseaseAssociationData);
-        log.info("The disease map has " + diseaseMap.size() +" entries");
+
+  @Override
+  public void accept(Path path) {
+    Preconditions.checkArgument(null != path);
+    new TsvRecordStreamSupplier(path).get()
+        .map(GeneDiseaseAssociation::parseCSVRecord)
+        // ensure that this disease is associated with a protein
+        .filter(gda -> UniProtMappingService.INSTANCE
+            .resolveUniProtMappingFromGeneSymbol(gda.geneSymbol()).isPresent())
+        .forEach(diseaseAssociationConsumer);
+  }
+
+
+  private Function<String, Node> resolveDiseaseNodeFunction = (diseaseId) -> {
+    if (!diseaseMap.containsKey(diseaseId)) {
+      AsyncLoggingService.logInfo("createDiseasekNode invoked for Disease id  " +
+          diseaseId);
+      diseaseMap.put(diseaseId, EmbeddedGraph.getGraphInstance()
+          .createNode(LabelTypes.Disease));
+    }
+    return diseaseMap.get(diseaseId);
+  };
+
+  private Consumer<GeneDiseaseAssociation> diseaseAssociationConsumer = (gda) -> {
+
+    String uniprotId = UniProtMappingService.INSTANCE
+        .resolveUniProtMappingFromGeneSymbol(gda.geneSymbol())
+        .get().uniProtId();   // get from Optional is OK because of previous filter
+    Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
+    String diseaseId = gda.diseaseId();
+    Node diseaseNode = resolveDiseaseNodeFunction.apply(diseaseId);
+    nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseName", gda.diseaseName()));
+    nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseId", diseaseId));
+
+    // register protein-disease relationship if new
+
+    Tuple2<String, String> protDisTuple = new Tuple2<>(uniprotId, diseaseId);
+    if (!proteinDiseaseRelMap.containsKey(protDisTuple)) {
+      proteinDiseaseRelMap.put(protDisTuple,
+          proteinNode.createRelationshipTo(diseaseNode, RelTypes.IMPLICATED_IN)
+      );
     }
 
+    proteinDiseaseRelMap.get(protDisTuple).setProperty("Confidence_level",
+        gda.score());
+    proteinDiseaseRelMap.get(protDisTuple).setProperty("Reference",
+        gda.source());
 
-    private void processGeneDiseaseAssociationData(String[] tokens) {
-                for (int i = 0; i < tokens.length; i++) {
-                    tokens[i] = tokens[i].toUpperCase().trim();
-                }
-                String szUniprotId = null;
-                for (Map.Entry<String, Node> eProtein : proteinMap.entrySet()) {
-                    if (eProtein.getValue().getProperty("ProteinId").toString()
-                            .equals(tokens[0])) {
-                        szUniprotId = eProtein.getKey();
-                        proteinMap.get(szUniprotId).setProperty("GeneSymbol",
-                                tokens[1]);
-                        break;
-                    }
-                }
-                if (null != szUniprotId) {
-                    if (!diseaseMap.containsKey(tokens[4])) {
-                        createDiseaseNode(tokens[4]);
-                    }
-                    Tuple2 strPair = new Tuple2(szUniprotId, tokens[4]);
-                    if (!vDiseaseRelMap.containsKey(strPair)) {
-                        vDiseaseRelMap
-                                .put(strPair,
-                                        proteinMap
-                                                .get(szUniprotId)
-                                                .createRelationshipTo(
-                                                        diseaseMap
-                                                                .get(tokens[4]),
-                                                        Utils.convertStringToRelType(tokens[7])));
-                        vDiseaseRelMap.get(strPair).setProperty(
-                                "Confidence_level",
-                                Double.parseDouble(tokens[5]));
-                        vDiseaseRelMap.get(strPair).setProperty("Reference",
-                                tokens[8]);
-                    }
-                }
-            }
- // main method for stand alone testing
-    public static void main(String... args) {
-        FrameworkPropertyService.INSTANCE.getOptionalPathProperty("GENE_UNIPROT_ID_ASSOC_DISGENET_FILE")
-                .ifPresent(new GeneUniprotIdAssociationDataConsumer());
-        FrameworkPropertyService.INSTANCE.getOptionalPathProperty("GENE_DISEASE_ASSOC_DISGENET_FILE")
-                .ifPresent(new GeneUniprotIdAssociationDataConsumer());
+  };
+
+  // main method for stand alone testing
+  public static void main(String... args) {
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("GENE_UNIPROT_ID_ASSOC_DISGENET_FILE")
+        .ifPresent(new GeneUniprotIdAssociationDataConsumer());
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("GENE_DISEASE_ASSOC_DISGENET_FILE")
+        .ifPresent(new GeneUniprotIdAssociationDataConsumer());
 
 
+  }
 
-    }
-
-    }
+}
 

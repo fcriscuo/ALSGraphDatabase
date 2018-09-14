@@ -1,7 +1,5 @@
 package org.nygenome.als.graphdb.value;
 
-import org.apache.spark.sql.Encoder;
-import org.apache.spark.sql.types.StructType;
 import com.twitter.logging.Logger;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import java.nio.file.Paths;
@@ -22,11 +20,7 @@ public class TestPsiMiTab {
     } catch (Exception e) {
       e.printStackTrace();
     }
-//    StructType schema = PsiMitab.schemaSupplier.get();
-//    Arrays.asList(schema.fieldNames()).forEach(System.out::println);
-//
-//    Encoder<PsiMitab> encoder = PsiMitab.encoderSupplier.get();
-//    System.out.println(encoder.toString());
+
 
   }
 

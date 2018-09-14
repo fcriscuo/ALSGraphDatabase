@@ -31,8 +31,8 @@ object PsiMitab extends ValueTrait{
 
   def parseCSVRecord (record:CSVRecord):PsiMitab = {
     new PsiMitab(
-      record.get("#ID(s) interactor A"),
-      record.get("ID(s) interactor B"),
+      parseStringOnColonFunction(record.get("#ID(s) interactor A")).last,
+      parseStringOnColonFunction(record.get("ID(s) interactor B")).last,
      parseStringOnPipeFunction(record.get("Alt. ID(s) interactor A")),
       parseStringOnPipeFunction(record.get("Alt. ID(s) interactor B")),
     parseStringOnPipeFunction(record.get("Alias(es) interactor A")),
