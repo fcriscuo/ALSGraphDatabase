@@ -33,11 +33,11 @@ public enum EmbeddedGraph
 		eNoEvent, IN_PATHWAY, BIOMARKER, THERAPEUTIC, GENETIC_VARIATION, KANEKO_ASSOCIATED, PPI_ASSOCIATION, PPI_COLOCALIZATION,
 		PPI_GENETIC_INTERACTION, PPI_PREDICTED_INTERACTION, TISSUE_ENHANCED, DRUG_TARGET,
 		DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER, PART_OF, DEG_RELATED_TO, SEQ_SIM,
-		GO_CLASSIFICATION, TRANSCRIPT, IMPLICATED_IN
+		GO_CLASSIFICATION, TRANSCRIPT, IMPLICATED_IN, HAS_SAMPLE, SAMPLED_FROM
 	}
 
 	public static enum LabelTypes implements Label {
-		GeneOntology, Transcript, Pathway, Disease, Protein, Tissue, Drug, GEOStudy, GEOComparison, Gene
+		GeneOntology, Transcript, Pathway, Disease, Protein, Tissue, Drug, GEOStudy, GEOComparison, Gene, Subject, Sample
 	}
 
 	// convenience method to satisfy legacy usages

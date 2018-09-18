@@ -90,8 +90,8 @@ public enum UniProtMappingService {
         .forEach((id) -> UniProtMappingService.INSTANCE.getUniProtMappingByUniprotId(id)
             .ifPresent(System.out::println));
     // look for ENSG00000001461 should be gene NIPAL3
-    System.out.println("Looking for gene id ENSG00000001461");
-    UniProtMappingService.INSTANCE.resolveUniProtMappingByEnsemblGeneId("ENSG00000001461")
+    System.out.println("Looking for gene id ENSG00000261457");
+    UniProtMappingService.INSTANCE.resolveUniProtMappingByEnsemblGeneId("ENSG00000261457")
         .ifPresent(System.out::println);
     System.out.println("Looking for transcript id: ENST00000419349");
     // should be gene GPX1
@@ -99,7 +99,7 @@ public enum UniProtMappingService {
         .ifPresent(System.out::println);
 
     // look for uniprot id based on gene symbol
-    Lists.immutable.of("NR2E3", "MIR875", "GNE", "FECD3")
+    Lists.immutable.of("AC008417.1","NR2E3", "MIR875", "GNE", "FECD3")
         .stream()
         .peek((gs) -> System.out.println("Resolving gene symbol " + gs))
         .forEach(geneSymbol -> UniProtMappingService.INSTANCE

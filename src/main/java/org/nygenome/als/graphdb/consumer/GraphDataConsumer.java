@@ -58,6 +58,9 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
     protected Map<String, Node> pathwayMap = new HashMap<String, Node>();
     protected Map<String, Node> tissueMap = new HashMap<String, Node>();
     protected Map<String, Node> GEOStudyMap = new HashMap<String, Node>();
+    protected Map<String,Node> subjectMap = new HashMap<>();
+    protected Map<String,Node> sampleMap = new HashMap<>();
+
 
 
     protected Map<Tuple2<String,String>, Node> GEOComparisonMap = new HashMap<Tuple2<String,String>, Node>();
@@ -74,6 +77,7 @@ public abstract class GraphDataConsumer   implements Consumer<Path> {
     protected Map<Tuple3<String,String,String>, Relationship> vGEOGeneRelMap = new HashMap<Tuple3<String,String,String>, Relationship>();
     protected Map<Tuple2<String,String>, Relationship> vGEOComponentsRelMap = new HashMap<Tuple2<String,String>, Relationship>();
     protected Map<Tuple2<String,String>, Relationship> vSeqSimMap = new HashMap<Tuple2<String,String>, Relationship>();
+    protected Map<Tuple2<String,String>,Relationship> subjectSampleRelMap = new HashMap<>();
 
 
     protected BiConsumer<Node,Tuple2<String,String>> nodePropertyValueConsumer = (node,propertyTuple) ->{
