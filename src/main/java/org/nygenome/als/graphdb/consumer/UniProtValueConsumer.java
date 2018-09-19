@@ -53,7 +53,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
 
   private Consumer<UniProtValue> uniProtValueConsumer = (upv -> {
     // create the protein node for this uniprot entry
-    createProteinNode(upv);
+    uniProtValueToProteinNodeConsumer.accept(upv);
     // add Gene Ontology associations
     geneOntologyListConsumer.accept(upv);
     // add ensembl trancripts

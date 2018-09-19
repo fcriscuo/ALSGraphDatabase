@@ -31,18 +31,12 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
 
   private Function<StringSubjectProperty,Node> resolveSampleNodeFunction = (stringSubjectProperty) -> {
     String externalSampleId = stringSubjectProperty.externalSampleId();
-    if (!sampleMap.containsKey(externalSampleId)) {
-      AsyncLoggingService.logInfo("creating Sample Node for external sample id  " +
-          externalSampleId);
-      Node sampleNode =  EmbeddedGraph.getGraphInstance()
-          .createNode(LabelTypes.Sample);
+     Node sampleNode = resolveSampleNodeByExternalId(externalSampleId);
+     // an existing Sample node may not have had these properties set
       nodePropertyValueConsumer.accept(sampleNode,new Tuple2<>("ExternalSampleId",externalSampleId));
       nodePropertyValueConsumer.accept(sampleNode, new Tuple2<>("SampleType", stringSubjectProperty.sampleType()));
       nodePropertyValueConsumer.accept(sampleNode, new Tuple2<>("AnalyteType", stringSubjectProperty.analyteType()));
-      subjectMap.put(externalSampleId, sampleNode);
-      return sampleNode;
-    }
-    return sampleMap.get(externalSampleId);
+    return sampleNode;
   };
 
   private Consumer<StringSubjectProperty> stringSubjectPropertyConsumer = (subjectProperty) -> {
