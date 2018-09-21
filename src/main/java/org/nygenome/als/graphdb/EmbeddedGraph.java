@@ -39,7 +39,8 @@ public enum EmbeddedGraph
 	public static enum LabelTypes implements Label {
 		Ensembl, HUGO, GeneOntology, Transcript, Pathway, Disease, Protein, Tissue,
     Drug, GEOStudy, GEOComparison, Gene, Subject, Sample,
-    Expression,TPM,Xref,EnsemblGene, EnsemblTranscript
+    Expression,TPM,Xref,EnsemblGene, EnsemblTranscript,MolecularFunction,
+		BiologicalProcess, CellularComponents,Unknown
 	}
 
 	// convenience method to satisfy legacy usages

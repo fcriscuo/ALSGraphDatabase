@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import com.twitter.logging.Logger;
 
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import org.neo4j.graphdb.Node;
@@ -174,7 +175,10 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
       (proteinMap.containsKey(uniprotId)) ? proteinMap.get(uniprotId)
           : createProteinFunctionNode.apply(uniprotId);
 
-
+/*
+Protected Consumer that will create a Protein Node with properties or
+add properties to an existing Protein Node
+ */
   protected Consumer<UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
     Node node = resolveProteinNodeFunction.apply(upv.uniprotId());
     nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
@@ -186,15 +190,20 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   Private Function to create a new DrugBank node in the graph and register it
   in the Map
    */
-  protected Function<String, Node> resolveDrugBankNode = (dbId) -> {
-    if (!drugMap.containsKey(dbId)) {
-      AsyncLoggingService.logInfo("createDrugBankNode invoked for DrunkBank id  " +
-          dbId);
-      drugMap.put(dbId, EmbeddedGraph.getGraphInstance()
-          .createNode(LabelTypes.Drug));
-    }
-    return drugMap.get(dbId);
+  private Function<String, Node> createDrugBankNodeFunction = (dbId) -> {
+    AsyncLoggingService.logInfo("createDrugBankNode invoked for DrunkBank id  " +
+        dbId);
+    Node node =  EmbeddedGraph.getGraphInstance()
+        .createNode(LabelTypes.Drug);
+    nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugBankId",
+        dbId));
+    drugMap.put(dbId, node);
+    return node;
   };
+  protected Function<String, Node> resolveDrugBankNode = (dbId) ->
+      (drugMap.containsKey(dbId))? drugMap.get(dbId)
+          : createDrugBankNodeFunction.apply(dbId);
+
 
   /*
   Protected method to create a new DrugBank node
@@ -205,7 +214,6 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     String key = dbv.drugBankId();
     if (!drugMap.containsKey(key)) {
       Node node = resolveDrugBankNode.apply(key);
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugId", dbv.drugBankId()));
       nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugName", dbv.drugName()));
       nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugType", dbv.drugType()));
       nodePropertyValueConsumer.accept(node, new Tuple2<>("CASNumber", dbv.casNumber()));
@@ -214,44 +222,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     }
   }
 
-  /*
 
-   */
-  protected BiConsumer<RelTypes, UniProtDrug> proteinDrugRelationshiprConsumer
-      = (drugRelType, drug) -> {
-    String uniprotId = drug.uniprotId();
-    // check if the protein node exists
-    if (proteinMap.containsKey(uniprotId)) {
-      Node proteinNode = proteinMap.get(uniprotId);
-      drug.drugIdList().forEach((id) -> {
-        Node drugNode = (drugMap.containsKey(id)) ? drugMap.get(id)
-            : resolveDrugBankNode.apply(id);
-        proteinDrugRelMap.put(new Tuple2<>(uniprotId, id),
-            proteinNode.createRelationshipTo(drugNode, drugRelType));
-      });
-    } else {
-      AsyncLoggingService.logError("resolveProteinDrugRelationship: "
-          + " uniprot id: " + uniprotId + " is not registered.");
-    }
-  };
-
-  protected void resolveProteinDrugRelationship(@Nonnull String uniprotId,
-      @Nonnull RelTypes drugRelType, java.util.List<String> drugBankIdList) {
-    // check if the protein node exists
-    if (proteinMap.containsKey(uniprotId)) {
-      Node proteinNode = proteinMap.get(uniprotId);
-      drugBankIdList.forEach((id) -> {
-        Node drugNode = (drugMap.containsKey(id)) ? drugMap.get(id)
-            : resolveDrugBankNode.apply(id);
-        proteinDrugRelMap.put(new Tuple2<>(uniprotId, id),
-            proteinNode.createRelationshipTo(drugNode, drugRelType));
-      });
-
-    } else {
-      AsyncLoggingService.logError("resolveProteinDrugRelationship: "
-          + " uniprot id: " + uniprotId + " is not registered.");
-    }
-  }
 
   private Function<String, Node> createEnsemblTranscriptNodeFunction =
       (transcriptId) -> {
@@ -283,7 +254,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   }
 
   /*
-  Protected method to reolve a Sample node
+  Protected method to resolve a Sample node
   Will create a new one if necessary
    */
   protected Node resolveSampleNodeByExternalId(@Nonnull String externalSampleId) {
@@ -296,27 +267,46 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     return sampleMap.get(externalSampleId);
   }
 
-  protected void createGeneOntologyNode(String uniprotId, GeneOntology go) {
-    if (!geneOntologyMap.containsKey(go.goId())) {
-      geneOntologyMap.put(go.goId(), EmbeddedGraph.getGraphInstance()
-          .createNode(LabelTypes.GeneOntology));
-      Node node = geneOntologyMap.get(go.goId());
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyId", go.goId()));
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyAspect", go.goAspect()));
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyName", go.goName()));
+
+  /*
+  Protected Function to select the correct Gene Ontology principle label
+   */
+  protected Function <String,LabelTypes> resolveGeneOntologyPrincipleFunction = (princ) ->{
+        if(princ.toUpperCase().startsWith("MOLECULAR")) {
+          return LabelTypes.MolecularFunction;
+        }
+    if(princ.toUpperCase().startsWith("BIOLOGICAL")) {
+      return LabelTypes.BiologicalProcess;
     }
-    // establish relationship to the protein node
-    Tuple2<String, String> relKey = new Tuple2<>(uniprotId, go.goId());
-    if (!proteinGeneOntologyRelMap.containsKey(relKey)) {
-      Node proteinNode = proteinMap.get(uniprotId);
-      Node goNode = geneOntologyMap.get(go.goId());
-      proteinGeneOntologyRelMap.put(relKey,
-          proteinNode.createRelationshipTo(goNode, RelTypes.GO_CLASSIFICATION)
-      );
-      AsyncLoggingService.logInfo("Created relationship beteen protein " + uniprotId
-          + " and GO id: " + go.goId());
+    if(princ.toUpperCase().startsWith("CELLULAR")) {
+      return LabelTypes.CellularComponents;
     }
-  }
+    AsyncLoggingService.logError(princ +" is not a valid Gene Ontology principle " );
+    return LabelTypes.Unknown;
+
+  };
+
+
+  /*
+  Private function to create a new GeneOntology node with an id and GO principle
+   */
+  private Function<GeneOntology,Node> createGeneOntologyNodeFunction = (go) -> {
+      Node node = EmbeddedGraph.getGraphInstance()
+          .createNode(LabelTypes.GeneOntology);
+      node.addLabel(resolveGeneOntologyPrincipleFunction.apply(go.goAspect()));
+      nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyId",go.goId()));
+     nodePropertyValueConsumer.accept(node,new Tuple2<>("GeneOntologyPrinciple",
+        go.goAspect()));
+    geneOntologyMap.put(go.goId(),node);
+    nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyName", go.goName()));
+    return node;
+  };
+
+  protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)->
+      (geneOntologyMap.containsKey(go.goId()))? geneOntologyMap.get(go.goId())
+          : createGeneOntologyNodeFunction.apply(go);
+
+
 
   protected void createProteinNode(String strProteinId, String szUniprotId,
       String szEnsembleTranscript, String szProteinName,

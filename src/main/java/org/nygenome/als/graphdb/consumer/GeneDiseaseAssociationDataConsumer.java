@@ -11,12 +11,11 @@ import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
 import org.nygenome.als.graphdb.service.UniProtMappingService;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.util.Utils;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.value.GeneDiseaseAssociation;
 import scala.Tuple2;
 import java.nio.file.Path;
-import java.util.Map;
+
 
 /*
 Consumer of gene disease association data from a specified file
@@ -56,6 +55,7 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
     Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
     String diseaseId = gda.diseaseId();
     Node diseaseNode = resolveDiseaseNodeFunction.apply(diseaseId);
+    nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseId", gda.diseaseId()));
     nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseName", gda.diseaseName()));
     nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseId", diseaseId));
 

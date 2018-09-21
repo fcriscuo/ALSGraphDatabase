@@ -3,11 +3,15 @@ package org.nygenome.als.graphdb.consumer;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import java.util.function.Consumer;
+import org.neo4j.graphdb.Node;
+import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
 import org.nygenome.als.graphdb.service.DrugBankService;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.UniProtValue;
+import scala.Tuple2;
 
 
 public class UniProtValueConsumer extends GraphDataConsumer {
@@ -21,25 +25,39 @@ public class UniProtValueConsumer extends GraphDataConsumer {
         .forEach(uniProtValueConsumer);
   }
 
+  private void createProteinGeneOntologyRealtionship(String uniprotId, GeneOntology go) {
+    // establish relationship to the protein node
+    Tuple2<String, String> relKey = new Tuple2<>(uniprotId, go.goId());
+    if (!proteinGeneOntologyRelMap.containsKey(relKey)) {
+      Node goNode = resolveGeneOntologyNodeFunction.apply(go);
+      Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
+      proteinGeneOntologyRelMap.put(relKey,
+          proteinNode.createRelationshipTo(goNode, RelTypes.GO_CLASSIFICATION)
+      );
+      AsyncLoggingService.logInfo("Created relationship between protein " + uniprotId
+          + " and GO id: " + go.goId());
+    }
+  }
+
   private Consumer<UniProtValue> geneOntologyListConsumer = (upv) -> {
     // complete the association with gene ontology links
     // biological process
     StringUtils.convertToJavaString(upv.goBioProcessList())
         .stream()
         .map(goEntry -> GeneOntology.parseGeneOntologyEntry("Gene Ontology (bio process)", goEntry))
-        .forEach(go -> createGeneOntologyNode(upv.uniprotId(), go));
+        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go));
     // cellular  component
     StringUtils.convertToJavaString(upv.goCellComponentList())
         .stream()
         .map(goEntry -> GeneOntology
             .parseGeneOntologyEntry("Gene Ontology (cellular component)", goEntry))
-        .forEach(go -> createGeneOntologyNode(upv.uniprotId(), go));
+        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go));
     // molecular function
     StringUtils.convertToJavaString(upv.goMolFuncList())
         .stream()
         .map(
             goEntry -> GeneOntology.parseGeneOntologyEntry("Gene Ontology (mol function)", goEntry))
-        .forEach(go -> createGeneOntologyNode(upv.uniprotId(), go));
+        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go));
   };
   /*
   Private Consumer to add drug bank nodes

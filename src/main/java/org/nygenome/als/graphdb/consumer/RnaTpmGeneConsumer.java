@@ -84,7 +84,6 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer{
         .filter(rnaTpmGene -> rnaTpmGene.uniProtMapping().isPresent())
         .filter(rtg ->rtg.tpm() >0.0D)
         .forEach(rnaTpmGeneConsumer);
-
-
   }
+
 }

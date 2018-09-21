@@ -39,6 +39,7 @@ public class FunctionLib {
         return Stream.empty();
     }
 
+    @Deprecated
     public static Function<String[],String[]> processTokensFunction = (tokens)-> {
        return (String[])  Arrays.stream(tokens).map(token -> token.toUpperCase().trim())
                 .collect(Collectors.toList()).toArray();
