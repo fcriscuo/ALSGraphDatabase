@@ -403,61 +403,19 @@ add properties to an existing Protein Node
     return tissueNode;
   };
 
+  /*
+  Protected Function to retrieve an exisiting HumanTissue Node by its
+  tissue+cell label ore create a new one
+   */
   protected Function<HumanTissueAtlas,Node> resolveHumanTissueAtlasNodeFunction =
       (ht)  -> (tissueMap.containsKey(ht.resolveTissueCellTypeLabel())) ?
           tissueMap.get(ht.resolveTissueCellTypeLabel())
           : createHumanTissueNodeFunction.apply(ht);
 
 
-  protected void createEnsemblTissueAssociation(@Nonnull HumanTissueAtlas ht) {
-    // resolve the protein node
 
 
-    if (!proteinMap.containsKey(ht.uniprotId())) {
-      createProteinNode(strNoInfo, ht.uniprotId(), ht.ensemblTranscriptId(),
-          strNoInfo, ht.geneName(), ht.ensemblGeneId());
-    }
-    if (!tissueMap.containsKey(ht.resolveTissueCellTypeLabel())) {
-      createTissueNode(ht);
-    }
-    // create protein - tissue relationship
 
-  }
-
-  protected void createEnsemblTissueAssociation(String[] tokens) {
-    String[] szTissueTokens = tokens[2].split("[:;]");
-
-    for (Map.Entry<String, Node> eProtein : proteinMap.entrySet()) {
-      if (eProtein.getValue().getProperty("EnsemblTranscript")
-          .equals(tokens[1])) {
-        eProtein.getValue()
-            .setProperty("GeneSymbol", tokens[0]);
-
-        for (int i = 0; i < szTissueTokens.length; i = i + 2) {
-          for (Map.Entry<String, Node> eTissue : tissueMap
-              .entrySet()) {
-            if (eTissue.getKey().equals(szTissueTokens[i])) {
-              Tuple2<String, String> strTuple2 = new Tuple2<>(
-                  tokens[1], eTissue.getKey());
-              if (!vTissueRelMap.containsKey(strTuple2)) {
-                vTissueRelMap
-                    .put(strTuple2,
-                        eProtein.getValue()
-                            .createRelationshipTo(
-                                eTissue.getValue(),
-                                EmbeddedGraph.RelTypes.TISSUE_ENHANCED));
-                vTissueRelMap.get(strTuple2).setProperty(
-                    "RNA_TS_FPKM_value",
-                    szTissueTokens[i + 1]);
-              }
-              break;
-            }
-          }
-        }
-        break;
-      }
-    }
-  }
 }
 
 

@@ -26,11 +26,18 @@ A uni-directional Relationship between a Protein Node and a HumanTissue Node
  */
 public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
 
-
+/*
+Predicate that only accepts HumanTissueAtlas value objects
+whose reliability values are Approved or Supported
+ */
     private Predicate<HumanTissueAtlas> reliabilityPredicate = (ht) ->
         ht.reliability().equalsIgnoreCase("Approved")
         || ht.reliability().equalsIgnoreCase("Supported");
 
+    /*
+    Predicate that filters out HumanTissue Atlas value objects
+    whose level values are "Not detected"
+     */
   private Predicate<HumanTissueAtlas> levelPredicate = (ht) ->
       !ht.level().equalsIgnoreCase("Not detected");
 
@@ -45,6 +52,12 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
             .forEach(consumeHumanTissueAtlasObject);
     }
 
+    /*
+    Private Consumer that processes a valid HumanTissueAtlas object
+    creates a Tissue Node if the tissue is new
+    It establishes a Relationship between the Protein and Tissue Nodes
+    It will also create a Protein Node if the protein is new
+     */
     private Consumer<HumanTissueAtlas> consumeHumanTissueAtlasObject = (ht) -> {
       try ( Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get()) {
         Node tissueNode = resolveHumanTissueAtlasNodeFunction.apply(ht);
