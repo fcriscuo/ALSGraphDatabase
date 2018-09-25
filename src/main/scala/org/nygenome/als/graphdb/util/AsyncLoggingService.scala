@@ -6,7 +6,6 @@ import com.twitter.util.Local
 object AsyncLoggingService {
 
   val fileHandler = FileHandler(
-    // TODO: add date to file name
     filename =  "/tmp/logs/alsdatabase_" +java.time.LocalDate.now() +".log",
     rollPolicy = Policy.Daily,
     append = true,

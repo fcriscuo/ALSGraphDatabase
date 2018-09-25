@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
+import java.util.function.Supplier;
 import org.apache.log4j.Logger;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -30,17 +31,20 @@ public enum EmbeddedGraph
 	private AlsNetwork protNet = new AlsNetwork();
 
 	public static enum RelTypes implements RelationshipType {
-		eNoEvent, IN_PATHWAY, BIOMARKER, THERAPEUTIC, GENETIC_VARIATION, KANEKO_ASSOCIATED, PPI_ASSOCIATION, PPI_COLOCALIZATION,
+		eNoEvent, IN_PATHWAY, BIOMARKER, THERAPEUTIC, GENETIC_VARIATION, KANEKO_ASSOCIATED,
+		PPI_ASSOCIATION, PPI_COLOCALIZATION,
 		PPI_GENETIC_INTERACTION, PPI_PREDICTED_INTERACTION, TISSUE_ENHANCED, DRUG_TARGET,
 		DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER, PART_OF, DEG_RELATED_TO, SEQ_SIM,
-		GO_CLASSIFICATION,  TRANSCRIPT, IMPLICATED_IN, HAS_SAMPLE, SAMPLED_FROM, MAPS_TO, EXPRESSION_LEVEL, EXPRESSED_PROTEIN
+		GO_CLASSIFICATION,  TRANSCRIPT, IMPLICATED_IN, HAS_SAMPLE, SAMPLED_FROM, MAPS_TO,
+		EXPRESSION_LEVEL, EXPRESSED_PROTEIN, ENCODED_BY,ASSOCIATED_PROTEIN,ASSOCIATED_GENETIC_ENTITY
 	}
 
 	public static enum LabelTypes implements Label {
 		Ensembl, HUGO, GeneOntology, Transcript, Pathway, Disease, Protein, Tissue,
     Drug, GEOStudy, GEOComparison, Gene, Subject, Sample,
     Expression,TPM,Xref,EnsemblGene, EnsemblTranscript,MolecularFunction,
-		BiologicalProcess, CellularComponents,Unknown
+		BiologicalProcess, CellularComponents,Unknown,Drug_Target, Drug_Enzyme, Drug_Transporter,
+		Drug_Carrier, GeneticEntity
 	}
 
 	// convenience method to satisfy legacy usages
@@ -53,6 +57,9 @@ public enum EmbeddedGraph
 		EmbeddedGraph.INSTANCE.createDb();
 		EmbeddedGraph.INSTANCE.shutDown();
 	}
+
+	public Supplier<Transaction> transactionSupplier = () ->
+			graphDb.beginTx();
 
 	void createDb() {
 		// START SNIPPET: transaction

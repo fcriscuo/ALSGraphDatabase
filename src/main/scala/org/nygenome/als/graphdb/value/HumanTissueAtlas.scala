@@ -11,6 +11,7 @@ Gene	Gene name	Tissue	Cell type	Level	Reliability
 case class HumanTissueAtlas(ensemblGeneId: String, geneName: String, tissue: String,
                           cellType: String, level: String, reliability: String,
                           ensemblTranscriptId: String, uniprotId: String
+
                          ) {
 var resolveTissueCellTypeLabel: String = tissue + ":" + cellType
 var proteinTissueKey: Tuple2[String, String] =

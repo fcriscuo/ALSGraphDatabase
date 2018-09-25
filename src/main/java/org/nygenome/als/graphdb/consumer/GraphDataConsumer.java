@@ -5,7 +5,6 @@ import com.google.common.base.Strings;
 import com.twitter.logging.Logger;
 
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import org.neo4j.graphdb.Node;
@@ -18,7 +17,6 @@ import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.value.DrugBankValue;
 import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.HumanTissueAtlas;
-import org.nygenome.als.graphdb.value.UniProtDrug;
 import org.nygenome.als.graphdb.value.UniProtValue;
 import scala.Tuple2;
 
@@ -53,6 +51,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Map<String, Node> proteinMap = new HashMap<String, Node>();
   protected Map<String, Node> geneOntologyMap = new HashMap<>();
   protected Map<String, Node> xrefMap = new HashMap<>();
+  protected Map<String,Node> geneticEntityMap = new HashMap<>();
   protected Map<String, Node> rnaTpmGeneMap = new HashMap<>();
   protected Map<String, Node> diseaseMap = new HashMap<String, Node>();
   protected Map<String, Node> drugMap = new HashMap<String, Node>();
@@ -67,6 +66,8 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   // Protein - Gene Ontology Relationships
   protected Map<Tuple2<String, String>, Relationship> proteinGeneOntologyRelMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> proteinDiseaseRelMap = new HashMap<Tuple2<String, String>, Relationship>();
+  protected Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap = new HashMap<Tuple2<String, String>, Relationship>();
+  protected Map<Tuple2<String,String>,Relationship> geneticEntityDiseaseMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> alsWhiteListRelMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> proteinDrugRelMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> vTissueRelMap = new HashMap<Tuple2<String, String>, Relationship>();
@@ -76,6 +77,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Map<Tuple2<String, String>, Relationship> subjectSampleRelMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> proteinTPMRelMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> proteinXrefRelMap = new HashMap<>();
+  protected Map<Tuple2<String,String> ,Relationship> proteinTissRelMap  = new HashMap<>();
 
 
   /*
@@ -116,24 +118,24 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   };
 
   /*
-  Private Function that creates a new Xref node for a specified HUGO Gene Symbol
-  A second label identifies the xref as a HUGO Gene Symbol
+  Private Function that creates a new GeneticEntity node for a specified HUGO Gene Symbol
+  A second label identifies the genetic entity as a Gene
    */
-  private Function<String, Node> createHugoGeneNodeFunction = (hugoId) -> {
-    Node node = EmbeddedGraph.getGraphInstance().createNode(LabelTypes.Xref);
-    node.addLabel(LabelTypes.HUGO);
-    nodePropertyValueConsumer.accept(node, new Tuple2<>("HugoGeneSymbol", hugoId));
-    xrefMap.put(hugoId, node);
+  private Function<String, Node> createGeneNodeFunction = (hugoId) -> {
+    Node node = EmbeddedGraph.getGraphInstance().createNode(LabelTypes.GeneticEntity);
+    node.addLabel(LabelTypes.Gene);
+    nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneSymbol", hugoId));
+    geneticEntityMap.put(hugoId, node);
     return node;
   };
 
   /*
-  Protected Function that resolves a HUGO xref by either finding an existing Node
+  Protected Function that resolves a Gene by either finding an existing Node
   with a specified gene symbol or creating a new Node for that symbol
    */
-  protected Function<String, Node> resolveHugoGeneNodeFunction = (hugoId) ->
-      (xrefMap.containsKey(hugoId)) ? xrefMap.get(hugoId)
-          : createHugoGeneNodeFunction.apply(hugoId);
+  protected Function<String, Node> resolveGeneNodeFunction = (hugoId) ->
+      (geneticEntityMap.containsKey(hugoId)) ? geneticEntityMap.get(hugoId)
+          : createGeneNodeFunction.apply(hugoId);
 
   /*
   Private Function that creates a new xref Node for a specified ensembl gene id
@@ -181,6 +183,7 @@ add properties to an existing Protein Node
  */
   protected Consumer<UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
     Node node = resolveProteinNodeFunction.apply(upv.uniprotId());
+
     nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
     nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
     nodePropertyValueListConsumer.accept(node, new Tuple2<>("GeneSymbol", upv.geneNameList()));
@@ -214,6 +217,7 @@ add properties to an existing Protein Node
     String key = dbv.drugBankId();
     if (!drugMap.containsKey(key)) {
       Node node = resolveDrugBankNode.apply(key);
+      nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugId", dbv.drugBankId()));
       nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugName", dbv.drugName()));
       nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugType", dbv.drugType()));
       nodePropertyValueConsumer.accept(node, new Tuple2<>("CASNumber", dbv.casNumber()));
@@ -356,6 +360,26 @@ add properties to an existing Protein Node
         szGEOStudyName);
   }
 
+  /*
+  Private Function to create a new disease node
+   */
+  private Function<String,Node> createDiseaseNodeFunction = (diseaseId)-> {
+    AsyncLoggingService.logInfo("createDiseasekNode invoked for Disease id  " +
+        diseaseId);
+    Node diseaseNode = EmbeddedGraph.getGraphInstance()
+        .createNode(LabelTypes.Disease);
+     nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseId",diseaseId));
+    diseaseMap.put(diseaseId,diseaseNode);
+    return diseaseNode;
+  };
+
+  /*
+  Protected Function to find an existing or create a new Disease Node based on its id
+   */
+  protected Function<String, Node> resolveDiseaseNodeFunction = (diseaseId) ->
+      (diseaseMap.containsKey(diseaseId))? diseaseMap.get(diseaseId)
+          :createDiseaseNodeFunction.apply(diseaseId);
+
   protected void createGEOComparisonNode(Tuple2<String, String> szTuple) {
     GEOComparisonMap.put(szTuple, EmbeddedGraph.getGraphInstance()
         .createNode(EmbeddedGraph.LabelTypes.GEOComparison));
@@ -363,10 +387,32 @@ add properties to an existing Protein Node
         szTuple._1());
   }
 
-  //createEnsemblTissueAssociation
+  /*
+  Private function to create a new HumanTissueAtlas Node from a HumanTissueAtlas
+  value object
+  Since a complete value object is used an a parameter, the nodes properties
+  can be set a s well
+   */
+  private Function<HumanTissueAtlas, Node> createHumanTissueNodeFunction = (ht)-> {
+    Node tissueNode = EmbeddedGraph.getGraphInstance()
+        .createNode(LabelTypes.Tissue);
+    
+    tissueMap.put(ht.resolveTissueCellTypeLabel(), tissueNode);
+    AsyncLoggingService.logInfo("createHumanTissueNodeFunction invoked for "
+    +ht.resolveTissueCellTypeLabel());
+    return tissueNode;
+  };
+
+  protected Function<HumanTissueAtlas,Node> resolveHumanTissueAtlasNodeFunction =
+      (ht)  -> (tissueMap.containsKey(ht.resolveTissueCellTypeLabel())) ?
+          tissueMap.get(ht.resolveTissueCellTypeLabel())
+          : createHumanTissueNodeFunction.apply(ht);
+
 
   protected void createEnsemblTissueAssociation(@Nonnull HumanTissueAtlas ht) {
     // resolve the protein node
+
+
     if (!proteinMap.containsKey(ht.uniprotId())) {
       createProteinNode(strNoInfo, ht.uniprotId(), ht.ensemblTranscriptId(),
           strNoInfo, ht.geneName(), ht.ensemblGeneId());

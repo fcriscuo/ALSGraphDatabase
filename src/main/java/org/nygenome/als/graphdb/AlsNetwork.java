@@ -19,10 +19,10 @@ public class AlsNetwork {
 	}
 
 	public void readDataFromDisGeNETFile() throws IOException {
-		FrameworkPropertyService.INSTANCE.getOptionalPathProperty("GENE_UNIPROT_ID_ASSOC_DISGENET_FILE")
-				.ifPresent(new GeneUniprotIdAssociationDataConsumer());
-		FrameworkPropertyService.INSTANCE.getOptionalPathProperty("GENE_DISEASE_ASSOC_DISGENET_FILE")
-				.ifPresent(new GeneUniprotIdAssociationDataConsumer());
+//		FrameworkPropertyService.INSTANCE.getOptionalPathProperty("GENE_UNIPROT_ID_ASSOC_DISGENET_FILE")
+//				.ifPresent(new GeneUniprotIdAssociationDataConsumer());
+//		FrameworkPropertyService.INSTANCE.getOptionalPathProperty("GENE_DISEASE_ASSOC_DISGENET_FILE")
+//				.ifPresent(new GeneUniprotIdAssociationDataConsumer());
 
 	}
 
