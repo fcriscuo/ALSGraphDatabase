@@ -1,6 +1,7 @@
 package org.nygenome.als.graphdb.value
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 trait ValueTrait {
   private val HUMAN_SPECIES = "Homo sapiens"
   protected var parseStringOnPipeFunction: Function[String, List[String]] = (s: String) => {
@@ -11,6 +12,14 @@ trait ValueTrait {
   }
   protected var parseStringOnSemiColonFunction: Function[String, List[String]] = (s: String) => {
     s.split(";").toList.map(_.trim)
+  }
+
+  protected var parseOntologyListFunction: Function[String,List[String]] = (s:String) => {
+    var results = new ListBuffer[String]
+    for ( w <- parseStringOnPipeFunction(s)) {
+      results +=  w.substring(w.indexOf('(')+1, w.length-1)
+    }
+    results.toList
   }
 protected def isHuman(species:String):Boolean = species.trim().equalsIgnoreCase(HUMAN_SPECIES)
 

@@ -52,13 +52,13 @@ Intended for resolving column headings
 
 	static public RelTypes convertStringToRelType(String string) {
 
-		if (string.toUpperCase().trim().equals("BIOMARKER"))
+		if (string.toUpperCase().trim().contains("BIOMARKER"))
 			return RelTypes.BIOMARKER;
 
-		if (string.toUpperCase().trim().equals("THERAPEUTIC"))
+		if (string.toUpperCase().trim().contains("THERAPEUTIC"))
 			return RelTypes.THERAPEUTIC;
 
-		if (string.toUpperCase().trim().equals("GENETICVARIATION"))
+		if (string.toUpperCase().trim().contains("GENETICVARIATION"))
 			return RelTypes.GENETIC_VARIATION;
 			
 		

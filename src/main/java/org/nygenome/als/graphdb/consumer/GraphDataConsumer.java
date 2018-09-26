@@ -9,6 +9,7 @@ import java.util.function.Function;
 import javax.annotation.Nonnull;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.EmbeddedGraph;
 import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
 import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
@@ -160,13 +161,24 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   Private Function that creates a new Protein Node for a specified UniProt id
    */
   private Function<String, Node> createProteinFunctionNode = (uniprotId) -> {
+    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
     AsyncLoggingService.logInfo("createProteinNodeFunction invoked for uniprot protein id  " +
         uniprotId);
-    Node node = EmbeddedGraph.getGraphInstance()
-        .createNode(LabelTypes.Protein);
-    nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtId", uniprotId));
-    proteinMap.put(uniprotId, node);
-    return node;
+    try {
+      Node node = EmbeddedGraph.getGraphInstance()
+          .createNode(LabelTypes.Protein);
+      nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtId", uniprotId));
+      proteinMap.put(uniprotId, node);
+      tx.success();
+      return node;
+    } catch (Exception e) {
+      e.printStackTrace();
+      tx.failure();
+    } finally {
+      tx.close();
+    }
+    return null;
+
   };
 
   /*

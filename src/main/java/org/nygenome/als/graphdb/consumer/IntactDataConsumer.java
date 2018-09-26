@@ -4,7 +4,6 @@ package org.nygenome.als.graphdb.consumer;
 import com.google.common.base.Preconditions;
 import java.nio.file.Paths;
 import java.util.function.BiConsumer;
-import org.apache.http.MethodNotSupportedException;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.EmbeddedGraph;
@@ -17,7 +16,6 @@ import org.nygenome.als.graphdb.util.Utils;
 import org.nygenome.als.graphdb.value.PsiMitab;
 import scala.Tuple2;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -33,42 +31,50 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
    */
 
   private Consumer<PsiMitab> proteinInteractionConsumer = (ppi) -> {
-    Tuple2<String,String> abTuple = new Tuple2<>(ppi.intearctorAId(),ppi.interactorBId());
-    try ( Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get()) {
-      if (!proteinProteinIntactMap.containsKey(abTuple)) {
-        Node proteinNodeA = resolveProteinNodeFunction.apply(ppi.intearctorAId());
-        Node proteinNodeB = resolveProteinNodeFunction.apply(ppi.interactorBId());
-        RelTypes relType = Utils.convertStringToRelType(ppi.interactionTypeList().head());
+    Tuple2<String, String> abTuple = new Tuple2<>(ppi.intearctorAId(), ppi.interactorBId());
+
+    if (!proteinProteinIntactMap.containsKey(abTuple)) {
+      Node proteinNodeA = resolveProteinNodeFunction.apply(ppi.intearctorAId());
+      Node proteinNodeB = resolveProteinNodeFunction.apply(ppi.interactorBId());
+      RelTypes relType = Utils.convertStringToRelType(ppi.interactionTypeList().head());
+      // create Relationships within a Transaction
+      Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+      try  {
         proteinProteinIntactMap.put(abTuple,
             proteinNodeA.createRelationshipTo(proteinNodeB, relType)
         );
         AsyncLoggingService.logInfo("Created new PPI, Protein A: " + ppi.intearctorAId()
             + "  Protein B: " + ppi.interactorBId() + "   rel type: " + relType.name());
-      }
-      // set or update relationship properties
-      proteinProteinIntactMap.get(abTuple).setProperty("Interaction_method_detection",
-          ppi.detectionMethodList().mkString("|"));
 
-      proteinProteinIntactMap.get(abTuple).setProperty("References",
-          ppi.publicationIdList().mkString("|"));
+        // set or update relationship properties
+        proteinProteinIntactMap.get(abTuple).setProperty("Interaction_method_detection",
+            ppi.detectionMethodList().mkString("|"));
 
-      if (null != ppi.confidenceScoreList() && ppi.confidenceScoreList().size() > 0) {
-        proteinProteinIntactMap.get(abTuple).setProperty("Confidence_level",
-            Double.parseDouble(ppi.confidenceScoreList().head()));
+        proteinProteinIntactMap.get(abTuple).setProperty("References",
+            ppi.publicationIdList().mkString("|"));
+
+        if (null != ppi.confidenceValuesList() && ppi.confidenceValuesList().size() > 0) {
+          proteinProteinIntactMap.get(abTuple).setProperty("Confidence_level",
+              Double.parseDouble(ppi.confidenceValuesList().head()));
+        }
+        tx.success();
       }
-      tx.success();
-    } catch (Exception e) {
+     catch(Exception e){
       AsyncLoggingService.logError(e.getMessage());
-    }
-
+      tx.failure();
+    } finally {
+        tx.close();
+      }
+  }
   };
 
   @Override
   public void accept(Path path_data, Path path_headings) {
-    Preconditions.checkArgument(Files.isRegularFile(path_data),LinkOption.NOFOLLOW_LINKS);
-    Preconditions.checkArgument(Files.isRegularFile(path_headings),LinkOption.NOFOLLOW_LINKS);
-    String[] columnHeadings = Utils.resolveColumnHeadingsFunction
-        .apply(path_headings);
+    Preconditions.checkArgument(Files.isRegularFile(path_data));
+    Preconditions.checkArgument(Files.isRegularFile(path_headings));
+    String[] columnHeadings = PsiMitab.INTACT_HEADER_STRING().split("\\t");
+//    String[] columnHeadings = Utils.resolveColumnHeadingsFunction
+//        .apply(path_headings);
     new TsvRecordSplitIteratorSupplier(path_data,columnHeadings).get()
         .map(PsiMitab::parseCSVRecord)
         .filter(selfInteractionPredicate)
@@ -79,7 +85,8 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
   // used for testing with default headings file
   @Override
   public void accept(Path path) {
-
+    Path headPath = Paths.get("/data/als/heading_intact.txt");
+    accept(path, headPath);
 
   }
  // main method for stand alone testing

@@ -15,6 +15,7 @@ public class TestPsiMiTab {
           .forEach(psi -> {
             log.info(">>>>> " +psi.intearctorAId() + " to " + psi.interactorBId() +"  negative = " +psi.negative());
            log.info( psi.altIdAList().mkString(" "));
+           log.info(psi.interactionTypeList().mkString(" "));
           });
 
     } catch (Exception e) {
