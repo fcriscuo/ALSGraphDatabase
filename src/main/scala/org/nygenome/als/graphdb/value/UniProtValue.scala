@@ -16,12 +16,6 @@ case class UniProtValue (
                         ) {
 
 }
-/*
-	Entry	Entry name	Status	Protein names	Gene names	Pathway	Interacts with	Gene ontology (biological process)
-		Gene ontology (cellular component)	Involvement in disease	Tissue specificity
-		Gene ontology (molecular function)	Disruption phenotype	Cross-reference (DrugBank)
-		Cross-reference (Reactome)	PubMed ID	Mass	Length	Ensembl transcript
- */
 
 object UniProtValue extends ValueTrait {
 

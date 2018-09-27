@@ -7,6 +7,7 @@ import org.neo4j.graphdb.Node;
 import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
 import org.nygenome.als.graphdb.service.DrugBankService;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.GeneOntology;
@@ -77,8 +78,12 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     // add ensembl trancripts
     createEnsemblTranscriptNodes(upv);
 
-
   });
+
+  public static void main(String[] args) {
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_UNIPROT_HUMAN_FILE")
+        .ifPresent(new UniProtValueConsumer());
+  }
 
 
 }

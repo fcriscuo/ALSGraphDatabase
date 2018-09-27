@@ -74,7 +74,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Map<Tuple2<String, String>, Relationship> vTissueRelMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> proteinProteinIntactMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<String, Relationship> proteinPathwayMap = new HashMap<>();
-  protected Map<Tuple2<String, String>, Relationship> vSeqSimMap = new HashMap<Tuple2<String, String>, Relationship>();
+  protected Map<Tuple2<String, String>, Relationship> sequenceSimMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> subjectSampleRelMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> proteinTPMRelMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> proteinXrefRelMap = new HashMap<>();
@@ -86,17 +86,30 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   specified nodes. The first relationship is registered in a Map to prevent
   duplication
   The relationship types are also provided
+  The created or existing Relationships are returned in a Tuple2 in the A->B, & B->A order
    */
-  protected void createBiDirectionalRelationship(Node nodeA, Node nodeB,
+  protected Tuple2<Relationship,Relationship> createBiDirectionalRelationship(Node nodeA, Node nodeB,
       Tuple2<String, String> keyTuple,
       Map<Tuple2<String, String>, Relationship> relMap, RelTypes relTypeA, RelTypes relTypeB) {
     if (!relMap.containsKey(keyTuple)) {
-      relMap.put(keyTuple, nodeA.createRelationshipTo(nodeB, relTypeA));
-      nodeB.createRelationshipTo(nodeA, relTypeB);
+      Relationship relA = nodeA.createRelationshipTo(nodeB, relTypeA);
+      relMap.put(keyTuple, relA);
+      Relationship relB = nodeB.createRelationshipTo(nodeA, relTypeB);
+      relMap.put(keyTuple.swap(), relB);
       AsyncLoggingService.logInfo("Created realtionship between " + keyTuple._1() + " and "
           + keyTuple._2());
     }
+    return new Tuple2<>(relMap.get(keyTuple),relMap.get(keyTuple.swap()));
   }
+  /*
+  Protected BiConsumer that accepts a Pair of Realtionships and a property key/value pair
+  The supplied property is applied to each of the Relationships
+   */
+  protected BiConsumer<Tuple2<Relationship,Relationship> , Tuple2<String,String>> relationshipPairPropertyConsumer
+      = (relPair,keyValue) -> {
+    relPair._1().setProperty(keyValue._1(), keyValue._2());
+    relPair._2().setProperty(keyValue._1(), keyValue._2());
+  };
 
   /*
   Protected BiConsumer that will add a property name/value pair to a specified node
@@ -178,7 +191,6 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
       tx.close();
     }
     return null;
-
   };
 
   /*
@@ -194,11 +206,19 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   add properties to an existing Protein Node
    */
   protected Consumer<UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
-    Node node = resolveProteinNodeFunction.apply(upv.uniprotId());
-
-    nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
-    nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
-    nodePropertyValueListConsumer.accept(node, new Tuple2<>("GeneSymbol", upv.geneNameList()));
+    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    try {
+      Node node = resolveProteinNodeFunction.apply(upv.uniprotId());
+      nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
+      nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
+      nodePropertyValueListConsumer.accept(node, new Tuple2<>("GeneSymbol", upv.geneNameList()));
+      tx.success();
+    } catch (Exception e) {
+      tx.failure();
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
   };
 
   /*

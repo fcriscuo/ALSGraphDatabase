@@ -61,8 +61,6 @@ specified path
             +" required " +duration.inSeconds() +" seconds" );
 
     }
-
-
     public static void main(String... args) {
         FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
                 .ifPresent(new PathwayInfoConsumer());
