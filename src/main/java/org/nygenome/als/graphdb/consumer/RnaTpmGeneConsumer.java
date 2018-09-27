@@ -59,7 +59,7 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
     try (Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get()) {
       Node rnaNode = resolveRnaTpmGeneNode.apply(tpm);
       // Optional.get is OK because we've already filtered on it presence
-      // and this is a private method only call from processing the  stream of TSV records
+      // and this is a private method only called from processing the  stream of TSV records
       Node hugoGeneNode = resolveGeneNodeFunction
           .apply(tpm.uniProtMapping().get().geneSymbol());
       Node ensemblGeneNode = resolveEnsemblGeneNodeFunction

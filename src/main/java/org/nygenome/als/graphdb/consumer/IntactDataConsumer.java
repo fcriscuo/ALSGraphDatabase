@@ -5,14 +5,15 @@ import com.google.common.base.Preconditions;
 import java.nio.file.Paths;
 import java.util.function.BiConsumer;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import org.nygenome.als.graphdb.util.DynamicRelationshipType;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
-import org.nygenome.als.graphdb.util.Utils;
 import org.nygenome.als.graphdb.value.PsiMitab;
 import scala.Tuple2;
 import java.nio.file.Files;
@@ -23,7 +24,7 @@ import java.util.function.Predicate;
 public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<Path,Path> {
 
   private Predicate<PsiMitab> selfInteractionPredicate = (ppi) ->
-      ! ppi.intearctorAId().equals(ppi.interactorBId());
+      ! ppi.interactorAId().equals(ppi.interactorBId());
 
   /*
   Process the human intact data. The file provided from IntAct is excessively
@@ -31,31 +32,35 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
    */
 
   private Consumer<PsiMitab> proteinInteractionConsumer = (ppi) -> {
-    Tuple2<String, String> abTuple = new Tuple2<>(ppi.intearctorAId(), ppi.interactorBId());
+    Tuple2<String, String> abTuple = new Tuple2<>(ppi.interactorAId(), ppi.interactorBId());
 
     if (!proteinProteinIntactMap.containsKey(abTuple)) {
-      Node proteinNodeA = resolveProteinNodeFunction.apply(ppi.intearctorAId());
+      Node proteinNodeA = resolveProteinNodeFunction.apply(ppi.interactorAId());
       Node proteinNodeB = resolveProteinNodeFunction.apply(ppi.interactorBId());
-      RelTypes relType = Utils.convertStringToRelType(ppi.interactionTypeList().head());
+      //RelTypes relType = Utils.convertStringToRelType(ppi.interactionTypeList().head());
       // create Relationships within a Transaction
       Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
       try  {
-        proteinProteinIntactMap.put(abTuple,
-            proteinNodeA.createRelationshipTo(proteinNodeB, relType)
+        RelationshipType interactionType = new DynamicRelationshipType(
+            ppi.interactionTypeList().head()
         );
-        AsyncLoggingService.logInfo("Created new PPI, Protein A: " + ppi.intearctorAId()
-            + "  Protein B: " + ppi.interactorBId() + "   rel type: " + relType.name());
+        proteinProteinIntactMap.put(abTuple,
+            proteinNodeA.createRelationshipTo(proteinNodeB, interactionType)
+        );
+        proteinNodeB.createRelationshipTo(proteinNodeA, interactionType);
+        AsyncLoggingService.logInfo("Created new  bi-directional PPI, Protein A: " + ppi.interactorAId()
+            + "  Protein B: " + ppi.interactorBId() + "   rel type: " + interactionType.name());
 
         // set or update relationship properties
-        proteinProteinIntactMap.get(abTuple).setProperty("Interaction_method_detection",
+        Relationship ppRel = proteinProteinIntactMap.get(abTuple);
+        ppRel.setProperty("Interaction_method_detection",
             ppi.detectionMethodList().mkString("|"));
-
-        proteinProteinIntactMap.get(abTuple).setProperty("References",
+        ppRel.setProperty("References",
             ppi.publicationIdList().mkString("|"));
-
+        ppRel.setProperty("Negative",String.valueOf(ppi.negative()));
         if (null != ppi.confidenceValuesList() && ppi.confidenceValuesList().size() > 0) {
-          proteinProteinIntactMap.get(abTuple).setProperty("Confidence_level",
-              Double.parseDouble(ppi.confidenceValuesList().head()));
+          ppRel.setProperty("Confidence_level",
+              Double.parseDouble(ppi.confidenceValuesList().last()));
         }
         tx.success();
       }

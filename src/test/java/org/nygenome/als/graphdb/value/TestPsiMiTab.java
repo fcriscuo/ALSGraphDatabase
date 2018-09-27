@@ -9,12 +9,15 @@ public class TestPsiMiTab {
   static Logger log = Logger.get(TestPsiMiTab.class);
   public static void main(String[] args) {
     try {
-      new TsvRecordStreamSupplier(Paths.get("/data/als/intact_negative.txt")).get()
+      new TsvRecordStreamSupplier(Paths.get("/data/als/short_human_intact.tsv")).get()
           .limit(50)
           .map(record  ->PsiMitab.parseCSVRecord(record))
+        //  .filter(psi -> psi.interactorAId().startsWith("uniprotkb"))
+        //  .filter(psi -> psi.interactorBId().startsWith("uniprotkb"))
           .forEach(psi -> {
-            log.info(">>>>> " +psi.intearctorAId() + " to " + psi.interactorBId() +"  negative = " +psi.negative());
+            log.info(">>>>> " +psi.interactorAId() + " to " + psi.interactorBId() +"  negative = " +psi.negative());
            log.info( psi.altIdAList().mkString(" "));
+           log.info("Confidence score: " +psi.confidenceValuesList().last());
            log.info(psi.interactionTypeList().mkString(" "));
           });
 

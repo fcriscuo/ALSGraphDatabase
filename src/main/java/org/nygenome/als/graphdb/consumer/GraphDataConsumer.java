@@ -4,6 +4,7 @@ package org.nygenome.als.graphdb.consumer;
 import com.google.common.base.Strings;
 import com.twitter.logging.Logger;
 
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
@@ -18,6 +19,7 @@ import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.value.DrugBankValue;
 import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.HumanTissueAtlas;
+import org.nygenome.als.graphdb.value.Pathway;
 import org.nygenome.als.graphdb.value.UniProtValue;
 import scala.Tuple2;
 
@@ -46,13 +48,11 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     eKaneko, eDisGeNet, ePPI
   }
 
-  protected Predicate<PathwayInfoConsumer.PathwayRecord> homoSapiensPredicate = (record) ->
-      record.getSpecies().equalsIgnoreCase(HUMAN_SPECIES);
 
   protected Map<String, Node> proteinMap = new HashMap<String, Node>();
   protected Map<String, Node> geneOntologyMap = new HashMap<>();
   protected Map<String, Node> xrefMap = new HashMap<>();
-  protected Map<String,Node> geneticEntityMap = new HashMap<>();
+  protected Map<String, Node> geneticEntityMap = new HashMap<>();
   protected Map<String, Node> rnaTpmGeneMap = new HashMap<>();
   protected Map<String, Node> diseaseMap = new HashMap<String, Node>();
   protected Map<String, Node> drugMap = new HashMap<String, Node>();
@@ -68,17 +68,17 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Map<Tuple2<String, String>, Relationship> proteinGeneOntologyRelMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> proteinDiseaseRelMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String,String>,Relationship> geneticEntityDiseaseMap = new HashMap<>();
+  protected Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> alsWhiteListRelMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> proteinDrugRelMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> vTissueRelMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> proteinProteinIntactMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String, String>, Relationship> vPathwayMap = new HashMap<Tuple2<String, String>, Relationship>();
+  protected Map<String, Relationship> proteinPathwayMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> vSeqSimMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> subjectSampleRelMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> proteinTPMRelMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> proteinXrefRelMap = new HashMap<>();
-  protected Map<Tuple2<String,String> ,Relationship> proteinTissRelMap  = new HashMap<>();
+  protected Map<Tuple2<String, String>, Relationship> proteinTissRelMap = new HashMap<>();
 
 
   /*
@@ -189,10 +189,10 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
       (proteinMap.containsKey(uniprotId)) ? proteinMap.get(uniprotId)
           : createProteinFunctionNode.apply(uniprotId);
 
-/*
-Protected Consumer that will create a Protein Node with properties or
-add properties to an existing Protein Node
- */
+  /*
+  Protected Consumer that will create a Protein Node with properties or
+  add properties to an existing Protein Node
+   */
   protected Consumer<UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
     Node node = resolveProteinNodeFunction.apply(upv.uniprotId());
 
@@ -208,7 +208,7 @@ add properties to an existing Protein Node
   private Function<String, Node> createDrugBankNodeFunction = (dbId) -> {
     AsyncLoggingService.logInfo("createDrugBankNode invoked for DrunkBank id  " +
         dbId);
-    Node node =  EmbeddedGraph.getGraphInstance()
+    Node node = EmbeddedGraph.getGraphInstance()
         .createNode(LabelTypes.Drug);
     nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugBankId",
         dbId));
@@ -216,7 +216,7 @@ add properties to an existing Protein Node
     return node;
   };
   protected Function<String, Node> resolveDrugBankNode = (dbId) ->
-      (drugMap.containsKey(dbId))? drugMap.get(dbId)
+      (drugMap.containsKey(dbId)) ? drugMap.get(dbId)
           : createDrugBankNodeFunction.apply(dbId);
 
 
@@ -237,7 +237,6 @@ add properties to an existing Protein Node
       nodePropertyValueConsumer.accept(node, new Tuple2<>("NDCLink", dbv.ndcLink()));
     }
   }
-
 
 
   private Function<String, Node> createEnsemblTranscriptNodeFunction =
@@ -287,17 +286,17 @@ add properties to an existing Protein Node
   /*
   Protected Function to select the correct Gene Ontology principle label
    */
-  protected Function <String,LabelTypes> resolveGeneOntologyPrincipleFunction = (princ) ->{
-        if(princ.toUpperCase().startsWith("MOLECULAR")) {
-          return LabelTypes.MolecularFunction;
-        }
-    if(princ.toUpperCase().startsWith("BIOLOGICAL")) {
+  protected Function<String, LabelTypes> resolveGeneOntologyPrincipleFunction = (princ) -> {
+    if (princ.toUpperCase().startsWith("MOLECULAR")) {
+      return LabelTypes.MolecularFunction;
+    }
+    if (princ.toUpperCase().startsWith("BIOLOGICAL")) {
       return LabelTypes.BiologicalProcess;
     }
-    if(princ.toUpperCase().startsWith("CELLULAR")) {
+    if (princ.toUpperCase().startsWith("CELLULAR")) {
       return LabelTypes.CellularComponents;
     }
-    AsyncLoggingService.logError(princ +" is not a valid Gene Ontology principle " );
+    AsyncLoggingService.logError(princ + " is not a valid Gene Ontology principle ");
     return LabelTypes.Unknown;
 
   };
@@ -306,22 +305,21 @@ add properties to an existing Protein Node
   /*
   Private function to create a new GeneOntology node with an id and GO principle
    */
-  private Function<GeneOntology,Node> createGeneOntologyNodeFunction = (go) -> {
-      Node node = EmbeddedGraph.getGraphInstance()
-          .createNode(LabelTypes.GeneOntology);
-      node.addLabel(resolveGeneOntologyPrincipleFunction.apply(go.goAspect()));
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyId",go.goId()));
-     nodePropertyValueConsumer.accept(node,new Tuple2<>("GeneOntologyPrinciple",
+  private Function<GeneOntology, Node> createGeneOntologyNodeFunction = (go) -> {
+    Node node = EmbeddedGraph.getGraphInstance()
+        .createNode(LabelTypes.GeneOntology);
+    node.addLabel(resolveGeneOntologyPrincipleFunction.apply(go.goAspect()));
+    nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyId", go.goId()));
+    nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyPrinciple",
         go.goAspect()));
-    geneOntologyMap.put(go.goId(),node);
+    geneOntologyMap.put(go.goId(), node);
     nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyName", go.goName()));
     return node;
   };
 
-  protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)->
-      (geneOntologyMap.containsKey(go.goId()))? geneOntologyMap.get(go.goId())
+  protected Function<GeneOntology, Node> resolveGeneOntologyNodeFunction = (go) ->
+      (geneOntologyMap.containsKey(go.goId())) ? geneOntologyMap.get(go.goId())
           : createGeneOntologyNodeFunction.apply(go);
-
 
 
   protected void createProteinNode(String strProteinId, String szUniprotId,
@@ -339,6 +337,34 @@ add properties to an existing Protein Node
     proteinMap.get(szUniprotId).setProperty("ProteinName", szProteinName);
     proteinMap.get(szUniprotId).setProperty("GeneSymbol", szGeneSymbol);
   }
+
+  private Function<Pathway, Optional<Node>> createPathwayNodeFunction = (pathway) -> {
+    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    try {
+      Node node = EmbeddedGraph.getGraphInstance()
+          .createNode(LabelTypes.Pathway);
+      pathwayMap.put(pathway.reactomeId(), node);
+      nodePropertyValueConsumer.accept(node, new Tuple2<>("ReactomeId", pathway.reactomeId()));
+      nodePropertyValueConsumer.accept(node, new Tuple2<>("Pathway", pathway.eventName()));
+      AsyncLoggingService.logInfo("creatPathway Node for Reactome ID: " + pathway.reactomeId());
+      tx.success();
+      return Optional.of(node);
+    } catch (Exception e) {
+      AsyncLoggingService.logError("ERR: createPathwayNodeFunction " + e.getMessage());
+      tx.failure();
+    } finally {
+      tx.close();
+    }
+    return Optional.empty();
+  };
+
+  /*
+  Protected Function to either find an existing Pathway Node or create a
+  new one
+   */
+  protected Function<Pathway, Optional<Node>> resolvePathwayNode = (pathway) ->
+      (pathwayMap.containsKey(pathway.reactomeId())) ? Optional.of(pathwayMap.get(pathway.reactomeId()))
+          : createPathwayNodeFunction.apply(pathway);
 
   protected void createDiseaseNode(String szDiseaseName) {
     diseaseMap.put(szDiseaseName, EmbeddedGraph.getGraphInstance()
@@ -375,13 +401,13 @@ add properties to an existing Protein Node
   /*
   Private Function to create a new disease node
    */
-  private Function<String,Node> createDiseaseNodeFunction = (diseaseId)-> {
+  private Function<String, Node> createDiseaseNodeFunction = (diseaseId) -> {
     AsyncLoggingService.logInfo("createDiseasekNode invoked for Disease id  " +
         diseaseId);
     Node diseaseNode = EmbeddedGraph.getGraphInstance()
         .createNode(LabelTypes.Disease);
-     nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseId",diseaseId));
-    diseaseMap.put(diseaseId,diseaseNode);
+    nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseId", diseaseId));
+    diseaseMap.put(diseaseId, diseaseNode);
     return diseaseNode;
   };
 
@@ -389,8 +415,8 @@ add properties to an existing Protein Node
   Protected Function to find an existing or create a new Disease Node based on its id
    */
   protected Function<String, Node> resolveDiseaseNodeFunction = (diseaseId) ->
-      (diseaseMap.containsKey(diseaseId))? diseaseMap.get(diseaseId)
-          :createDiseaseNodeFunction.apply(diseaseId);
+      (diseaseMap.containsKey(diseaseId)) ? diseaseMap.get(diseaseId)
+          : createDiseaseNodeFunction.apply(diseaseId);
 
   protected void createGEOComparisonNode(Tuple2<String, String> szTuple) {
     GEOComparisonMap.put(szTuple, EmbeddedGraph.getGraphInstance()
@@ -405,13 +431,13 @@ add properties to an existing Protein Node
   Since a complete value object is used an a parameter, the nodes properties
   can be set a s well
    */
-  private Function<HumanTissueAtlas, Node> createHumanTissueNodeFunction = (ht)-> {
+  private Function<HumanTissueAtlas, Node> createHumanTissueNodeFunction = (ht) -> {
     Node tissueNode = EmbeddedGraph.getGraphInstance()
         .createNode(LabelTypes.Tissue);
-    
+
     tissueMap.put(ht.resolveTissueCellTypeLabel(), tissueNode);
     AsyncLoggingService.logInfo("createHumanTissueNodeFunction invoked for "
-    +ht.resolveTissueCellTypeLabel());
+        + ht.resolveTissueCellTypeLabel());
     return tissueNode;
   };
 
@@ -419,13 +445,10 @@ add properties to an existing Protein Node
   Protected Function to retrieve an exisiting HumanTissue Node by its
   tissue+cell label ore create a new one
    */
-  protected Function<HumanTissueAtlas,Node> resolveHumanTissueAtlasNodeFunction =
-      (ht)  -> (tissueMap.containsKey(ht.resolveTissueCellTypeLabel())) ?
+  protected Function<HumanTissueAtlas, Node> resolveHumanTissueAtlasNodeFunction =
+      (ht) -> (tissueMap.containsKey(ht.resolveTissueCellTypeLabel())) ?
           tissueMap.get(ht.resolveTissueCellTypeLabel())
           : createHumanTissueNodeFunction.apply(ht);
-
-
-
 
 
 }
