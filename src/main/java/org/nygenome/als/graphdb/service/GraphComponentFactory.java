@@ -1,0 +1,158 @@
+package org.nygenome.als.graphdb.service;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import org.eclipse.collections.impl.factory.Maps;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
+import org.nygenome.als.graphdb.EmbeddedGraph;
+import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
+import org.nygenome.als.graphdb.lib.FunctionLib;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import scala.Tuple2;
+
+/**
+ * A Singleton service class implemented as an enum responsible for maintaining Maps of existing
+ * Nodes and Relationships and for creating new ones This is necessary so that particular Nodes and
+ * Relationships can be created the first time they occur in one of the data source file. It also
+ * allows some flexibility in the order of how source data is loaded as well as the option of
+ * supporting concurrent source data loading
+ *
+ * @author fcriscuolo
+ */
+public enum GraphComponentFactory {
+  INSTANCE;
+
+  private FunctionLib lib = new FunctionLib();
+  private final Supplier<Node> unknownNodeSupplier = () -> {
+    try (Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get()) {
+      return EmbeddedGraph.getGraphInstance().createNode(LabelTypes.Unknown);
+    }
+  };
+
+  private Map<String, Node> proteinMap = Maps.mutable.empty();
+  private Map<String, Node> geneOntologyMap = Maps.mutable.empty();
+  private Map<String, Node> xrefMap = Maps.mutable.empty();
+  private Map<String, Node> geneticEntityMap = Maps.mutable.empty();
+  private Map<String, Node> rnaTpmGeneMap = Maps.mutable.empty();
+  private Map<String, Node> diseaseMap = new HashMap<String, Node>();
+  private Map<String, Node> drugMap = new HashMap<String, Node>();
+  private Map<String, Node> pathwayMap = new HashMap<String, Node>();
+  private Map<String, Node> tissueMap = new HashMap<String, Node>();
+  private Map<String, Node> GEOStudyMap = new HashMap<String, Node>();
+  private Map<String, Node> subjectMap = Maps.mutable.empty();
+  private Map<String, Node> sampleMap = Maps.mutable.empty();
+
+
+  private Map<Tuple2<String, String>, Node> GEOComparisonMap = Maps.mutable.empty();
+  // Protein - Gene Ontology Relationships
+  private Map<Tuple2<String, String>, Relationship> proteinGeneOntologyRelMap = Maps.mutable
+      .empty();
+  private Map<Tuple2<String, String>, Relationship> proteinDiseaseRelMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> alsWhiteListRelMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> proteinDrugRelMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> tissueRelMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> proteinProteinIntactMap = Maps.mutable.empty();
+  private Map<String, Relationship> proteinPathwayMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> sequenceSimMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> subjectSampleRelMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> proteinTPMRelMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> proteinXrefRelMap = Maps.mutable.empty();
+  private Map<Tuple2<String, String>, Relationship> proteinTissRelMap = Maps.mutable.empty();
+
+
+
+  private Function<String, Node> createProteinNodeFunction = (uniprotId) -> {
+    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    AsyncLoggingService.logInfo("createProteinNodeFunction invoked for uniprot protein id  " +
+        uniprotId);
+    try {
+      Node node = EmbeddedGraph.getGraphInstance()
+          .createNode(LabelTypes.Protein);
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtId", uniprotId));
+      proteinMap.put(uniprotId, node);
+      tx.success();
+      return node;
+    } catch (Exception e) {
+      e.printStackTrace();
+      tx.failure();
+    } finally {
+      tx.close();
+    }
+    return unknownNodeSupplier.get();
+  };
+
+  public Function<String,Node> getProteinNodeFunction = (uniprotId) ->
+      (proteinMap.containsKey(uniprotId))? proteinMap.get(uniprotId)
+          : createProteinNodeFunction.apply(uniprotId);
+
+
+  private Function<Tuple2<String, LabelTypes>, Node> createXrefNodeFunction = (xrefTuple) -> {
+    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    String xrefId = xrefTuple._1();
+    LabelTypes type = xrefTuple._2();
+    try {
+      AsyncLoggingService.logInfo("createXrefNodeFunction invoked for XREF id  " +
+          xrefId + " type " + type.toString());
+      Node node = EmbeddedGraph.getGraphInstance().createNode(LabelTypes.Xref);
+      // add a type (e.g. ensembl, pubmed) label
+      node.addLabel(type);
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Xref Id", xrefId));
+      xrefMap.put(xrefId, node);
+      return node;
+    } catch (Exception e) {
+      tx.failure();
+      AsyncLoggingService.logError("ERR: createXrefNodeFunction failed:  " +
+          e.getMessage());
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return unknownNodeSupplier.get();
+
+  };
+
+  public Function<Tuple2<String, LabelTypes>, Node> getXrefNodeFunction = (xrefTuple) ->
+      (xrefMap.containsKey(xrefTuple._1()) ? xrefMap.get(xrefTuple._1())
+          : createXrefNodeFunction.apply(xrefTuple));
+
+  /*
+ Private Function that creates a new GeneticEntity node for a specified HUGO Gene Symbol
+ A second label identifies the genetic entity as a Gene
+  */
+  private Function<String, Node> createGeneNodeFunction = (hugoId) -> {
+    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    try {
+      AsyncLoggingService.logInfo("createGeneNodeFunction invoked for HUGO gene name  " +
+          hugoId);
+      Node node = EmbeddedGraph.getGraphInstance().createNode(LabelTypes.GeneticEntity);
+      node.addLabel(LabelTypes.Gene);
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneSymbol", hugoId));
+      geneticEntityMap.put(hugoId, node);
+      tx.success();
+      return node;
+    } catch (Exception e) {
+      tx.failure();
+      AsyncLoggingService.logError("ERR: createGeneNodeFunction failed:  " +
+          e.getMessage());
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return unknownNodeSupplier.get();
+  };
+
+  /*
+  Protected Function that resolves a Gene by either finding an existing Node
+  with a specified gene symbol or creating a new Node for that symbol
+   */
+  public Function<String, Node> getGeneNodeFunction = (hugoId) ->
+      (geneticEntityMap.containsKey(hugoId)) ? geneticEntityMap.get(hugoId)
+          : createGeneNodeFunction.apply(hugoId);
+
+}

@@ -1,10 +1,14 @@
 package org.nygenome.als.graphdb.consumer;
 
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.base.Strings;
+
 import com.twitter.logging.Logger;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
@@ -14,6 +18,7 @@ import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.EmbeddedGraph;
 import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
 import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.service.GraphComponentFactory;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.value.DrugBankValue;
@@ -27,7 +32,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
+
 import scala.collection.immutable.List;
 
 public abstract class GraphDataConsumer implements Consumer<Path> {
@@ -49,10 +54,32 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   }
 
 
-  protected Map<String, Node> proteinMap = new HashMap<String, Node>();
+
+// Node and Relationship caches
+  // Use Caffeine API instead of Google Guava to avoid dealing
+  // with concurrent Exception
+  // Protein Node cache
+private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
+    .maximumSize(10_000)
+    .expireAfterWrite(5, TimeUnit.MINUTES)
+    .build(uniprotId -> GraphComponentFactory.INSTANCE.getProteinNodeFunction
+        .apply(uniprotId));
+  // Gene Node cache
+  private LoadingCache<String,Node> geneNodeCache = Caffeine.newBuilder()
+      .maximumSize(1_000)
+      .expireAfterWrite(5, TimeUnit.MINUTES)
+      .build(hugoId -> GraphComponentFactory.INSTANCE.getGeneNodeFunction
+          .apply(hugoId));
+
+  // xref Node cache
+  private LoadingCache<Tuple2<String,LabelTypes>,Node> xrefNodeCache = Caffeine.newBuilder()
+      .maximumSize(10_000)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
+      .build(tuple2 -> GraphComponentFactory.INSTANCE.getXrefNodeFunction
+          .apply(tuple2));
+
   protected Map<String, Node> geneOntologyMap = new HashMap<>();
   protected Map<String, Node> xrefMap = new HashMap<>();
-  protected Map<String, Node> geneticEntityMap = new HashMap<>();
   protected Map<String, Node> rnaTpmGeneMap = new HashMap<>();
   protected Map<String, Node> diseaseMap = new HashMap<String, Node>();
   protected Map<String, Node> drugMap = new HashMap<String, Node>();
@@ -132,74 +159,28 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   };
 
   /*
-  Private Function that creates a new GeneticEntity node for a specified HUGO Gene Symbol
-  A second label identifies the genetic entity as a Gene
-   */
-  private Function<String, Node> createGeneNodeFunction = (hugoId) -> {
-    Node node = EmbeddedGraph.getGraphInstance().createNode(LabelTypes.GeneticEntity);
-    node.addLabel(LabelTypes.Gene);
-    nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneSymbol", hugoId));
-    geneticEntityMap.put(hugoId, node);
-    return node;
-  };
-
-  /*
   Protected Function that resolves a Gene by either finding an existing Node
   with a specified gene symbol or creating a new Node for that symbol
    */
   protected Function<String, Node> resolveGeneNodeFunction = (hugoId) ->
-      (geneticEntityMap.containsKey(hugoId)) ? geneticEntityMap.get(hugoId)
-          : createGeneNodeFunction.apply(hugoId);
-
-  /*
-  Private Function that creates a new xref Node for a specified ensembl gene id
-   */
-  private Function<String, Node> createEnsemblGeneNodeFunction = (ensemblGeneId) -> {
-    Node node = EmbeddedGraph.getGraphInstance().createNode(LabelTypes.Xref);
-    node.addLabel(LabelTypes.EnsemblGene);
-    nodePropertyValueConsumer.accept(node, new Tuple2<>("ensemblGeneId", ensemblGeneId));
-    xrefMap.put(ensemblGeneId, node);
-    return node;
-  };
+     geneNodeCache.get(hugoId);
 
   /*
   Protected Function that resolves a ensembl Gene xref by either finding an
   existing Node with a specified gene id or by creating a new Node for that id
    */
   protected Function<String, Node> resolveEnsemblGeneNodeFunction = (ensemblGeneId) ->
-      (xrefMap.containsKey(ensemblGeneId)) ? xrefMap.get(ensemblGeneId)
-          : createEnsemblGeneNodeFunction.apply(ensemblGeneId);
+      xrefNodeCache.get(new Tuple2<>(ensemblGeneId,LabelTypes.EnsemblGene));
+//      (xrefMap.containsKey(ensemblGeneId)) ? xrefMap.get(ensemblGeneId)
+//          : createEnsemblGeneNodeFunction.apply(ensemblGeneId);
 
-  /*
-  Private Function that creates a new Protein Node for a specified UniProt id
-   */
-  private Function<String, Node> createProteinFunctionNode = (uniprotId) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
-    AsyncLoggingService.logInfo("createProteinNodeFunction invoked for uniprot protein id  " +
-        uniprotId);
-    try {
-      Node node = EmbeddedGraph.getGraphInstance()
-          .createNode(LabelTypes.Protein);
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtId", uniprotId));
-      proteinMap.put(uniprotId, node);
-      tx.success();
-      return node;
-    } catch (Exception e) {
-      e.printStackTrace();
-      tx.failure();
-    } finally {
-      tx.close();
-    }
-    return null;
-  };
 
   /*
   Protected Function that resolves a Protein Node for a specified UniProt id
   by either finding an existing Node or by creating a new one
    */
   protected Function<String, Node> resolveProteinNodeFunction = (uniprotId) ->
-      (proteinMap.containsKey(uniprotId)) ? proteinMap.get(uniprotId)
-          : createProteinFunctionNode.apply(uniprotId);
+      proteinNodeCache.get(uniprotId);
 
   /*
   Protected Consumer that will create a Protein Node with properties or
@@ -342,21 +323,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
           : createGeneOntologyNodeFunction.apply(go);
 
 
-  protected void createProteinNode(String strProteinId, String szUniprotId,
-      String szEnsembleTranscript, String szProteinName,
-      String szGeneSymbol, String szEnsembl) {
-    log.info("createProteinNode invoked for uniprot protein id  " + szUniprotId);
 
-    proteinMap.put(szUniprotId, EmbeddedGraph.getGraphInstance()
-        .createNode(EmbeddedGraph.LabelTypes.Protein));
-    proteinMap.get(szUniprotId).setProperty("ProteinId", strProteinId);
-    proteinMap.get(szUniprotId).setProperty("UniprotId", szUniprotId);
-    proteinMap.get(szUniprotId).setProperty("EnsemblTranscript",
-        szEnsembleTranscript);
-    proteinMap.get(szUniprotId).setProperty("EnsemblId", szEnsembl);
-    proteinMap.get(szUniprotId).setProperty("ProteinName", szProteinName);
-    proteinMap.get(szUniprotId).setProperty("GeneSymbol", szGeneSymbol);
-  }
 
   private Function<Pathway, Optional<Node>> createPathwayNodeFunction = (pathway) -> {
     Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();

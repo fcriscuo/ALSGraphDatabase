@@ -15,8 +15,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.consumer.IntactDataConsumer;
 import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
-import org.nygenome.als.graphdb.consumer.UniprotIdConsumer;
-import org.nygenome.als.graphdb.consumer.UniprotIdEnsemblDataConsumer;
+import org.nygenome.als.graphdb.consumer.UniProtValueConsumer;
 import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 
@@ -69,7 +68,7 @@ public enum EmbeddedGraph
 				System.out.println("read uniprot to ensembl mapping");
 				FrameworkPropertyService.INSTANCE
 						.getOptionalPathProperty("UNIPROT_ENSEMBL_TRANSCRIPT_ASSOCIATION_FILE")
-						.ifPresent(new UniprotIdConsumer());
+						.ifPresent(new UniProtValueConsumer());
 				System.out.println("readPathwayInfo");
         FrameworkPropertyService.INSTANCE
             .getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")

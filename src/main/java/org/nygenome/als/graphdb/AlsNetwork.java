@@ -38,8 +38,8 @@ public class AlsNetwork {
 	}
 
 	public void readHumanTissueAtlasInfo() throws IOException {
-		FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIRPOT_IDS_ENSEMBL")
-				.ifPresent(new UniprotIdEnsemblDataConsumer());
+//		FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIRPOT_IDS_ENSEMBL")
+//				.ifPresent(new UniprotIdEnsemblDataConsumer());
 		FrameworkPropertyService.INSTANCE.getOptionalPathProperty("HUMAN_TISSUE_ATLAS")
 				.ifPresent(new HumanTissueAtlasDataConsumer());
 	}
