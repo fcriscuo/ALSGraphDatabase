@@ -18,10 +18,10 @@ import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.EmbeddedGraph;
 import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
 import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.service.GraphComponentFactory;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.StringUtils;
-import org.nygenome.als.graphdb.value.DrugBankValue;
 import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.HumanTissueAtlas;
 import org.nygenome.als.graphdb.value.Pathway;
@@ -53,7 +53,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     eKaneko, eDisGeNet, ePPI
   }
 
-
+protected final FunctionLib lib = new FunctionLib();
 
 // Node and Relationship caches
   // Use Caffeine API instead of Google Guava to avoid dealing
@@ -70,6 +70,19 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
       .expireAfterWrite(5, TimeUnit.MINUTES)
       .build(hugoId -> GraphComponentFactory.INSTANCE.getGeneNodeFunction
           .apply(hugoId));
+  //DrugBank Node Cache
+  private LoadingCache<String,Node> drugBankNodeCache = Caffeine.newBuilder()
+      .maximumSize(1_000)
+      .expireAfterWrite(5, TimeUnit.MINUTES)
+      .build(drugBankId -> GraphComponentFactory.INSTANCE.getDrugBankNodeFunction
+          .apply(drugBankId));
+  // Gene Ontology Cache
+
+  private LoadingCache<GeneOntology,Node> geneOntologyNodeCache = Caffeine.newBuilder()
+      .maximumSize(7_000)
+      .expireAfterWrite(5, TimeUnit.MINUTES)
+      .build(goId -> GraphComponentFactory.INSTANCE.getGeneOntologyNodeFunction
+          .apply(goId));
 
   // xref Node cache
   private LoadingCache<Tuple2<String,LabelTypes>,Node> xrefNodeCache = Caffeine.newBuilder()
@@ -82,7 +95,6 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
   protected Map<String, Node> xrefMap = new HashMap<>();
   protected Map<String, Node> rnaTpmGeneMap = new HashMap<>();
   protected Map<String, Node> diseaseMap = new HashMap<String, Node>();
-  protected Map<String, Node> drugMap = new HashMap<String, Node>();
   protected Map<String, Node> pathwayMap = new HashMap<String, Node>();
   protected Map<String, Node> tissueMap = new HashMap<String, Node>();
   protected Map<String, Node> GEOStudyMap = new HashMap<String, Node>();
@@ -186,58 +198,13 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
   Protected Consumer that will create a Protein Node with properties or
   add properties to an existing Protein Node
    */
-  protected Consumer<UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
-    try {
-      Node node = resolveProteinNodeFunction.apply(upv.uniprotId());
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
-      nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
-      nodePropertyValueListConsumer.accept(node, new Tuple2<>("GeneSymbol", upv.geneNameList()));
-      tx.success();
-    } catch (Exception e) {
-      tx.failure();
-      e.printStackTrace();
-    } finally {
-      tx.close();
-    }
-  };
 
-  /*
-  Private Function to create a new DrugBank node in the graph and register it
-  in the Map
-   */
-  private Function<String, Node> createDrugBankNodeFunction = (dbId) -> {
-    AsyncLoggingService.logInfo("createDrugBankNode invoked for DrunkBank id  " +
-        dbId);
-    Node node = EmbeddedGraph.getGraphInstance()
-        .createNode(LabelTypes.Drug);
-    nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugBankId",
-        dbId));
-    drugMap.put(dbId, node);
-    return node;
-  };
+
   protected Function<String, Node> resolveDrugBankNode = (dbId) ->
-      (drugMap.containsKey(dbId)) ? drugMap.get(dbId)
-          : createDrugBankNodeFunction.apply(dbId);
+      drugBankNodeCache.get(dbId);
 
 
-  /*
-  Protected method to create a new DrugBank node
-  The protein-drug relationships are created by processing different value objects
-  which provide the type of relationship
-   */
-  protected void createDrugBankNode(String uniprotId, DrugBankValue dbv) {
-    String key = dbv.drugBankId();
-    if (!drugMap.containsKey(key)) {
-      Node node = resolveDrugBankNode.apply(key);
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugId", dbv.drugBankId()));
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugName", dbv.drugName()));
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugType", dbv.drugType()));
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("CASNumber", dbv.casNumber()));
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("RxListLink", dbv.rxListLink()));
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("NDCLink", dbv.ndcLink()));
-    }
-  }
+
 
 
   private Function<String, Node> createEnsemblTranscriptNodeFunction =
@@ -284,45 +251,9 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
   }
 
 
-  /*
-  Protected Function to select the correct Gene Ontology principle label
-   */
-  protected Function<String, LabelTypes> resolveGeneOntologyPrincipleFunction = (princ) -> {
-    if (princ.toUpperCase().startsWith("MOLECULAR")) {
-      return LabelTypes.MolecularFunction;
-    }
-    if (princ.toUpperCase().startsWith("BIOLOGICAL")) {
-      return LabelTypes.BiologicalProcess;
-    }
-    if (princ.toUpperCase().startsWith("CELLULAR")) {
-      return LabelTypes.CellularComponents;
-    }
-    AsyncLoggingService.logError(princ + " is not a valid Gene Ontology principle ");
-    return LabelTypes.Unknown;
 
-  };
-
-
-  /*
-  Private function to create a new GeneOntology node with an id and GO principle
-   */
-  private Function<GeneOntology, Node> createGeneOntologyNodeFunction = (go) -> {
-    Node node = EmbeddedGraph.getGraphInstance()
-        .createNode(LabelTypes.GeneOntology);
-    node.addLabel(resolveGeneOntologyPrincipleFunction.apply(go.goAspect()));
-    nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyId", go.goId()));
-    nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyPrinciple",
-        go.goAspect()));
-    geneOntologyMap.put(go.goId(), node);
-    nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyName", go.goName()));
-    return node;
-  };
-
-  protected Function<GeneOntology, Node> resolveGeneOntologyNodeFunction = (go) ->
-      (geneOntologyMap.containsKey(go.goId())) ? geneOntologyMap.get(go.goId())
-          : createGeneOntologyNodeFunction.apply(go);
-
-
+  protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go) ->
+      geneOntologyNodeCache.get(go);
 
 
   private Function<Pathway, Optional<Node>> createPathwayNodeFunction = (pathway) -> {
@@ -359,16 +290,6 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
     diseaseMap.get(szDiseaseName).setProperty("DiseaseName", szDiseaseName);
   }
 
-  protected void createDrugNode(String szDrugId, String szDrugName,
-      String szDrugType) {
-    drugMap.put(szDrugId,
-        EmbeddedGraph.getGraphInstance().createNode(EmbeddedGraph.LabelTypes.Drug));
-    drugMap.get(szDrugId).setProperty("DrugId", szDrugId);
-    drugMap.get(szDrugId).setProperty("DrugName", szDrugName);
-    drugMap.get(szDrugId).setProperty("DrugType", szDrugType);
-  }
-
-
   protected void createTissueNode(HumanTissueAtlas ht) {
     String tissueCellType = ht.resolveTissueCellTypeLabel();
     tissueMap.put(tissueCellType, EmbeddedGraph.getGraphInstance()
@@ -376,8 +297,6 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
     tissueMap.get(tissueCellType).setProperty("TissueName", ht.tissue());
     tissueMap.get(tissueCellType).setProperty("CellType", ht.cellType());
   }
-
-
   protected void createGEOStudyNode(String szGEOStudyName) {
     GEOStudyMap.put(szGEOStudyName, EmbeddedGraph.getGraphInstance()
         .createNode(EmbeddedGraph.LabelTypes.GEOStudy));

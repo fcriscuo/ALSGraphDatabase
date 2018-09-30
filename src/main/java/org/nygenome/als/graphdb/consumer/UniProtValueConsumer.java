@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
-import org.nygenome.als.graphdb.service.DrugBankService;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.StringUtils;
@@ -40,6 +39,8 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     }
   }
 
+
+
   private Consumer<UniProtValue> geneOntologyListConsumer = (upv) -> {
     // complete the association with gene ontology links
     // biological process
@@ -60,15 +61,22 @@ public class UniProtValueConsumer extends GraphDataConsumer {
             goEntry -> GeneOntology.parseGeneOntologyEntry("Gene Ontology (mol function)", goEntry))
         .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go));
   };
-  /*
-  Private Consumer to add drug bank nodes
-   */
-  private Consumer<UniProtValue> drugBankIdConsumer = (upv) -> {
-    StringUtils.convertToJavaString(upv.drugBankIdList()).stream()
-        .map(DrugBankService.INSTANCE::getDrugBankValueById)
-        .forEach(dbOpt ->dbOpt.ifPresent(db ->createDrugBankNode(upv.uniprotId(), db)));
+
+  private Consumer<UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
+      Node node = resolveProteinNodeFunction.apply(upv.uniprotId());
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
+      lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
+      lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("GeneSymbol", upv.geneNameList()));
+      AsyncLoggingService.logInfo(">>>Created Protein node for " +upv.uniprotId());
+
   };
 
+  // create drugbank nodes associated with this protein
+  // to protein - drug relationships are determined by other
+  // source files
+  private Consumer<UniProtValue> drugBankIdConsumer = (upv) ->
+      StringUtils.convertToJavaString(upv.drugBankIdList())
+      .forEach(dbId ->resolveDrugBankNode.apply(dbId));
 
   private Consumer<UniProtValue> uniProtValueConsumer = (upv -> {
     // create the protein node for this uniprot entry
@@ -77,6 +85,8 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     geneOntologyListConsumer.accept(upv);
     // add ensembl trancripts
     createEnsemblTranscriptNodes(upv);
+    // add drugs associated with this protein
+    drugBankIdConsumer.accept(upv);
 
   });
 

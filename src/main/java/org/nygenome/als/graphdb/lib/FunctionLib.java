@@ -15,6 +15,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
+import org.nygenome.als.graphdb.EmbeddedGraph;
+import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
 import scala.collection.immutable.List;
 
@@ -23,13 +27,37 @@ public class FunctionLib {
     private static final Logger log = Logger.getLogger(FunctionLib.class);
     public FunctionLib(){}
 
+    public Function<String, LabelTypes> resolveGeneOntologyPrincipleFunction = (princ) -> {
+        if (princ.toUpperCase().startsWith("MOLECULAR")) {
+            return LabelTypes.MolecularFunction;
+        }
+        if (princ.toUpperCase().startsWith("BIOLOGICAL")) {
+            return LabelTypes.BiologicalProcess;
+        }
+        if (princ.toUpperCase().startsWith("CELLULAR")) {
+            return LabelTypes.CellularComponents;
+        }
+        AsyncLoggingService.logError(princ + " is not a valid Gene Ontology principle ");
+        return LabelTypes.Unknown;
+    };
+
+
     /*
  Protected BiConsumer that will add a property name/value pair to a specified node
  Currently only String property values are supported
   */
     public  BiConsumer<Node, Tuple2<String, String>> nodePropertyValueConsumer = (node, propertyTuple) -> {
         if (!Strings.isNullOrEmpty(propertyTuple._2())) {
-            node.setProperty(propertyTuple._1(), propertyTuple._2());
+            Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+            try {
+                node.setProperty(propertyTuple._1(), propertyTuple._2());
+                tx.success();
+            } catch (Exception e) {
+                tx.failure();
+                AsyncLoggingService.logError(e.getMessage());
+            } finally {
+                tx.close();
+            }
         }
     };
 
@@ -37,9 +65,18 @@ public class FunctionLib {
     Protected BiConsumer to register a List of property values for a specified node
     Property values are persisted as Strings
      */
-    protected BiConsumer<Node, Tuple2<String, List<String>>> nodePropertyValueListConsumer = (node, propertyListTuple) -> {
+    public BiConsumer<Node, Tuple2<String, List<String>>> nodePropertyValueListConsumer = (node, propertyListTuple) -> {
         if (propertyListTuple._2() != null && propertyListTuple._2().size() > 0) {
-            node.setProperty(propertyListTuple._1(), propertyListTuple._2().head());
+            Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+            try {
+                node.setProperty(propertyListTuple._1(), propertyListTuple._2().head());
+                tx.success();
+            }  catch (Exception e) {
+                tx.failure();
+                AsyncLoggingService.logError(e.getMessage());
+            } finally {
+                tx.close();
+            }
         }
     };
 

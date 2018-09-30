@@ -2,6 +2,7 @@ package org.nygenome.als.graphdb.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.eclipse.collections.impl.factory.Maps;
@@ -12,6 +13,7 @@ import org.nygenome.als.graphdb.EmbeddedGraph;
 import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import org.nygenome.als.graphdb.value.GeneOntology;
 import scala.Tuple2;
 
 /**
@@ -65,8 +67,84 @@ public enum GraphComponentFactory {
   private Map<Tuple2<String, String>, Relationship> proteinXrefRelMap = Maps.mutable.empty();
   private Map<Tuple2<String, String>, Relationship> proteinTissRelMap = Maps.mutable.empty();
 
+ /*
+ Creat a GeneOntology Node and set its properties
+  */
+  private Function<GeneOntology, Node> createGeneOntologyNodeFunction = (go) -> {
+    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    try {
+      Node node = EmbeddedGraph.getGraphInstance()
+          .createNode(LabelTypes.GeneOntology);
+      node.addLabel(lib.resolveGeneOntologyPrincipleFunction.apply(go.goAspect()));
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyId", go.goId()));
+     lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyPrinciple",
+          go.goAspect()));
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyName", go.goName()));
+      geneOntologyMap.put(go.goId(), node);
+      tx.success();
+      return node;
+    } catch (Exception e) {
+      tx.failure();
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return unknownNodeSupplier.get();
+  };
 
+  /*
+  Public method to find or create a GeneOntology Node
+   */
+  public Function<GeneOntology, Node> getGeneOntologyNodeFunction = (go) ->
+      (geneOntologyMap.containsKey(go.goId())) ? geneOntologyMap.get(go.goId())
+          : createGeneOntologyNodeFunction.apply(go);
+  
+  private BiConsumer<String,Node> completeDrugBankNodeProperties = (id,node) -> {
+    DrugBankService.INSTANCE.getDrugBankValueById(id)
+        .ifPresent(dbv -> {
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugId", dbv.drugBankId()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugName", dbv.drugName()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugType", dbv.drugType()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("CASNumber", dbv.casNumber()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("RxListLink", dbv.rxListLink()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("NDCLink", dbv.ndcLink()));
+        });
+  };
 
+/*
+Private Function to create a new DrugBank node
+ */
+  private Function<String, Node> createDrugBankNodeFunction = (dbId) -> {
+    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    AsyncLoggingService.logInfo("createDrugBankNode invoked for DrunkBank id  " +
+        dbId);
+    try {
+      Node node = EmbeddedGraph.getGraphInstance()
+          .createNode(LabelTypes.Drug);
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugBankId",
+          dbId));
+      completeDrugBankNodeProperties.accept(dbId,node);
+      drugMap.put(dbId, node);
+      tx.success();
+      return node;
+    } catch (Exception e) {
+      tx.failure();
+      AsyncLoggingService.logError("ERR: createDrugBankNode: " +
+          e.getMessage());
+      e.printStackTrace();
+
+    } finally {
+      tx.close();
+    }
+    return unknownNodeSupplier.get();
+  };
+
+  public Function<String,Node> getDrugBankNodeFunction = (drugBankId) ->
+      (drugMap.containsKey(drugBankId))? drugMap.get(drugBankId)
+          :createDrugBankNodeFunction.apply(drugBankId);
+/*
+Private Function to create a new Protein Node
+ */
   private Function<String, Node> createProteinNodeFunction = (uniprotId) -> {
     Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
     AsyncLoggingService.logInfo("createProteinNodeFunction invoked for uniprot protein id  " +
@@ -91,7 +169,9 @@ public enum GraphComponentFactory {
       (proteinMap.containsKey(uniprotId))? proteinMap.get(uniprotId)
           : createProteinNodeFunction.apply(uniprotId);
 
-
+/*
+Private Function to create a new Xref Node
+ */
   private Function<Tuple2<String, LabelTypes>, Node> createXrefNodeFunction = (xrefTuple) -> {
     Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
     String xrefId = xrefTuple._1();
