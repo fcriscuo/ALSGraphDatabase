@@ -40,7 +40,6 @@ public class UniProtValueConsumer extends GraphDataConsumer {
   }
 
 
-
   private Consumer<UniProtValue> geneOntologyListConsumer = (upv) -> {
     // complete the association with gene ontology links
     // biological process

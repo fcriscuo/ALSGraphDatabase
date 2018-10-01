@@ -12,6 +12,7 @@ case class HumanTissueAtlas(ensemblGeneId: String, geneName: String, tissue: Str
                           cellType: String, level: String, reliability: String,
                           ensemblTranscriptId: String, uniprotId: String
 
+
                          ) {
 var resolveTissueCellTypeLabel: String = tissue + ":" + cellType
 var proteinTissueKey: Tuple2[String, String] =
@@ -24,7 +25,7 @@ object HumanTissueAtlas extends ValueTrait {
 
 private def resolveUniprotId(geneId: String): String = {
   val uniOpt: Optional[UniProtMapping] = UniProtMappingService.INSTANCE.resolveUniProtMappingByEnsemblGeneId(geneId)
-  return if ((uniOpt.isPresent)) {
+   if (uniOpt.isPresent) {
     uniOpt.get.uniProtId
   }
   else {
@@ -34,7 +35,7 @@ private def resolveUniprotId(geneId: String): String = {
 
 private def resolveTranscriptId(geneId: String): String = {
   val uniOpt: Optional[UniProtMapping] = UniProtMappingService.INSTANCE.resolveUniProtMappingByEnsemblGeneId(geneId)
-  return if ((uniOpt.isPresent)) {
+   if ((uniOpt.isPresent)) {
     uniOpt.get.ensemblGeneId
   }
   else {

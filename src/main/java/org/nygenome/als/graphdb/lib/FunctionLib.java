@@ -2,6 +2,7 @@ package org.nygenome.als.graphdb.lib;
 
 
 import com.google.common.base.Strings;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import org.apache.log4j.Logger;
 
@@ -15,9 +16,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.EmbeddedGraph;
 import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
+import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
 import scala.collection.immutable.List;
@@ -26,6 +29,48 @@ import scala.collection.immutable.List;
 public class FunctionLib {
     private static final Logger log = Logger.getLogger(FunctionLib.class);
     public FunctionLib(){}
+
+    /*
+  Protected method to create two (2) directional relationships between two (2)
+  specified nodes. The first relationship is registered in a Map to prevent
+  duplication
+  The relationship types are also provided
+  The created or existing Relationships are returned in a Tuple2 in the A->B, & B->A order
+   */
+    public Tuple2<Relationship,Relationship> createBiDirectionalRelationship(Node nodeA, Node nodeB,
+        Tuple2<String, String> keyTuple,
+        Map<Tuple2<String, String>, Relationship> relMap, RelTypes relTypeA, RelTypes relTypeB) {
+        if (!relMap.containsKey(keyTuple)) {
+            Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+            try {
+                Relationship relA = nodeA.createRelationshipTo(nodeB, relTypeA);
+                Relationship relB = nodeB.createRelationshipTo(nodeA, relTypeB);
+                relMap.put(keyTuple, relA);
+                relMap.put(keyTuple.swap(), relB);
+                tx.success();
+                AsyncLoggingService.logInfo("Created realtionship between " + keyTuple._1() + " and "
+                    + keyTuple._2());
+            } catch (Exception e) {
+                tx.failure();
+                AsyncLoggingService.logError("ERR: failed to create bi-directional realtionship between " + keyTuple._1() + " and "
+                    + keyTuple._2());
+                e.printStackTrace();
+                return null;
+            } finally {
+                tx.close();
+            }
+        }
+        return new Tuple2<>(relMap.get(keyTuple),relMap.get(keyTuple.swap()));
+    }
+    /*
+    Protected BiConsumer that accepts a Pair of Realtionships and a property key/value pair
+    The supplied property is applied to each of the Relationships
+     */
+    public BiConsumer<Tuple2<Relationship,Relationship> , Tuple2<String,String>> relationshipPairPropertyConsumer
+        = (relPair,keyValue) -> {
+        relPair._1().setProperty(keyValue._1(), keyValue._2());
+        relPair._2().setProperty(keyValue._1(), keyValue._2());
+    };
 
     public Function<String, LabelTypes> resolveGeneOntologyPrincipleFunction = (princ) -> {
         if (princ.toUpperCase().startsWith("MOLECULAR")) {

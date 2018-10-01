@@ -25,6 +25,7 @@ import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.HumanTissueAtlas;
 import org.nygenome.als.graphdb.value.Pathway;
+import org.nygenome.als.graphdb.value.RnaTpmGene;
 import org.nygenome.als.graphdb.value.UniProtValue;
 import scala.Tuple2;
 
@@ -37,7 +38,6 @@ import scala.collection.immutable.List;
 
 public abstract class GraphDataConsumer implements Consumer<Path> {
 
-  //private static final Logger log = Logger.getLogger(GraphDataConsumer.class);
   protected final String TAB_DELIM = "\t";  // tab delimited file
   protected final String COMMA_DELIM = ",";  // comma delimited file
   protected final String strNoInfo = "NA";
@@ -90,13 +90,52 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
       .expireAfterWrite(15, TimeUnit.MINUTES)
       .build(tuple2 -> GraphComponentFactory.INSTANCE.getXrefNodeFunction
           .apply(tuple2));
+  // RNA TPM Gene Cache
+  private LoadingCache<RnaTpmGene,Node> rnaTpmGeneNodeCache = Caffeine.newBuilder()
+      .maximumSize(10_000)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
+      .build(tuple2 -> GraphComponentFactory.INSTANCE.getRnaTpmGeneNodeFunction
+          .apply(tuple2));
 
-  protected Map<String, Node> geneOntologyMap = new HashMap<>();
-  protected Map<String, Node> xrefMap = new HashMap<>();
-  protected Map<String, Node> rnaTpmGeneMap = new HashMap<>();
-  protected Map<String, Node> diseaseMap = new HashMap<String, Node>();
-  protected Map<String, Node> pathwayMap = new HashMap<String, Node>();
-  protected Map<String, Node> tissueMap = new HashMap<String, Node>();
+  // Disease cache
+  private LoadingCache<String,Node> diseaseNodeCache = Caffeine.newBuilder()
+      .maximumSize(10_000)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
+      .build(diseaseId -> GraphComponentFactory.INSTANCE.getDiseaseNodeFunction
+          .apply(diseaseId));
+
+  // Pathway cache
+  private LoadingCache<String,Node> pathwayNodeCache = Caffeine.newBuilder()
+      .maximumSize(10_000)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
+      .build(pathwayId -> GraphComponentFactory.INSTANCE.getPathwayNodeFunction
+          .apply(pathwayId));
+  // Tissue cache
+  private LoadingCache<String,Node> tissueNodeCache = Caffeine.newBuilder()
+      .maximumSize(10_000)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
+      .build(tissueId -> GraphComponentFactory.INSTANCE.getHumanTissueNodeFunction
+          .apply(tissueId));
+
+  // Subject cache
+  private LoadingCache<String,Node> subjectNodeCache = Caffeine.newBuilder()
+      .maximumSize(1_000)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
+      .build(subjectId -> GraphComponentFactory.INSTANCE.getSubjectNodeFunction
+          .apply(subjectId));
+
+  // Sample cache
+  // Subject cache
+  private LoadingCache<String,Node> sampleNodeCache = Caffeine.newBuilder()
+      .maximumSize(1_000)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
+      .build(sampleId -> GraphComponentFactory.INSTANCE.getSampleNodeFunction
+          .apply(sampleId));
+
+
+
+
+
   protected Map<String, Node> GEOStudyMap = new HashMap<String, Node>();
   protected Map<String, Node> subjectMap = new HashMap<>();
   protected Map<String, Node> sampleMap = new HashMap<>();
@@ -110,9 +149,9 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
   protected Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> alsWhiteListRelMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> proteinDrugRelMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String, String>, Relationship> vTissueRelMap = new HashMap<Tuple2<String, String>, Relationship>();
+  protected Map<Tuple2<String, String>, Relationship> transcriptTissueMap= new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> proteinProteinIntactMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<String, Relationship> proteinPathwayMap = new HashMap<>();
+  protected Map<Tuple2<String,String>, Relationship> proteinPathwayMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> sequenceSimMap = new HashMap<Tuple2<String, String>, Relationship>();
   protected Map<Tuple2<String, String>, Relationship> subjectSampleRelMap = new HashMap<>();
   protected Map<Tuple2<String, String>, Relationship> proteinTPMRelMap = new HashMap<>();
@@ -160,15 +199,25 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
     }
   };
 
+  protected Function<String, Node> resolveSubjectNodeFunction = (extSubjectId) ->
+      subjectNodeCache.get(extSubjectId);
+
+  protected Function<String,Node> resolveHumanTissueNodeFunction  = (tissueId)->
+      tissueNodeCache.get(tissueId);
+
+  protected Function<String,Node> resolvePathwayNodeFunction = (pathwayId) ->
+      pathwayNodeCache.get(pathwayId);
+
+
+  protected Function<String,Node> resolveDiseaseNodeFunction = (diseaseId) ->
+      diseaseNodeCache.get(diseaseId);
+
   /*
-  Protected BiConsumer to register a List of property values for a specified node
-  Property values are persisted as Strings
+  Only this Consumer creates RnaTpmGene Nodes so it can be private and set the properties
    */
-  protected BiConsumer<Node, Tuple2<String, List<String>>> nodePropertyValueListConsumer = (node, propertyListTuple) -> {
-    if (propertyListTuple._2() != null && propertyListTuple._2().size() > 0) {
-      node.setProperty(propertyListTuple._1(), propertyListTuple._2().head());
-    }
-  };
+  protected Function<RnaTpmGene, Node> resolveRnaTpmGeneNode = (rnaTpmGene) ->
+        rnaTpmGeneNodeCache.get(rnaTpmGene);
+
 
   /*
   Protected Function that resolves a Gene by either finding an existing Node
@@ -199,29 +248,12 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
   add properties to an existing Protein Node
    */
 
-
   protected Function<String, Node> resolveDrugBankNode = (dbId) ->
       drugBankNodeCache.get(dbId);
 
-
-
-
-
-  private Function<String, Node> createEnsemblTranscriptNodeFunction =
-      (transcriptId) -> {
-        xrefMap.put(transcriptId, EmbeddedGraph.getGraphInstance()
-            .createNode(LabelTypes.Xref));
-        Node node = xrefMap.get(transcriptId);
-        node.addLabel(LabelTypes.EnsemblTranscript);
-        nodePropertyValueConsumer.accept(node, new Tuple2<>("EnsemblTranscriptId", transcriptId));
-        return node;
-      };
-
   protected Function<String, Node> resolveEnsemblTranscriptNodeFunction =
       transcriptId ->
-          (xrefMap.containsKey(transcriptId)) ?
-              xrefMap.get(transcriptId)
-              : createEnsemblTranscriptNodeFunction.apply(transcriptId);
+          xrefNodeCache.get(new Tuple2<>(transcriptId, LabelTypes.EnsemblTranscript));
 
 
   protected void createEnsemblTranscriptNodes(@Nonnull UniProtValue upv) {
@@ -236,67 +268,16 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
     });
   }
 
-  /*
-  Protected method to resolve a Sample node
-  Will create a new one if necessary
-   */
-  protected Node resolveSampleNodeByExternalId(@Nonnull String externalSampleId) {
-    if (!sampleMap.containsKey(externalSampleId)) {
-      AsyncLoggingService.logInfo("creating Sample Node for external sample id  " +
-          externalSampleId);
-      return EmbeddedGraph.getGraphInstance()
-          .createNode(LabelTypes.Sample);
-    }
-    return sampleMap.get(externalSampleId);
-  }
 
+
+  protected Function<String,Node> resolveSampleNodeByExternalIdFunction = (extSampleId)
+      -> sampleNodeCache.get(extSampleId);
 
 
   protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go) ->
       geneOntologyNodeCache.get(go);
 
 
-  private Function<Pathway, Optional<Node>> createPathwayNodeFunction = (pathway) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
-    try {
-      Node node = EmbeddedGraph.getGraphInstance()
-          .createNode(LabelTypes.Pathway);
-      pathwayMap.put(pathway.reactomeId(), node);
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("ReactomeId", pathway.reactomeId()));
-      nodePropertyValueConsumer.accept(node, new Tuple2<>("Pathway", pathway.eventName()));
-      AsyncLoggingService.logInfo("creatPathway Node for Reactome ID: " + pathway.reactomeId());
-      tx.success();
-      return Optional.of(node);
-    } catch (Exception e) {
-      AsyncLoggingService.logError("ERR: createPathwayNodeFunction " + e.getMessage());
-      tx.failure();
-    } finally {
-      tx.close();
-    }
-    return Optional.empty();
-  };
-
-  /*
-  Protected Function to either find an existing Pathway Node or create a
-  new one
-   */
-  protected Function<Pathway, Optional<Node>> resolvePathwayNode = (pathway) ->
-      (pathwayMap.containsKey(pathway.reactomeId())) ? Optional.of(pathwayMap.get(pathway.reactomeId()))
-          : createPathwayNodeFunction.apply(pathway);
-
-  protected void createDiseaseNode(String szDiseaseName) {
-    diseaseMap.put(szDiseaseName, EmbeddedGraph.getGraphInstance()
-        .createNode(EmbeddedGraph.LabelTypes.Disease));
-    diseaseMap.get(szDiseaseName).setProperty("DiseaseName", szDiseaseName);
-  }
-
-  protected void createTissueNode(HumanTissueAtlas ht) {
-    String tissueCellType = ht.resolveTissueCellTypeLabel();
-    tissueMap.put(tissueCellType, EmbeddedGraph.getGraphInstance()
-        .createNode(EmbeddedGraph.LabelTypes.Tissue));
-    tissueMap.get(tissueCellType).setProperty("TissueName", ht.tissue());
-    tissueMap.get(tissueCellType).setProperty("CellType", ht.cellType());
-  }
   protected void createGEOStudyNode(String szGEOStudyName) {
     GEOStudyMap.put(szGEOStudyName, EmbeddedGraph.getGraphInstance()
         .createNode(EmbeddedGraph.LabelTypes.GEOStudy));
@@ -304,25 +285,7 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
         szGEOStudyName);
   }
 
-  /*
-  Private Function to create a new disease node
-   */
-  private Function<String, Node> createDiseaseNodeFunction = (diseaseId) -> {
-    AsyncLoggingService.logInfo("createDiseasekNode invoked for Disease id  " +
-        diseaseId);
-    Node diseaseNode = EmbeddedGraph.getGraphInstance()
-        .createNode(LabelTypes.Disease);
-    nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseId", diseaseId));
-    diseaseMap.put(diseaseId, diseaseNode);
-    return diseaseNode;
-  };
 
-  /*
-  Protected Function to find an existing or create a new Disease Node based on its id
-   */
-  protected Function<String, Node> resolveDiseaseNodeFunction = (diseaseId) ->
-      (diseaseMap.containsKey(diseaseId)) ? diseaseMap.get(diseaseId)
-          : createDiseaseNodeFunction.apply(diseaseId);
 
   protected void createGEOComparisonNode(Tuple2<String, String> szTuple) {
     GEOComparisonMap.put(szTuple, EmbeddedGraph.getGraphInstance()
@@ -331,30 +294,6 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
         szTuple._1());
   }
 
-  /*
-  Private function to create a new HumanTissueAtlas Node from a HumanTissueAtlas
-  value object
-  Since a complete value object is used an a parameter, the nodes properties
-  can be set a s well
-   */
-  private Function<HumanTissueAtlas, Node> createHumanTissueNodeFunction = (ht) -> {
-    Node tissueNode = EmbeddedGraph.getGraphInstance()
-        .createNode(LabelTypes.Tissue);
-
-    tissueMap.put(ht.resolveTissueCellTypeLabel(), tissueNode);
-    AsyncLoggingService.logInfo("createHumanTissueNodeFunction invoked for "
-        + ht.resolveTissueCellTypeLabel());
-    return tissueNode;
-  };
-
-  /*
-  Protected Function to retrieve an exisiting HumanTissue Node by its
-  tissue+cell label ore create a new one
-   */
-  protected Function<HumanTissueAtlas, Node> resolveHumanTissueAtlasNodeFunction =
-      (ht) -> (tissueMap.containsKey(ht.resolveTissueCellTypeLabel())) ?
-          tissueMap.get(ht.resolveTissueCellTypeLabel())
-          : createHumanTissueNodeFunction.apply(ht);
 
 
 }

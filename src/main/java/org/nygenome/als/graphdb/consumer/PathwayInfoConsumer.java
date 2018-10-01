@@ -27,12 +27,17 @@ public class PathwayInfoConsumer extends GraphDataConsumer implements Consumer<P
   and establish a protein->pathway Relationship if novel
    */
   private Consumer<Pathway> pathwayConsumer = (pathway)-> {
-    resolvePathwayNode.apply(pathway).ifPresent( pathwayNode ->{
-      if(!proteinPathwayMap.containsKey(pathway.id())){
+    Node pathwayNode = resolvePathwayNodeFunction.apply(pathway.id());
+    // if this is the first time we've seen this Pathway we need to set the
+    // pathway name
+      lib.nodePropertyValueConsumer
+          .accept(pathwayNode, new Tuple2<>("Pathway", pathway.eventName()));
+     Tuple2<String,String> keyTuple = new Tuple2<>(pathway.uniprotId(),pathway.id());
+      if(!proteinPathwayMap.containsKey(keyTuple)){
         Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+        Node proteinNode = resolveProteinNodeFunction.apply(pathway.uniprotId());
         try {
-          Node proteinNode = resolveProteinNodeFunction.apply(pathway.uniprotId());
-          proteinPathwayMap.put(pathway.id(),
+          proteinPathwayMap.put(keyTuple,
               proteinNode.createRelationshipTo(pathwayNode, RelTypes.IN_PATHWAY));
           tx.success();
         } catch (Exception e) {
@@ -42,7 +47,6 @@ public class PathwayInfoConsumer extends GraphDataConsumer implements Consumer<P
           tx.close();
         }
       }
-    });
   };
 
 /*

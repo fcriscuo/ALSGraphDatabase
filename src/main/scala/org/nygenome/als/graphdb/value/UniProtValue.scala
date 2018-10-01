@@ -12,7 +12,6 @@ case class UniProtValue (
                           tissueList:List[String], goMolFuncList:List[String],
                           phenotype:String, drugBankIdList:List[String], reactomeIdList:List[String],
                           pubMedIdList:List[String], mass:Double, length:Int, ensemblTranscriptList:List[String]
-
                         ) {
 
 }

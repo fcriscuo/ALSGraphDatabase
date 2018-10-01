@@ -27,28 +27,6 @@ a streamin utility based on a Splititerator is used
 public class RnaTpmGeneConsumer extends GraphDataConsumer {
 
   /*
-  Only this Consumer creates RnaTpmGene Nodes so it can be private and set the properties
-   */
-  private Function<RnaTpmGene, Node> resolveRnaTpmGeneNode = (rnaTpmGene) -> {
-    String id = rnaTpmGene.id();
-    if (!rnaTpmGeneMap.containsKey(id)) {
-      AsyncLoggingService.logInfo("creating RnaTpmNode for id  " +
-          id);
-
-        Node node = EmbeddedGraph.getGraphInstance()
-            .createNode(LabelTypes.Expression);
-        node.addLabel(LabelTypes.TPM);
-        nodePropertyValueConsumer.accept(node, new Tuple2<>("SampleGeneId", id));
-        // persist tpm value as a String
-        nodePropertyValueConsumer
-            .accept(node, new Tuple2<>("TPM", String.valueOf(rnaTpmGene.tpm())));
-        rnaTpmGeneMap.put(id, node);
-
-    }
-    return rnaTpmGeneMap.get(id);
-  };
-
-  /*
   private Consumer to process a RnaTpmGene object
   Will create an RnaTpmGene Node  and if necessary an EnsembleGene Node
   and/or a HugoGene Node
@@ -75,17 +53,17 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
       );
       createBiDirectionalRelationship(proteinNode, hugoGeneNode,
           new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
-              tpm.uniProtMapping().get().geneSymbol()), proteinXrefRelMap, RelTypes.MAPS_TO,
-          RelTypes.MAPS_TO);
+              tpm.uniProtMapping().get().geneSymbol()), proteinXrefRelMap, RelTypes.REFERENCES,
+          RelTypes.REFERENCES);
       createBiDirectionalRelationship(proteinNode, ensemblGeneNode,
           new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
-              tpm.uniProtMapping().get().ensemblGeneId()), proteinXrefRelMap, RelTypes.MAPS_TO,
-          RelTypes.MAPS_TO);
+              tpm.uniProtMapping().get().ensemblGeneId()), proteinXrefRelMap, RelTypes.REFERENCES,
+          RelTypes.REFERENCES);
       createBiDirectionalRelationship(proteinNode, ensemblTranscriptNode,
           new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
               tpm.uniProtMapping().get().ensemblTranscriptId()), proteinXrefRelMap,
-          RelTypes.MAPS_TO,
-          RelTypes.MAPS_TO);
+          RelTypes.REFERENCES,
+          RelTypes.REFERENCES);
       tx.success();
     } catch ( Exception e ) {
       AsyncLoggingService.logError(e.getMessage());

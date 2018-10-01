@@ -54,17 +54,17 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
       nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseName", gda.diseaseName()));
       // create bi-directional relationships between these nodes
       // protein - gene
-      createBiDirectionalRelationship(proteinNode, geneNode,
+      lib.createBiDirectionalRelationship(proteinNode, geneNode,
           new Tuple2<>(uniprotId, gda.geneSymbol()),
           proteinGeneticEntityMap, RelTypes.ENCODED_BY, RelTypes.EXPRESSED_PROTEIN
       );
       // protein - disease
-      createBiDirectionalRelationship(proteinNode, diseaseNode,
+      lib.createBiDirectionalRelationship(proteinNode, diseaseNode,
           new Tuple2<>(uniprotId, gda.diseaseId()),
           proteinDiseaseRelMap, RelTypes.IMPLICATED_IN, RelTypes.ASSOCIATED_PROTEIN);
       // gene -disease
       Tuple2<String, String> geneDiseaseTuple = new Tuple2<>(gda.geneSymbol(), diseaseId);
-      createBiDirectionalRelationship(geneNode, diseaseNode, geneDiseaseTuple,
+      lib.createBiDirectionalRelationship(geneNode, diseaseNode, geneDiseaseTuple,
           geneticEntityDiseaseMap, RelTypes.IMPLICATED_IN, RelTypes.ASSOCIATED_GENETIC_ENTITY);
       geneticEntityDiseaseMap.get(geneDiseaseTuple).setProperty("ConfidenceLevel", gda.score());
       geneticEntityDiseaseMap.get(geneDiseaseTuple).setProperty("Reference", gda.source());
