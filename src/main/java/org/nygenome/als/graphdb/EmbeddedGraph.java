@@ -36,7 +36,7 @@ public enum EmbeddedGraph
 		DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER, PART_OF, DEG_RELATED_TO, SEQ_SIM,
 		GO_CLASSIFICATION,  TRANSCRIPT, IMPLICATED_IN, HAS_SAMPLE, SAMPLED_FROM, MAPS_TO,
 		EXPRESSION_LEVEL, EXPRESSED_PROTEIN, ENCODED_BY,ASSOCIATED_PROTEIN,ASSOCIATED_GENETIC_ENTITY,
-		REFERENCES
+		REFERENCES, ASSOCIATED_VARIANT
 	}
 
 	public static enum LabelTypes implements Label {
@@ -44,7 +44,7 @@ public enum EmbeddedGraph
     Drug, GEOStudy, GEOComparison, Gene, Subject, Sample,
     Expression,TPM,Xref,EnsemblGene, EnsemblTranscript,MolecularFunction,
 		BiologicalProcess, CellularComponents,Unknown,Drug_Target, Drug_Enzyme, Drug_Transporter,
-		Drug_Carrier, GeneticEntity
+		Drug_Carrier, GeneticEntity, Variant, SNP
 	}
 
 	// convenience method to satisfy legacy usages

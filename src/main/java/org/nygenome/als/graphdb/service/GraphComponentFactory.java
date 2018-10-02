@@ -41,33 +41,43 @@ public enum GraphComponentFactory {
   private Map<String, Node> xrefMap = Maps.mutable.empty();
   private Map<String, Node> geneticEntityMap = Maps.mutable.empty();
   private Map<String, Node> rnaTpmGeneMap = Maps.mutable.empty();
-  private Map<String, Node> diseaseMap = new HashMap<String, Node>();
-  private Map<String, Node> drugMap = new HashMap<String, Node>();
-  private Map<String, Node> pathwayMap = new HashMap<String, Node>();
-  private Map<String, Node> tissueMap = new HashMap<String, Node>();
-  private Map<String, Node> GEOStudyMap = new HashMap<String, Node>();
+  private Map<String, Node> diseaseMap = Maps.mutable.empty();
+  private Map<String, Node> drugMap = Maps.mutable.empty();
+  private Map<String, Node> pathwayMap = Maps.mutable.empty();
+  private Map<String, Node> tissueMap = Maps.mutable.empty();
   private Map<String, Node> subjectMap = Maps.mutable.empty();
   private Map<String, Node> sampleMap = Maps.mutable.empty();
+  private Map<String,Node>  snpMap = Maps.mutable.empty();
 
 
-  private Map<Tuple2<String, String>, Node> GEOComparisonMap = Maps.mutable.empty();
-  // Protein - Gene Ontology Relationships
-  private Map<Tuple2<String, String>, Relationship> proteinGeneOntologyRelMap = Maps.mutable
-      .empty();
-  private Map<Tuple2<String, String>, Relationship> proteinDiseaseRelMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> alsWhiteListRelMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> proteinDrugRelMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> tissueRelMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> proteinProteinIntactMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> proteinPathwayMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> sequenceSimMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> subjectSampleRelMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> proteinTPMRelMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> proteinXrefRelMap = Maps.mutable.empty();
-  private Map<Tuple2<String, String>, Relationship> proteinTissRelMap = Maps.mutable.empty();
 
+  /*
+  SNP Node
+   */
+
+  private Function<String,Node> createSnpNodeFunction = (snpId) -> {
+    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    try {
+      Node snpNode = EmbeddedGraph.getGraphInstance()
+          .createNode(LabelTypes.Variant);
+      snpNode.addLabel(LabelTypes.SNP);
+      lib.nodePropertyValueConsumer
+          .accept(snpNode, new Tuple2<>("snpId", snpId));
+      snpMap.put(snpId,snpNode);
+      tx.success();
+      return snpNode;
+    } catch (Exception e) {
+      tx.failure();
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return unknownNodeSupplier.get();
+  };
+
+  public Function<String,Node> getSnpNodeFunction = (snpId) ->
+      (snpMap.containsKey(snpId))? snpMap.get(snpId)
+          :createSnpNodeFunction.apply(snpId);
 
   /*
   Sample Node

@@ -4,14 +4,14 @@ import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
 import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
+import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.StringSubjectProperty;
 import scala.Tuple2;
 
@@ -52,6 +52,9 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
 
   };
 
+  private Predicate<StringSubjectProperty> alsPredicate = (ssp) ->
+      !ssp.externalSubjectId().toUpperCase().startsWith("TCGA");
+
   /*
   Public Consumer interface method to process the specified file
   as a CSV file containing data that can be mapped to StringSubjectProperty objects
@@ -59,8 +62,9 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
   @Override
   public void accept(Path path) {
     Preconditions.checkArgument(null != path);
-    new CsvRecordStreamSupplier(path).get()
+    new TsvRecordStreamSupplier(path,StringSubjectProperty.columnHeadings()).get()
         .map(StringSubjectProperty::parseCSVRecord)
+        .filter(alsPredicate)
         .forEach(stringSubjectPropertyConsumer);
   }
 

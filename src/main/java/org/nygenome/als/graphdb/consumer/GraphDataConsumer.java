@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
+import org.eclipse.collections.impl.factory.Maps;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
@@ -125,38 +126,36 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
           .apply(subjectId));
 
   // Sample cache
-  // Subject cache
+
   private LoadingCache<String,Node> sampleNodeCache = Caffeine.newBuilder()
       .maximumSize(1_000)
       .expireAfterWrite(15, TimeUnit.MINUTES)
       .build(sampleId -> GraphComponentFactory.INSTANCE.getSampleNodeFunction
           .apply(sampleId));
 
+  //SNP cache
+  private LoadingCache<String,Node> snpNodeCache = Caffeine.newBuilder()
+      .maximumSize(20_000)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
+      .build(snpId -> GraphComponentFactory.INSTANCE.getSnpNodeFunction
+          .apply(snpId));
 
 
-
-
-  protected Map<String, Node> GEOStudyMap = new HashMap<String, Node>();
-  protected Map<String, Node> subjectMap = new HashMap<>();
-  protected Map<String, Node> sampleMap = new HashMap<>();
-
-
-  protected Map<Tuple2<String, String>, Node> GEOComparisonMap = new HashMap<Tuple2<String, String>, Node>();
-  // Protein - Gene Ontology Relationships
-  protected Map<Tuple2<String, String>, Relationship> proteinGeneOntologyRelMap = new HashMap<>();
-  protected Map<Tuple2<String, String>, Relationship> proteinDiseaseRelMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = new HashMap<>();
-  protected Map<Tuple2<String, String>, Relationship> alsWhiteListRelMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String, String>, Relationship> proteinDrugRelMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String, String>, Relationship> transcriptTissueMap= new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String, String>, Relationship> proteinProteinIntactMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String,String>, Relationship> proteinPathwayMap = new HashMap<>();
-  protected Map<Tuple2<String, String>, Relationship> sequenceSimMap = new HashMap<Tuple2<String, String>, Relationship>();
-  protected Map<Tuple2<String, String>, Relationship> subjectSampleRelMap = new HashMap<>();
-  protected Map<Tuple2<String, String>, Relationship> proteinTPMRelMap = new HashMap<>();
-  protected Map<Tuple2<String, String>, Relationship> proteinXrefRelMap = new HashMap<>();
-  protected Map<Tuple2<String, String>, Relationship> proteinTissRelMap = new HashMap<>();
+  protected Map<Tuple2<String, String>, Relationship> proteinGeneOntologyRelMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> proteinDiseaseRelMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap =Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> alsWhiteListRelMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> proteinDrugRelMap =Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> transcriptTissueMap= Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> proteinProteinIntactMap = Maps.mutable.empty();
+  protected Map<Tuple2<String,String>, Relationship> proteinPathwayMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> sequenceSimMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> subjectSampleRelMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> proteinTPMRelMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> proteinXrefRelMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> proteinTissRelMap = Maps.mutable.empty();
+  protected Map<Tuple2<String, String>, Relationship> snpDiseaseRelMap = Maps.mutable.empty();
 
 
   /*
@@ -277,22 +276,8 @@ private LoadingCache<String,Node> proteinNodeCache = Caffeine.newBuilder()
   protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go) ->
       geneOntologyNodeCache.get(go);
 
-
-  protected void createGEOStudyNode(String szGEOStudyName) {
-    GEOStudyMap.put(szGEOStudyName, EmbeddedGraph.getGraphInstance()
-        .createNode(EmbeddedGraph.LabelTypes.GEOStudy));
-    GEOStudyMap.get(szGEOStudyName).setProperty("GEOStudyID",
-        szGEOStudyName);
-  }
-
-
-
-  protected void createGEOComparisonNode(Tuple2<String, String> szTuple) {
-    GEOComparisonMap.put(szTuple, EmbeddedGraph.getGraphInstance()
-        .createNode(EmbeddedGraph.LabelTypes.GEOComparison));
-    GEOComparisonMap.get(szTuple).setProperty("GEOComparisonID",
-        szTuple._1());
-  }
+protected Function<String,Node>  resolveSnpNodeFunction = (snpId) ->
+    snpNodeCache.get(snpId);
 
 
 

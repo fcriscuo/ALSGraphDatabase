@@ -3,7 +3,6 @@ package org.nygenome.als.graphdb.consumer;
 import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;

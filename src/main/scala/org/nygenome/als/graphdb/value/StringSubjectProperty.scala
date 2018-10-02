@@ -17,4 +17,7 @@ object StringSubjectProperty extends ValueTrait {
       record.get("analyteType")
     )
   }
+  val columnHeadings:Array[String] = Array("subjectId","propertyName","propertyValue","externalSubjectId",
+    "nygcSubjectId","subId2","externalSampleId","nygcSampleId","sampleId"
+    ,"subId3","type","analyteType","sampleGroupId","samId2")
 }
