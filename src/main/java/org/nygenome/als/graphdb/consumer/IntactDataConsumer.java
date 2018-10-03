@@ -2,13 +2,19 @@ package org.nygenome.als.graphdb.consumer;
 
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.DynamicRelationshipType;
@@ -16,10 +22,6 @@ import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import org.nygenome.als.graphdb.value.PsiMitab;
 import scala.Tuple2;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<Path,Path> {
 
@@ -39,7 +41,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
       Node proteinNodeB = resolveProteinNodeFunction.apply(ppi.interactorBId());
       //RelTypes relType = Utils.convertStringToRelType(ppi.interactionTypeList().head());
       // create Relationships within a Transaction
-      Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
+      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
       try  {
         RelationshipType interactionType = new DynamicRelationshipType(
             ppi.interactionTypeList().head()
@@ -92,13 +94,19 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
   public void accept(Path path) {
     Path headPath = Paths.get("/data/als/heading_intact.txt");
     accept(path, headPath);
+  }
 
+  public static void importData() {
+    Stopwatch sw = Stopwatch.createStarted();
+    FrameworkPropertyService.INSTANCE
+        .getOptionalPathProperty("PPI_INTACT_FILE")
+        .ifPresent(new IntactDataConsumer());
+    AsyncLoggingService.logInfo("read protein-protein interaction file: "
+        +sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
  // main method for stand alone testing
   // use short file: short_human_intact.tsv
   public static void main(String[] args) {
-
-
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("PPI_INTACT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer().accept(path, new IntactDataConsumer()));

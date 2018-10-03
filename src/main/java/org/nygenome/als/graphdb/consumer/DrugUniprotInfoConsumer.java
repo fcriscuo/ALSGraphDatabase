@@ -1,12 +1,14 @@
 package org.nygenome.als.graphdb.consumer;
 
+import com.google.common.base.Stopwatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import org.apache.log4j.Logger;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.LabelTypes;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
@@ -23,7 +25,7 @@ Will create new Protein nodes if uniprotId value is novel
 
 public class DrugUniprotInfoConsumer extends GraphDataConsumer  {
     private static final Logger log = Logger.getLogger(DrugUniprotInfoConsumer.class);
-    private final EmbeddedGraphApp.RelTypes eRelType;
+    private final ALSDatabaseImportApp.RelTypes eRelType;
     /*
     DRUG_TARGET,
 		DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER
@@ -54,7 +56,7 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer  {
         = (drugRelType, drug) -> {
         String uniprotId = drug.uniprotId();
         // check if the protein node exists
-        try ( Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get()) {
+        try ( Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get()) {
             Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
             // label the Protein Node with its drug characteristic
             addDrugTypeLabel(proteinNode);
@@ -76,7 +78,7 @@ Sample line from csv
 P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,Haemophilus influenzae (strain ATCC 51907 / DSM 11121 / KW20 / Rd),DB00303
      */
 
-    public DrugUniprotInfoConsumer(EmbeddedGraphApp.RelTypes eRelType) {
+    public DrugUniprotInfoConsumer(ALSDatabaseImportApp.RelTypes eRelType) {
         this.eRelType = eRelType;
     }
 
@@ -87,34 +89,53 @@ P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,H
             .forEach(uniProtDrug -> proteinDrugRelationshiprConsumer.accept(eRelType,uniProtDrug));
     }
 
-    /*
-     DRUG_TARGET_UNIRPOT_FILE = /data/als/drug_target_uniprot_links.csv
- DRUG_ENZYME_UNIRPOT_FILE = /data/als/drug_enzyme_uniprot_links.csv
- DRUG_TRANSPORTER_UNIRPOT_FILE = /data/als/drug_transporter_uniprot_links.csv
- DRUG_CARRIER_UNIRPOT_FILE = /data/als/drug_carrier_uniprot_links.csv
-     */
+    public static void importData() {
+      Stopwatch sw = Stopwatch.createStarted();
+      FrameworkPropertyService.INSTANCE
+          .getOptionalPathProperty("DRUG_TARGET_UNIRPOT_FILE")
+          .ifPresent(new DrugUniprotInfoConsumer(RelTypes.DRUG_TARGET));
+      // Drug Enzyme
+      FrameworkPropertyService.INSTANCE
+          .getOptionalPathProperty("DRUG_ENZYME_UNIRPOT_FILE")
+          .ifPresent(new DrugUniprotInfoConsumer(RelTypes.DRUG_ENZYME));
+      // Drug Transporter
+      FrameworkPropertyService.INSTANCE
+          .getOptionalPathProperty("DRUG_TRANSPORTER_UNIRPOT_FILE")
+          .ifPresent(new DrugUniprotInfoConsumer(RelTypes.DRUG_TRANSPORTER));
+      //Drug Carrier
+      FrameworkPropertyService.INSTANCE
+          .getOptionalPathProperty("DRUG_CARRIER_UNIRPOT_FILE")
+          .ifPresent(new DrugUniprotInfoConsumer(RelTypes.DRUG_CARRIER));
+      AsyncLoggingService.logInfo("drug data import completed: "
+      +sw.elapsed(TimeUnit.SECONDS) +" seconds");
+    }
+
+  private static void testImportData() {
+  // use generic TestGraphDataConsumer to test
+  // Drug target
+  FrameworkPropertyService.INSTANCE
+      .getOptionalPathProperty("DRUG_TARGET_UNIRPOT_FILE")
+      .ifPresent(path->
+          new TestGraphDataConsumer().accept(path,new DrugUniprotInfoConsumer(RelTypes.DRUG_TARGET)));
+  // Drug Enzyme
+  FrameworkPropertyService.INSTANCE
+      .getOptionalPathProperty("DRUG_ENZYME_UNIRPOT_FILE")
+      .ifPresent(path->
+          new TestGraphDataConsumer().accept(path,new DrugUniprotInfoConsumer(RelTypes.DRUG_ENZYME)));
+  // Drug Transporter
+  FrameworkPropertyService.INSTANCE
+      .getOptionalPathProperty("DRUG_TRANSPORTER_UNIRPOT_FILE")
+      .ifPresent(path->
+          new TestGraphDataConsumer().accept(path,new DrugUniprotInfoConsumer(RelTypes.DRUG_TRANSPORTER)));
+  //Drug Carrier
+  FrameworkPropertyService.INSTANCE
+      .getOptionalPathProperty("DRUG_CARRIER_UNIRPOT_FILE")
+      .ifPresent(path->
+          new TestGraphDataConsumer().accept(path,new DrugUniprotInfoConsumer(RelTypes.DRUG_CARRIER)));
+}
     public static void main(String[] args) {
-        // use generic TestGraphDataConsumer to test
-        // Drug target
-        FrameworkPropertyService.INSTANCE
-            .getOptionalPathProperty("DRUG_TARGET_UNIRPOT_FILE")
-            .ifPresent(path->
-                new TestGraphDataConsumer().accept(path,new DrugUniprotInfoConsumer(RelTypes.DRUG_TARGET)));
-        // Drug Enzyme
-        FrameworkPropertyService.INSTANCE
-            .getOptionalPathProperty("DRUG_ENZYME_UNIRPOT_FILE")
-            .ifPresent(path->
-                new TestGraphDataConsumer().accept(path,new DrugUniprotInfoConsumer(RelTypes.DRUG_ENZYME)));
-        // Drug Transporter
-        FrameworkPropertyService.INSTANCE
-            .getOptionalPathProperty("DRUG_TRANSPORTER_UNIRPOT_FILE")
-            .ifPresent(path->
-                new TestGraphDataConsumer().accept(path,new DrugUniprotInfoConsumer(RelTypes.DRUG_TRANSPORTER)));
-        //Drug Carrier
-        FrameworkPropertyService.INSTANCE
-            .getOptionalPathProperty("DRUG_CARRIER_UNIRPOT_FILE")
-            .ifPresent(path->
-                new TestGraphDataConsumer().accept(path,new DrugUniprotInfoConsumer(RelTypes.DRUG_CARRIER)));
+      DrugUniprotInfoConsumer.testImportData();
+
     }
 
     }

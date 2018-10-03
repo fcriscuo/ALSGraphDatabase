@@ -7,8 +7,8 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -27,7 +27,7 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
    lib.createBiDirectionalRelationship(snpNode,diseaseNode, relTuple,
         snpDiseaseRelMap,  RelTypes.IMPLICATED_IN,RelTypes.ASSOCIATED_VARIANT
         );
-    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
     try {
       snpDiseaseRelMap.get(relTuple).setProperty("ConfidenceLevel",snp.score());
       snpDiseaseRelMap.get(relTuple).setProperty("Reference",snp.source());

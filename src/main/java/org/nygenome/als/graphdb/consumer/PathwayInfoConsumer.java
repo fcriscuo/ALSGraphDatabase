@@ -1,13 +1,16 @@
 package org.nygenome.als.graphdb.consumer;
 
+import com.google.common.base.Stopwatch;
 import com.twitter.util.Duration;
 import com.twitter.util.Stopwatches;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -32,7 +35,7 @@ public class PathwayInfoConsumer extends GraphDataConsumer implements Consumer<P
           .accept(pathwayNode, new Tuple2<>("Pathway", pathway.eventName()));
      Tuple2<String,String> keyTuple = new Tuple2<>(pathway.uniprotId(),pathway.id());
       if(!proteinPathwayMap.containsKey(keyTuple)){
-        Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
+        Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
         Node proteinNode = resolveProteinNodeFunction.apply(pathway.uniprotId());
         try {
           proteinPathwayMap.put(keyTuple,
@@ -54,18 +57,28 @@ specified path
 
     @Override
     public void accept(@Nonnull Path path) {
-        Duration duration = Stopwatches.start().apply(); // start a stopwatch
         new TsvRecordStreamSupplier(path).get().map(Pathway::parseCSVRecord)
                 .filter(pathway -> !pathway.uniprotId().startsWith("A") )
                 .filter(pathway-> Pathway.isHuman(pathway.species()) )// only human entries
                 .forEach(pathwayConsumer);
-        AsyncLoggingService.logInfo("Processing pathway file " +path.toString()
-            +" required " +duration.inSeconds() +" seconds" );
+
 
     }
+    public static void importData() {
+      Stopwatch sw = Stopwatch.createStarted();
+      FrameworkPropertyService.INSTANCE
+          .getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
+          .ifPresent(new PathwayInfoConsumer());
+      AsyncLoggingService.logInfo("read pathway data: " +
+          sw.elapsed(TimeUnit.SECONDS) +" seconds");
+    }
+
     public static void main(String... args) {
-        FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
-                .ifPresent(new PathwayInfoConsumer());
+      FrameworkPropertyService.INSTANCE
+          .getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
+          .ifPresent(path->
+              new TestGraphDataConsumer().accept(path,new PathwayInfoConsumer()));
+
     }
 
 }

@@ -6,7 +6,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
@@ -31,9 +31,7 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
       Node rnaNode = resolveRnaTpmGeneNode.apply(tpm);
       // Optional.get is OK because we've already filtered on it presence
       // and this is a private method only called from processing the  stream of TSV records
-      Node hugoGeneNode = resolveGeneNodeFunction
-          .apply(tpm.uniProtMapping().get().geneSymbol());
-      Node ensemblGeneNode = resolveEnsemblGeneNodeFunction
+      Node ensemblGeneNode  = resolveGeneticEntityNodeFunction
           .apply(tpm.uniProtMapping().get().ensemblGeneId());
       Node ensemblTranscriptNode = resolveEnsemblTranscriptNodeFunction
           .apply(tpm.uniProtMapping().get().ensemblTranscriptId());
@@ -44,10 +42,11 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
           new Tuple2<>(tpm.uniProtMapping().get().uniProtId(), tpm.id()),
           proteinTPMRelMap, RelTypes.EXPRESSION_LEVEL, RelTypes.EXPRESSED_PROTEIN
       );
-      lib.createBiDirectionalRelationship(proteinNode, hugoGeneNode,
-          new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
-              tpm.uniProtMapping().get().geneSymbol()), proteinXrefRelMap, RelTypes.REFERENCES,
-          RelTypes.REFERENCES);
+      // TODO: add xref to HUGO
+//      lib.createBiDirectionalRelationship(proteinNode, hugoGeneNode,
+//          new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
+//              tpm.uniProtMapping().get().geneSymbol()), proteinXrefRelMap, RelTypes.REFERENCES,
+//          RelTypes.REFERENCES);
       lib.createBiDirectionalRelationship(proteinNode, ensemblGeneNode,
           new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
               tpm.uniProtMapping().get().ensemblGeneId()), proteinXrefRelMap, RelTypes.REFERENCES,

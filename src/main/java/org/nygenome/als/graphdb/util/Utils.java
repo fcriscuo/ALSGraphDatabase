@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.parboiled.common.Preconditions;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 
 public class Utils {
 

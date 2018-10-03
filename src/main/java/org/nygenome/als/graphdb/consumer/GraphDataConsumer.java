@@ -13,8 +13,8 @@ import javax.annotation.Nonnull;
 import org.eclipse.collections.impl.factory.Maps;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.LabelTypes;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.service.GraphComponentFactory;
 import org.nygenome.als.graphdb.util.StringUtils;
@@ -52,12 +52,12 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
       .expireAfterWrite(5, TimeUnit.MINUTES)
       .build(uniprotId -> GraphComponentFactory.INSTANCE.getProteinNodeFunction
           .apply(uniprotId));
-  // Gene Node cache
-  private LoadingCache<String, Node> geneNodeCache = Caffeine.newBuilder()
+  // GeneticEntity Node cache
+  private LoadingCache<String, Node> geneticEntityNodeCache = Caffeine.newBuilder()
       .maximumSize(1_000)
       .expireAfterWrite(5, TimeUnit.MINUTES)
-      .build(hugoId -> GraphComponentFactory.INSTANCE.getGeneNodeFunction
-          .apply(hugoId));
+      .build(ensemblGeneId -> GraphComponentFactory.INSTANCE.getGeneticEntityNodeFunction
+          .apply(ensemblGeneId));
   //DrugBank Node Cache
   private LoadingCache<String, Node> drugBankNodeCache = Caffeine.newBuilder()
       .maximumSize(1_000)
@@ -133,6 +133,10 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Map<Tuple2<String, String>, Relationship> proteinDiseaseRelMap = Maps.mutable.empty();
   protected Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap = Maps.mutable
       .empty();
+  protected Map<Tuple2<String, String>, Relationship> proteinTranscriptMap = Maps.mutable
+      .empty();
+  protected Map<Tuple2<String, String>, Relationship> geneTranscriptMap = Maps.mutable
+      .empty();
   protected Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = Maps.mutable
       .empty();
   protected Map<Tuple2<String, String>, Relationship> alsWhiteListRelMap = Maps.mutable.empty();
@@ -167,13 +171,12 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Function<RnaTpmGene, Node> resolveRnaTpmGeneNode = (rnaTpmGene) ->
       rnaTpmGeneNodeCache.get(rnaTpmGene);
 
-
   /*
   Protected Function that resolves a Gene by either finding an existing Node
-  with a specified gene symbol or creating a new Node for that symbol
+  with a specified ensembl gene id or creating a new Node for that id
    */
-  protected Function<String, Node> resolveGeneNodeFunction = (hugoId) ->
-      geneNodeCache.get(hugoId);
+  protected Function<String, Node> resolveGeneticEntityNodeFunction = (geneticEntityId) ->
+      geneticEntityNodeCache.get(geneticEntityId);
 
   /*
   Protected Function that resolves a ensembl Gene xref by either finding an

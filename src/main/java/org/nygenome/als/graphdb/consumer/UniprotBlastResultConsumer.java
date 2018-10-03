@@ -7,8 +7,8 @@ import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
@@ -19,7 +19,7 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
 
   private Consumer<UniProtBlastResult> uniProtBlastResultConsumer = (blastResult) -> {
     // create a bi-directional Relationship between both proteins
-    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
     try {
       Node sourceNode = resolveProteinNodeFunction.apply(blastResult.sourceUniprotId());
       Node hitNode = resolveProteinNodeFunction.apply(blastResult.hitUniprotId());

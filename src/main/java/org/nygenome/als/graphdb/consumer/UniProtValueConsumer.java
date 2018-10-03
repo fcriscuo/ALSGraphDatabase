@@ -1,10 +1,13 @@
 package org.nygenome.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.StringUtils;
@@ -87,15 +90,23 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     // add Gene Ontology associations
     geneOntologyListConsumer.accept(upv);
     // add ensembl trancripts
-    createEnsemblTranscriptNodes(upv);
+    //createEnsemblTranscriptNodes(upv);
     // add drugs associated with this protein
     drugBankIdConsumer.accept(upv);
 
   });
-
-  public static void main(String[] args) {
+  public static void importData() {
+    Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIPROT_HUMAN_FILE")
         .ifPresent(new UniProtValueConsumer());
+    AsyncLoggingService.logInfo("read uniprot data: " +
+        sw.elapsed(TimeUnit.SECONDS) +" seconds.");
+  }
+
+  public static void main(String[] args) {
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_UNIPROT_HUMAN_FILE")
+        .ifPresent(path ->
+            new TestGraphDataConsumer().accept(path, new UniProtValueConsumer()));
   }
 
 

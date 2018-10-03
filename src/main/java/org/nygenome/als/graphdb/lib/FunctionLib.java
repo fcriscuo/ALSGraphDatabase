@@ -18,9 +18,9 @@ import java.util.stream.Stream;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.LabelTypes;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
 import scala.collection.immutable.List;
@@ -41,7 +41,7 @@ public class FunctionLib {
         Tuple2<String, String> keyTuple,
         Map<Tuple2<String, String>, Relationship> relMap, RelTypes relTypeA, RelTypes relTypeB) {
         if (!relMap.containsKey(keyTuple)) {
-            Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
+            Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
             try {
                 Relationship relA = nodeA.createRelationshipTo(nodeB, relTypeA);
                 Relationship relB = nodeB.createRelationshipTo(nodeA, relTypeB);
@@ -69,7 +69,7 @@ public class FunctionLib {
         Tuple2<String, String> keyTuple,
         Map<Tuple2<String, String>, Relationship> relMap, RelTypes relTypeA) {
         if (!relMap.containsKey(keyTuple)) {
-            Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
+            Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
             try {
                 Relationship relA = nodeA.createRelationshipTo(nodeB, relTypeA);
                 relMap.put(keyTuple, relA);
@@ -119,7 +119,7 @@ public class FunctionLib {
   */
     public  BiConsumer<Node, Tuple2<String, String>> nodePropertyValueConsumer = (node, propertyTuple) -> {
         if (!Strings.isNullOrEmpty(propertyTuple._2())) {
-            Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
+            Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
             try {
                 node.setProperty(propertyTuple._1(), propertyTuple._2());
                 tx.success();
@@ -138,7 +138,7 @@ public class FunctionLib {
      */
     public BiConsumer<Node, Tuple2<String, List<String>>> nodePropertyValueListConsumer = (node, propertyListTuple) -> {
         if (propertyListTuple._2() != null && propertyListTuple._2().size() > 0) {
-            Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
+            Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
             try {
                 node.setProperty(propertyListTuple._1(), propertyListTuple._2().head());
                 tx.success();

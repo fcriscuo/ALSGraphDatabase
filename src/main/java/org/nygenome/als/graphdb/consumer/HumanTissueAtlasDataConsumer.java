@@ -1,12 +1,14 @@
 package org.nygenome.als.graphdb.consumer;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
-import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -77,7 +79,7 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
         ht.resolveTissueCellTypeLabel());
     if (!proteinTissRelMap.containsKey(keyTuple)) {
       Node proteinNode = resolveProteinNodeFunction.apply(ht.uniprotId());
-      Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
+      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
       try {// complete uni-directional relationship between protein and tissue
         Relationship rel = proteinNode.createRelationshipTo(tissueNode, RelTypes.TISSUE_ENHANCED);
         rel.setProperty("Level", ht.level());
@@ -96,7 +98,13 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
       }
     }
   };
-
+public static void importData() {
+  Stopwatch sw = Stopwatch.createStarted();
+  FrameworkPropertyService.INSTANCE.getOptionalPathProperty("HUMAN_TISSUE_ATLAS_FILE")
+      .ifPresent( new HumanTissueAtlasDataConsumer());
+  AsyncLoggingService.logInfo("read the Human Tissue Atlas data: " +
+      sw.elapsed(TimeUnit.SECONDS) +" seconds");
+}
 
 // main method for standalone testing
     public static void main (String[]args){
