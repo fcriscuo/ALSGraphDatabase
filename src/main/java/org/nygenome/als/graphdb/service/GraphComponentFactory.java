@@ -1,16 +1,14 @@
 package org.nygenome.als.graphdb.service;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.eclipse.collections.impl.factory.Maps;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.LabelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.value.GeneOntology;
@@ -31,8 +29,8 @@ public enum GraphComponentFactory {
 
   private FunctionLib lib = new FunctionLib();
   private final Supplier<Node> unknownNodeSupplier = () -> {
-    try (Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get()) {
-      return EmbeddedGraph.getGraphInstance().createNode(LabelTypes.Unknown);
+    try (Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get()) {
+      return EmbeddedGraphApp.getGraphInstance().createNode(LabelTypes.Unknown);
     }
   };
 
@@ -49,16 +47,14 @@ public enum GraphComponentFactory {
   private Map<String, Node> sampleMap = Maps.mutable.empty();
   private Map<String,Node>  snpMap = Maps.mutable.empty();
 
-
-
   /*
   SNP Node
    */
 
   private Function<String,Node> createSnpNodeFunction = (snpId) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     try {
-      Node snpNode = EmbeddedGraph.getGraphInstance()
+      Node snpNode = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.Variant);
       snpNode.addLabel(LabelTypes.SNP);
       lib.nodePropertyValueConsumer
@@ -84,9 +80,9 @@ public enum GraphComponentFactory {
    */
   private Function<String,Node> createSampleNodeFunction = (extSampleId) ->
   {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     try {
-      Node sampleNode = EmbeddedGraph.getGraphInstance()
+      Node sampleNode = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.Sample);
       lib.nodePropertyValueConsumer
           .accept(sampleNode, new Tuple2<>("ExternalSampleId", extSampleId));
@@ -110,9 +106,9 @@ public enum GraphComponentFactory {
    */
 
   private Function<String, Node> createSubjectNodeFunction = (extSubjectId) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     try {
-      Node subjectNode = EmbeddedGraph.getGraphInstance()
+      Node subjectNode = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.Subject);
       lib.nodePropertyValueConsumer
           .accept(subjectNode, new Tuple2<>("ExternalSubjectId", extSubjectId));
@@ -137,9 +133,9 @@ public enum GraphComponentFactory {
 
    */
   private Function<String, Node> createHumanTissueNodeFunction = (id) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     try {
-      Node tissueNode = EmbeddedGraph.getGraphInstance()
+      Node tissueNode = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.Tissue);
       lib.nodePropertyValueConsumer.accept(tissueNode, new Tuple2<>("ID", id));
       tissueMap.put(id, tissueNode);
@@ -163,9 +159,9 @@ public enum GraphComponentFactory {
   Pathway Node
    */
   private Function<String, Node> createPathwayNodeFunction = (pathwayId) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     try {
-      Node node = EmbeddedGraph.getGraphInstance()
+      Node node = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.Pathway);
       pathwayMap.put(pathwayId, node);
       lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("ReactomeId", pathwayId));
@@ -189,9 +185,9 @@ public enum GraphComponentFactory {
   Create a Disease node
    */
   private Function<String, Node> createDiseaseNodeFunction = (diseaseId) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     try {
-      Node diseaseNode = EmbeddedGraph.getGraphInstance()
+      Node diseaseNode = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.Disease);
       lib.nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseId", diseaseId));
       diseaseMap.put(diseaseId, diseaseNode);
@@ -216,10 +212,10 @@ public enum GraphComponentFactory {
   Create an RnaTpmGene node
    */
   private Function<RnaTpmGene, Node> createRnaTpmGeneNodeFunction = (rna) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     String id = rna.id();
     try {
-      Node node = EmbeddedGraph.getGraphInstance()
+      Node node = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.Expression);
       node.addLabel(LabelTypes.TPM);
 
@@ -250,9 +246,9 @@ public enum GraphComponentFactory {
   Create a GeneOntology Node and set its properties
    */
   private Function<GeneOntology, Node> createGeneOntologyNodeFunction = (go) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     try {
-      Node node = EmbeddedGraph.getGraphInstance()
+      Node node = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.GeneOntology);
       node.addLabel(lib.resolveGeneOntologyPrincipleFunction.apply(go.goAspect()));
       lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneOntologyId", go.goId()));
@@ -294,11 +290,11 @@ public enum GraphComponentFactory {
   Private Function to create a new DrugBank node
    */
   private Function<String, Node> createDrugBankNodeFunction = (dbId) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     AsyncLoggingService.logInfo("createDrugBankNode invoked for DrunkBank id  " +
         dbId);
     try {
-      Node node = EmbeddedGraph.getGraphInstance()
+      Node node = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.Drug);
       lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugBankId",
           dbId));
@@ -325,11 +321,11 @@ public enum GraphComponentFactory {
   Private Function to create a new Protein Node
    */
   private Function<String, Node> createProteinNodeFunction = (uniprotId) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     AsyncLoggingService.logInfo("createProteinNodeFunction invoked for uniprot protein id  " +
         uniprotId);
     try {
-      Node node = EmbeddedGraph.getGraphInstance()
+      Node node = EmbeddedGraphApp.getGraphInstance()
           .createNode(LabelTypes.Protein);
       lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtId", uniprotId));
       proteinMap.put(uniprotId, node);
@@ -352,13 +348,13 @@ public enum GraphComponentFactory {
   Private Function to create a new Xref Node
    */
   private Function<Tuple2<String, LabelTypes>, Node> createXrefNodeFunction = (xrefTuple) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     String xrefId = xrefTuple._1();
     LabelTypes type = xrefTuple._2();
     try {
       AsyncLoggingService.logInfo("createXrefNodeFunction invoked for XREF id  " +
           xrefId + " type " + type.toString());
-      Node node = EmbeddedGraph.getGraphInstance().createNode(LabelTypes.Xref);
+      Node node = EmbeddedGraphApp.getGraphInstance().createNode(LabelTypes.Xref);
       // add a type (e.g. ensembl, pubmed) label
       node.addLabel(type);
       lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Xref Id", xrefId));
@@ -386,11 +382,11 @@ public enum GraphComponentFactory {
  A second label identifies the genetic entity as a Gene
   */
   private Function<String, Node> createGeneNodeFunction = (hugoId) -> {
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     try {
       AsyncLoggingService.logInfo("createGeneNodeFunction invoked for HUGO gene name  " +
           hugoId);
-      Node node = EmbeddedGraph.getGraphInstance().createNode(LabelTypes.GeneticEntity);
+      Node node = EmbeddedGraphApp.getGraphInstance().createNode(LabelTypes.GeneticEntity);
       node.addLabel(LabelTypes.Gene);
       lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("GeneSymbol", hugoId));
       geneticEntityMap.put(hugoId, node);

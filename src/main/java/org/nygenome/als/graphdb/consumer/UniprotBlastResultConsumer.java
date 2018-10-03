@@ -7,8 +7,8 @@ import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
@@ -19,17 +19,17 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
 
   private Consumer<UniProtBlastResult> uniProtBlastResultConsumer = (blastResult) -> {
     // create a bi-directional Relationship between both proteins
-    Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+    Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
     try {
       Node sourceNode = resolveProteinNodeFunction.apply(blastResult.sourceUniprotId());
       Node hitNode = resolveProteinNodeFunction.apply(blastResult.hitUniprotId());
       Tuple2<String,String>  keyTuple = new Tuple2<>(blastResult.sourceUniprotId(),blastResult.hitUniprotId() );
       // create or find existing Relationship pair
-       Tuple2<Relationship, Relationship>  sourceHitTuple =  createBiDirectionalRelationship(sourceNode,hitNode,keyTuple,sequenceSimMap,
+       Tuple2<Relationship, Relationship>  sourceHitTuple =  lib.createBiDirectionalRelationship(sourceNode,hitNode,keyTuple,sequenceSimMap,
             RelTypes.SEQ_SIM, RelTypes.SEQ_SIM);
-       relationshipPairPropertyConsumer.accept(sourceHitTuple, new Tuple2<>("BLAST score",
+       lib.relationshipPairPropertyConsumer.accept(sourceHitTuple, new Tuple2<>("BLAST score",
            String.valueOf(blastResult.score())));
-      relationshipPairPropertyConsumer.accept(sourceHitTuple, new Tuple2<>("eValue",
+      lib.relationshipPairPropertyConsumer.accept(sourceHitTuple, new Tuple2<>("eValue",
          blastResult.eValue()));
       tx.success();
     } catch(Exception e){

@@ -3,13 +3,11 @@ package org.nygenome.als.graphdb.consumer;
 import com.twitter.util.Duration;
 import com.twitter.util.Stopwatches;
 import java.util.function.Consumer;
-import org.apache.commons.csv.CSVRecord;
 
-import lombok.extern.log4j.Log4j;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -34,7 +32,7 @@ public class PathwayInfoConsumer extends GraphDataConsumer implements Consumer<P
           .accept(pathwayNode, new Tuple2<>("Pathway", pathway.eventName()));
      Tuple2<String,String> keyTuple = new Tuple2<>(pathway.uniprotId(),pathway.id());
       if(!proteinPathwayMap.containsKey(keyTuple)){
-        Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+        Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
         Node proteinNode = resolveProteinNodeFunction.apply(pathway.uniprotId());
         try {
           proteinPathwayMap.put(keyTuple,

@@ -5,14 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
-import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import org.nygenome.als.graphdb.value.RnaTpmGene;
@@ -33,8 +28,6 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
   It will create bidirectional Relationships between all three Node types
    */
   private Consumer<RnaTpmGene> rnaTpmGeneConsumer = (tpm) -> {
-
-    try (Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get()) {
       Node rnaNode = resolveRnaTpmGeneNode.apply(tpm);
       // Optional.get is OK because we've already filtered on it presence
       // and this is a private method only called from processing the  stream of TSV records
@@ -47,27 +40,24 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
       Node proteinNode = resolveProteinNodeFunction
           .apply(tpm.uniProtMapping().get().uniProtId());
       // establish a relationship between the RNA node and the protein node
-      createBiDirectionalRelationship(proteinNode, rnaNode,
+      lib.createBiDirectionalRelationship(proteinNode, rnaNode,
           new Tuple2<>(tpm.uniProtMapping().get().uniProtId(), tpm.id()),
           proteinTPMRelMap, RelTypes.EXPRESSION_LEVEL, RelTypes.EXPRESSED_PROTEIN
       );
-      createBiDirectionalRelationship(proteinNode, hugoGeneNode,
+      lib.createBiDirectionalRelationship(proteinNode, hugoGeneNode,
           new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
               tpm.uniProtMapping().get().geneSymbol()), proteinXrefRelMap, RelTypes.REFERENCES,
           RelTypes.REFERENCES);
-      createBiDirectionalRelationship(proteinNode, ensemblGeneNode,
+      lib.createBiDirectionalRelationship(proteinNode, ensemblGeneNode,
           new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
               tpm.uniProtMapping().get().ensemblGeneId()), proteinXrefRelMap, RelTypes.REFERENCES,
           RelTypes.REFERENCES);
-      createBiDirectionalRelationship(proteinNode, ensemblTranscriptNode,
+      lib.createBiDirectionalRelationship(proteinNode, ensemblTranscriptNode,
           new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
               tpm.uniProtMapping().get().ensemblTranscriptId()), proteinXrefRelMap,
           RelTypes.REFERENCES,
           RelTypes.REFERENCES);
-      tx.success();
-    } catch ( Exception e ) {
-      AsyncLoggingService.logError(e.getMessage());
-    }
+
   };
 
   @Override

@@ -4,9 +4,9 @@ import java.util.function.BiConsumer;
 import org.apache.log4j.Logger;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.EmbeddedGraph.LabelTypes;
-import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.LabelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
@@ -23,7 +23,7 @@ Will create new Protein nodes if uniprotId value is novel
 
 public class DrugUniprotInfoConsumer extends GraphDataConsumer  {
     private static final Logger log = Logger.getLogger(DrugUniprotInfoConsumer.class);
-    private final EmbeddedGraph.RelTypes eRelType;
+    private final EmbeddedGraphApp.RelTypes eRelType;
     /*
     DRUG_TARGET,
 		DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER
@@ -54,7 +54,7 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer  {
         = (drugRelType, drug) -> {
         String uniprotId = drug.uniprotId();
         // check if the protein node exists
-        try ( Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get()) {
+        try ( Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get()) {
             Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
             // label the Protein Node with its drug characteristic
             addDrugTypeLabel(proteinNode);
@@ -76,7 +76,7 @@ Sample line from csv
 P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,Haemophilus influenzae (strain ATCC 51907 / DSM 11121 / KW20 / Rd),DB00303
      */
 
-    public DrugUniprotInfoConsumer(EmbeddedGraph.RelTypes eRelType) {
+    public DrugUniprotInfoConsumer(EmbeddedGraphApp.RelTypes eRelType) {
         this.eRelType = eRelType;
     }
 

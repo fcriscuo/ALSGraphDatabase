@@ -11,11 +11,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import org.apache.parquet.Strings;
 import org.parboiled.common.Preconditions;
-import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
 
 public class Utils {
 

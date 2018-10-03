@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.StringUtils;
@@ -16,6 +16,7 @@ import scala.Tuple2;
 
 public class UniProtValueConsumer extends GraphDataConsumer {
 
+  public UniProtValueConsumer() {}
   @Override
   public void accept(Path path) {
     Preconditions.checkArgument(path != null);
@@ -31,9 +32,10 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     if (!proteinGeneOntologyRelMap.containsKey(relKey)) {
       Node goNode = resolveGeneOntologyNodeFunction.apply(go);
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
-      proteinGeneOntologyRelMap.put(relKey,
-          proteinNode.createRelationshipTo(goNode, RelTypes.GO_CLASSIFICATION)
-      );
+      lib.createUniDirectionalRelationship(proteinNode,goNode,
+          new Tuple2<>(uniprotId, go.goId()),proteinGeneOntologyRelMap,
+          RelTypes.GO_CLASSIFICATION);
+
       AsyncLoggingService.logInfo("Created relationship between protein " + uniprotId
           + " and GO id: " + go.goId());
     }
@@ -66,6 +68,8 @@ public class UniProtValueConsumer extends GraphDataConsumer {
       lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
       lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
       lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("GeneSymbol", upv.geneNameList()));
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Mass", upv.mass()));
+    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Length", upv.length()));
       AsyncLoggingService.logInfo(">>>Created Protein node for " +upv.uniprotId());
 
   };
@@ -90,7 +94,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
   });
 
   public static void main(String[] args) {
-    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_UNIPROT_HUMAN_FILE")
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIPROT_HUMAN_FILE")
         .ifPresent(new UniProtValueConsumer());
   }
 

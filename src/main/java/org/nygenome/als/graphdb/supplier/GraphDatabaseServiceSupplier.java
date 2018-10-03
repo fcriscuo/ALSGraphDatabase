@@ -40,7 +40,6 @@ public class GraphDatabaseServiceSupplier implements Supplier<GraphDatabaseServi
         graphDb.shutdown();
       }
     });
-
   }
 
   @Override

@@ -5,8 +5,8 @@ import com.google.common.base.Preconditions;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.service.UniProtMappingService;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
@@ -42,7 +42,7 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
    */
   private Consumer<GeneDiseaseAssociation> diseaseAssociationConsumer = (gda) -> {
 
-    try ( Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get()) {
+    try ( Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get()) {
       String uniprotId = UniProtMappingService.INSTANCE
           .resolveUniProtMappingFromGeneSymbol(gda.geneSymbol())
           .get().uniProtId();   // get from Optional is OK because of previous filter
@@ -51,7 +51,7 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
       String diseaseId = gda.diseaseId();
       Node diseaseNode = resolveDiseaseNodeFunction.apply(diseaseId);
-      nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseName", gda.diseaseName()));
+      lib.nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseName", gda.diseaseName()));
       // create bi-directional relationships between these nodes
       // protein - gene
       lib.createBiDirectionalRelationship(proteinNode, geneNode,

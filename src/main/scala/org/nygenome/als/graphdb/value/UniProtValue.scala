@@ -11,7 +11,7 @@ case class UniProtValue (
                           goCellComponentList:List[String], dieaseList:List[String],
                           tissueList:List[String], goMolFuncList:List[String],
                           phenotype:String, drugBankIdList:List[String], reactomeIdList:List[String],
-                          pubMedIdList:List[String], mass:Double, length:Int, ensemblTranscriptList:List[String]
+                          pubMedIdList:List[String], mass:String, length:String, ensemblTranscriptList:List[String]
                         ) {
 
 }
@@ -36,9 +36,9 @@ object UniProtValue extends ValueTrait {
       parseStringOnSemiColonFunction.apply(record.get("Cross-reference (DrugBank)")),
       parseStringOnSemiColonFunction.apply(record.get("Cross-reference (Reactome)")),
       parseStringOnSemiColonFunction.apply(record.get("PubMed ID")),
-      parseDoubleStringFunction.apply(record.get("Mass")),
-      record.get("Length").toInt
-      , parseStringOnSemiColonFunction.apply(record.get("Ensembl transcript"))
+      record.get("Mass"),
+      record.get("Length"),
+      parseStringOnSemiColonFunction.apply(record.get("Ensembl transcript"))
     )
   }
 }

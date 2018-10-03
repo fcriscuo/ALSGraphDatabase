@@ -8,7 +8,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.EmbeddedGraph;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.DynamicRelationshipType;
@@ -39,7 +39,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
       Node proteinNodeB = resolveProteinNodeFunction.apply(ppi.interactorBId());
       //RelTypes relType = Utils.convertStringToRelType(ppi.interactionTypeList().head());
       // create Relationships within a Transaction
-      Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+      Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
       try  {
         RelationshipType interactionType = new DynamicRelationshipType(
             ppi.interactionTypeList().head()
@@ -99,7 +99,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
   public static void main(String[] args) {
 
 
-    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_PPI_INTACT_FILE")
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("PPI_INTACT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer().accept(path, new IntactDataConsumer()));
   }

@@ -5,8 +5,8 @@ import java.util.function.BiConsumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.EmbeddedGraph;
-import org.nygenome.als.graphdb.EmbeddedGraph.RelTypes;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp;
+import org.nygenome.als.graphdb.app.EmbeddedGraphApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -14,7 +14,6 @@ import org.nygenome.als.graphdb.value.HumanTissueAtlas;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import scala.Tuple2;
@@ -78,7 +77,7 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
         ht.resolveTissueCellTypeLabel());
     if (!proteinTissRelMap.containsKey(keyTuple)) {
       Node proteinNode = resolveProteinNodeFunction.apply(ht.uniprotId());
-      Transaction tx = EmbeddedGraph.INSTANCE.transactionSupplier.get();
+      Transaction tx = EmbeddedGraphApp.INSTANCE.transactionSupplier.get();
       try {// complete uni-directional relationship between protein and tissue
         Relationship rel = proteinNode.createRelationshipTo(tissueNode, RelTypes.TISSUE_ENHANCED);
         rel.setProperty("Level", ht.level());
