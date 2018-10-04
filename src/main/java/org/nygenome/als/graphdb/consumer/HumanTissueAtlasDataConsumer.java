@@ -61,7 +61,7 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
     Node transcripNode = resolveEnsemblTranscriptNodeFunction.apply(transcriptId);
     Node tissueNode = resolveHumanTissueNodeFunction.apply(tissueId);
         lib.createBiDirectionalRelationship(tissueNode, transcripNode, new Tuple2<>(transcriptId,tissueId),
-          transcriptTissueMap,RelTypes.TRANSCRIPT,RelTypes.TISSUE_ENHANCED);
+          transcriptTissueMap, RelTypes.TRANSCRIPT,RelTypes.TISSUE_ENHANCED);
         AsyncLoggingService.logInfo("created transcript-tissue relationship for transcript "
         +transcriptId +" tissue " +tissueId);
       };

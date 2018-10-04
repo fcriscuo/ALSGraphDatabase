@@ -1,6 +1,5 @@
 package org.nygenome.als.graphdb.service;
 
-import com.google.common.base.Strings;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -12,10 +11,9 @@ import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
+import org.nygenome.als.graphdb.value.RnaTpmGene;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.value.GeneOntology;
-import org.nygenome.als.graphdb.value.RnaTpmGene;
-import org.nygenome.als.graphdb.value.UniProtMapping;
 import scala.Tuple2;
 
 /**

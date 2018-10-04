@@ -1,8 +1,6 @@
 package org.nygenome.als.graphdb.consumer;
 
 import com.google.common.base.Stopwatch;
-import com.twitter.util.Duration;
-import com.twitter.util.Stopwatches;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 

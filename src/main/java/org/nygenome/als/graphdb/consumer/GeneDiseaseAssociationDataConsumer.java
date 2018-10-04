@@ -8,12 +8,12 @@ import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.value.UniProtMapping;
 import org.nygenome.als.graphdb.service.UniProtMappingService;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.value.GeneDiseaseAssociation;
-import org.nygenome.als.graphdb.value.UniProtMapping;
 import scala.Tuple2;
 import java.nio.file.Path;
 
@@ -57,10 +57,10 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
       lib.nodePropertyValueConsumer
           .accept(diseaseNode, new Tuple2<>("DiseaseName", gda.diseaseName()));
       // create bi-directional relationships between these nodes
-      // protein - gene
+      // protein <-> transcript
       lib.createBiDirectionalRelationship(proteinNode, transcriptNode,
           new Tuple2<>(uniprotId, upm.ensemblTranscriptId()),
-          proteinTranscriptMap, RelTypes.ENCODED_BY, RelTypes.EXPRESSED_PROTEIN
+          proteinGeneticEntityMap, RelTypes.ENCODED_BY, RelTypes.EXPRESSED_PROTEIN
       );
       lib.createBiDirectionalRelationship(geneNode,transcriptNode,
           new Tuple2<>(upm.ensemblGeneId(),upm.ensemblTranscriptId()),

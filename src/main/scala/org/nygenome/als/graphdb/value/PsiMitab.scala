@@ -1,6 +1,5 @@
 package org.nygenome.als.graphdb.value
 
-
 import org.apache.commons.csv.CSVRecord
 import org.apache.spark.sql.{Encoder, Encoders}
 import org.apache.spark.sql.types.{DataTypes, StructField, StructType}

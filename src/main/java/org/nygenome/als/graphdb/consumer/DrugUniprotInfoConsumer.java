@@ -25,7 +25,7 @@ Will create new Protein nodes if uniprotId value is novel
 
 public class DrugUniprotInfoConsumer extends GraphDataConsumer  {
     private static final Logger log = Logger.getLogger(DrugUniprotInfoConsumer.class);
-    private final ALSDatabaseImportApp.RelTypes eRelType;
+    private final RelTypes eRelType;
     /*
     DRUG_TARGET,
 		DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER

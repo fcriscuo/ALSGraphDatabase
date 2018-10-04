@@ -1,18 +1,9 @@
 package org.nygenome.als.graphdb.util;
 
-import com.google.common.io.Files;
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
 import com.twitter.logging.Logger;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;

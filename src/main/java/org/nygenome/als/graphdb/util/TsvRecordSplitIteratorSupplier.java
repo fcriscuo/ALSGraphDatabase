@@ -4,11 +4,9 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
-import com.google.common.base.Strings;
 import com.twitter.logging.Logger;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import java.io.FileReader;
@@ -17,8 +15,6 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.Spliterators;

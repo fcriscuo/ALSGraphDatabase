@@ -1,6 +1,5 @@
 package org.nygenome.als.graphdb.value;
 
-import com.twitter.logging.Logger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;

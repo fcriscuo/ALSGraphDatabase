@@ -55,4 +55,5 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
         .ifPresent(path ->
             new TestGraphDataConsumer().accept(path,new VariantDiseaseAssociationDataConsumer()));
   }
+
 }

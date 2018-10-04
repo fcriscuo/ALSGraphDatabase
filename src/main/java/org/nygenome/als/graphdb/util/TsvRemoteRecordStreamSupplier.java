@@ -1,19 +1,8 @@
 package org.nygenome.als.graphdb.util;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -22,7 +11,6 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.Logger;
 import org.nygenome.als.graphdb.value.HumanTissueAtlas;
-import org.nygenome.als.graphdb.value.PsiMitab;
 
 /*
 A Supplier that will open a TSV file on a remote SFTP server and

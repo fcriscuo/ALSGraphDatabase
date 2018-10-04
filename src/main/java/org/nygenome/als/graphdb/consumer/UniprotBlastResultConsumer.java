@@ -9,10 +9,10 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import org.nygenome.als.graphdb.value.UniProtBlastResult;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class UniprotBlastResultConsumer extends GraphDataConsumer {

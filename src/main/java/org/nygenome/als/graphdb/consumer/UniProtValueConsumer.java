@@ -8,12 +8,12 @@ import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.UniProtValue;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import org.nygenome.als.graphdb.util.StringUtils;
+import org.nygenome.als.graphdb.value.GeneOntology;
 import scala.Tuple2;
 
 

@@ -14,10 +14,10 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.nygenome.als.graphdb.util.DynamicReaaltionshipTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.DynamicRelationshipType;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import org.nygenome.als.graphdb.value.PsiMitab;
@@ -43,7 +43,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
       // create Relationships within a Transaction
       Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
       try  {
-        RelationshipType interactionType = new DynamicRelationshipType(
+        RelationshipType interactionType = new DynamicReaaltionshipTypes(
             ppi.interactionTypeList().head()
         );
         proteinProteinIntactMap.put(abTuple,

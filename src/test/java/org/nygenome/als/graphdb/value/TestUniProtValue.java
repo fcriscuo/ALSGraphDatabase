@@ -2,8 +2,8 @@ package org.nygenome.als.graphdb.value;
 
 
 import java.util.function.BiConsumer;
-import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
+import org.nygenome.als.graphdb.util.StringUtils;
 import scala.Tuple2;
 import scala.collection.immutable.List;
 

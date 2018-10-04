@@ -133,8 +133,6 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Map<Tuple2<String, String>, Relationship> proteinDiseaseRelMap = Maps.mutable.empty();
   protected Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap = Maps.mutable
       .empty();
-  protected Map<Tuple2<String, String>, Relationship> proteinTranscriptMap = Maps.mutable
-      .empty();
   protected Map<Tuple2<String, String>, Relationship> geneTranscriptMap = Maps.mutable
       .empty();
   protected Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = Maps.mutable

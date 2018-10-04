@@ -8,10 +8,10 @@ import java.util.function.Predicate;
 import org.neo4j.graphdb.Node;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.StringSubjectProperty;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class SubjectPropertyConsumer extends GraphDataConsumer {

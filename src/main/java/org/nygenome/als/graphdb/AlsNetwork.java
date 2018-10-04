@@ -3,8 +3,11 @@ package org.nygenome.als.graphdb;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.nygenome.als.graphdb.consumer.*;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+import org.nygenome.als.graphdb.consumer.DrugUniprotInfoConsumer;
+import org.nygenome.als.graphdb.consumer.HumanTissueAtlasDataConsumer;
+import org.nygenome.als.graphdb.consumer.IntactDataConsumer;
+import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import proteinFramework.ProteinNetworkOrig;
 

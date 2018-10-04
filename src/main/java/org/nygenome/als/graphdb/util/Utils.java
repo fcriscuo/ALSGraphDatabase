@@ -12,8 +12,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
-import org.parboiled.common.Preconditions;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+import org.parboiled.common.Preconditions;
 
 public class Utils {
 
