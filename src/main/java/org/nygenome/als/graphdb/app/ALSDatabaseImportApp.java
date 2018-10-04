@@ -11,11 +11,16 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.nygenome.als.graphdb.consumer.AlsGeneConsumer;
+import org.nygenome.als.graphdb.consumer.AlsSnpConsumer;
+import org.nygenome.als.graphdb.consumer.GeneDiseaseAssociationDataConsumer;
 import org.nygenome.als.graphdb.consumer.IntactDataConsumer;
 import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
 import org.nygenome.als.graphdb.consumer.DrugUniprotInfoConsumer;
 import org.nygenome.als.graphdb.consumer.HumanTissueAtlasDataConsumer;
+import org.nygenome.als.graphdb.consumer.SubjectPropertyConsumer;
 import org.nygenome.als.graphdb.consumer.UniProtValueConsumer;
+import org.nygenome.als.graphdb.consumer.VariantDiseaseAssociationDataConsumer;
 import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -71,10 +76,21 @@ public enum ALSDatabaseImportApp
 				PathwayInfoConsumer.importData();
 				// protein - protein interactions
 				IntactDataConsumer.importData();
+				// ALS genes
+				AlsGeneConsumer.importData();
+				//ALS SNP
+				AlsSnpConsumer.importData();
+				//Subject properties
+				SubjectPropertyConsumer.importData();
         // Tissue data consumer
-				HumanTissueAtlasDataConsumer.importData();
+				// TODO: limit to ALS genes
+				//HumanTissueAtlasDataConsumer.importData();
 				// Drug data
 				DrugUniprotInfoConsumer.importData();
+				// gene disease associations
+				GeneDiseaseAssociationDataConsumer.importData();
+				// variant disease association
+				VariantDiseaseAssociationDataConsumer.importData();
 
 
 //

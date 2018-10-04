@@ -1,15 +1,18 @@
 package org.nygenome.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.VariantDiseaseAssociation;
@@ -50,6 +53,15 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
         .forEach(variantDiseaseAssociationConsumer);
   }
 
+  public static void importData() {
+    Stopwatch sw = Stopwatch.createStarted();
+    FrameworkPropertyService.INSTANCE
+        .getOptionalPathProperty("VARIANT_DISEASE_ASSOC_DISGENET_FILE")
+        .ifPresent(new VariantDiseaseAssociationDataConsumer());
+    AsyncLoggingService.logInfo("processed variant disease associaton file : " +
+        sw.elapsed(TimeUnit.SECONDS) +" seconds");
+  }
+  // main method for stand alone testing
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("VARIANT_DISEASE_ASSOC_DISGENET_FILE")
         .ifPresent(path ->

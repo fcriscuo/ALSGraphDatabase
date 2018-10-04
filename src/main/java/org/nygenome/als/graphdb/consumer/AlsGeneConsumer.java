@@ -27,7 +27,7 @@ Additional ALS genes may be added to this collection manually
 
  */
 public class AlsGeneConsumer extends GraphDataConsumer{
-  private final Label  alsLabel = new DynamicLabel("ALS");
+
   // keep track of what genes have been processed to avoid
   // repetitive property setting
   private Set<String> processedAlsGeneSet = Sets.mutable.empty();
@@ -46,6 +46,7 @@ public class AlsGeneConsumer extends GraphDataConsumer{
            .accept(geneNode, new Tuple2<>("end end", alsGene.geneEnd()));
        lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("strand", alsGene.strand()));
        processedAlsGeneSet.add(alsGene.ensemblGeneId());
+       AsyncLoggingService.logInfo("Added new ALS-associated gene: " +alsGene.hugoName());
      }
      Node transcriptNode =  resolveGeneticEntityNodeFunction.apply(alsGene.ensemblTranscriptId());
     lib.novelLabelConsumer.accept(transcriptNode,alsLabel);
@@ -70,6 +71,7 @@ public class AlsGeneConsumer extends GraphDataConsumer{
     new TsvRecordStreamSupplier(path).get()
         .map(EnsemblAlsGene::parseCSVRecord)
         .forEach(alsGeneConsumer);
+    AsyncLoggingService.logInfo("ALS-associated gene count = " +processedAlsGeneSet.size());
   }
   public static void importData() {
     Stopwatch sw = Stopwatch.createStarted();

@@ -11,12 +11,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import org.eclipse.collections.impl.factory.Maps;
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.service.GraphComponentFactory;
+import org.nygenome.als.graphdb.util.DynamicLabel;
 import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.RnaTpmGene;
@@ -31,6 +33,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final String strApostrophe = "`";
   protected final String HUMAN_SPECIES = "homo sapiens";
   protected Logger log = Logger.get(GraphDataConsumer.class);
+  protected final Label alsLabel = new DynamicLabel("ALS-associated");
 
   public enum EnsemblType_e {
     ENST, ENSG
@@ -134,6 +137,8 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap = Maps.mutable
       .empty();
   protected Map<Tuple2<String, String>, Relationship> geneTranscriptMap = Maps.mutable
+      .empty();
+  protected Map<Tuple2<String, String>, Relationship> transcriptSnpMap = Maps.mutable
       .empty();
   protected Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = Maps.mutable
       .empty();

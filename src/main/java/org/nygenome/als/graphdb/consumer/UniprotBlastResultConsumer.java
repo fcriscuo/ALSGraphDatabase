@@ -1,14 +1,17 @@
 package org.nygenome.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import org.nygenome.als.graphdb.value.UniProtBlastResult;
@@ -50,9 +53,21 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
         .filter(blastRes -> !blastRes.sourceUniprotId().equalsIgnoreCase(blastRes.hitUniprotId()))
         .forEach(uniProtBlastResultConsumer);
   }
-  // main method for stand alone testing
-  public static void main(String[] args) {
-    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_SEQ_SIM_FILE")
+
+  public static void importData() {
+    Stopwatch sw = Stopwatch.createStarted();
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("SEQ_SIM_FILE")
         .ifPresent(new UniprotBlastResultConsumer());
+    AsyncLoggingService.logInfo("processed sequence similarity file : " +
+        sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
+
+  // main method for stand alone testing using test data
+  public static void main(String[] args) {
+    FrameworkPropertyService.INSTANCE
+        .getOptionalPathProperty("TEST_SEQ_SIM_FILE")
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new UniprotBlastResultConsumer()));
+  }
+
+
 }

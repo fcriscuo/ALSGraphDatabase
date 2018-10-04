@@ -1,12 +1,15 @@
 package org.nygenome.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import org.neo4j.graphdb.Node;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -67,8 +70,16 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
         .forEach(stringSubjectPropertyConsumer);
   }
 
-  public static void main(String... args) {
+  public static void importData() {
+    Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("SUBJECT_PROPERTY_FILE")
         .ifPresent(new SubjectPropertyConsumer());
+    AsyncLoggingService.logInfo("processed subject properties file: " +
+        sw.elapsed(TimeUnit.SECONDS) +" seconds");
+  }
+  public static void main(String... args) {
+    FrameworkPropertyService.INSTANCE
+        .getOptionalPathProperty("SUBJECT_PROPERTY_FILE")
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SubjectPropertyConsumer()));
   }
 }

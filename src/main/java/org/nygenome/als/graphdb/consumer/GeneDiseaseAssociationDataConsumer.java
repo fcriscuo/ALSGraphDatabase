@@ -2,6 +2,8 @@ package org.nygenome.als.graphdb.consumer;
 
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
@@ -81,6 +83,15 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
       e.printStackTrace();
     }
   };
+
+  public static void importData() {
+    Stopwatch sw = Stopwatch.createStarted();
+    FrameworkPropertyService.INSTANCE
+        .getOptionalPathProperty("GENE_DISEASE_ASSOC_DISGENET_FILE")
+        .ifPresent(new GeneDiseaseAssociationDataConsumer());
+    AsyncLoggingService.logInfo("processed gene disease associaton file : " +
+        sw.elapsed(TimeUnit.SECONDS) +" seconds");
+  }
 
   // main method for stand alone testing
   public static void main(String... args) {
