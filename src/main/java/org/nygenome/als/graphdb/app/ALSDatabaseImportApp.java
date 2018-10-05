@@ -50,7 +50,7 @@ public enum ALSDatabaseImportApp
     Drug, GEOStudy, GEOComparison, Gene, Subject, Sample,
     Expression,TPM,Xref,EnsemblGene, EnsemblTranscript,MolecularFunction,
 		BiologicalProcess, CellularComponents,Unknown,Drug_Target, Drug_Enzyme, Drug_Transporter,
-		Drug_Carrier, GeneticEntity, Variant, SNP
+		Drug_Carrier, GeneticEntity, Variant, SNP, SampleVariant
 	}
 
 	// convenience method to satisfy legacy usages

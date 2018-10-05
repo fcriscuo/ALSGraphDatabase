@@ -14,6 +14,8 @@ import org.eclipse.collections.impl.factory.Maps;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
@@ -22,6 +24,7 @@ import org.nygenome.als.graphdb.util.DynamicLabel;
 import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.RnaTpmGene;
+import org.nygenome.als.graphdb.value.SampleVariantSummary;
 import org.nygenome.als.graphdb.value.UniProtValue;
 import scala.Tuple2;
 
@@ -222,6 +225,13 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
       );
     });
   }
+protected Function<SampleVariantSummary,Node> resolveSampleVariantNode = (svc) -> {
+  Node svNode = GraphComponentFactory.INSTANCE.getSampleVariantNodeFunction.apply(svc.id());
+  // TODO: add test for ALS gene and add label if so
+  // persist the list of variants
+  lib.nodePropertyValueStringArrayConsumer.accept(svNode,new Tuple2<>("Variants", svc.variantList()));
+  return svNode;
+};
 
 
   protected Function<String, Node> resolveSampleNodeByExternalIdFunction = (extSampleId)

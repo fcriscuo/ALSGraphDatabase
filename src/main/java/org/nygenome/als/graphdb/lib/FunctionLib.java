@@ -4,6 +4,8 @@ package org.nygenome.als.graphdb.lib;
 import com.google.common.base.Strings;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.stream.StreamSupport;
 import org.apache.log4j.Logger;
 
@@ -19,6 +21,7 @@ import java.util.stream.Stream;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
@@ -56,6 +59,63 @@ public class FunctionLib {
   };
 
   /*
+  Public Function to find or create a Relationship between two nodes.
+  n.b. if the relationship NodeA -> NodeB requires a different relationship type
+  than NodeB -> NodeA, then two (2) relationships need to be created
+   */
+  public BiFunction<Tuple2<Node,Node>, RelationshipType,Relationship> resolveNodeRelationshipFunction = (nodeTuple, relType) -> {
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    Node nodeStart = nodeTuple._1();
+    Node nodeEnd = nodeTuple._2();
+    try {
+     Relationship rel = StreamSupport.stream(nodeStart.getRelationships().spliterator(), false)
+         .filter(relationship -> relationship.getEndNodeId() == nodeEnd.getId())
+         .filter(relationship -> relationship.getType().name().equalsIgnoreCase(relType.name()) )
+         .findFirst().orElse(nodeStart.createRelationshipTo(nodeEnd,relType));
+     AsyncLoggingService.logInfo("created relationship between " +nodeStart.getLabels().toString()
+     +" and " + nodeEnd.getLabels().toString());
+      tx.success();
+      return rel;
+    } catch (Exception e) {
+      tx.failure();
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return null;
+  };
+
+  /*
+  Public method to create a bidirectional relationship between nodes
+  Provides support for cases where the number of relationships
+  are too large to keep a map in memory
+   */
+  public Tuple2<Relationship, Relationship> createUnmappedBiDirectionalRelationship(Node nodeA, Node nodeB,
+      Tuple2<String, String> keyTuple,
+       RelTypes relTypeA, RelTypes relTypeB) {
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    try {
+      Relationship relA = nodeA.createRelationshipTo(nodeB, relTypeA);
+      Relationship relB = nodeB.createRelationshipTo(nodeA, relTypeB);
+      tx.success();
+      AsyncLoggingService.logInfo("Created realtionship between " + keyTuple._1() + " and "
+          + keyTuple._2());
+      return new Tuple2<>(relA,relB);
+    } catch (Exception e) {
+      tx.failure();
+      AsyncLoggingService.logError(
+          "ERR: failed to create bi-directional realtionship between " + keyTuple._1() + " and "
+              + keyTuple._2());
+      e.printStackTrace();
+      return null;
+    } finally {
+      tx.close();
+    }
+
+  };
+
+
+  /*
 Protected method to create two (2) directional relationships between two (2)
 specified nodes. The first relationship is registered in a Map to prevent
 duplication
@@ -88,8 +148,6 @@ The created or existing Relationships are returned in a Tuple2 in the A->B, & B-
     }
     return new Tuple2<>(relMap.get(keyTuple), relMap.get(keyTuple.swap()));
   }
-
-
   // public utility method to create a uni-directional relationship from Node A to Node B
   public Relationship createUniDirectionalRelationship(Node nodeA, Node nodeB,
       Tuple2<String, String> keyTuple,
@@ -118,7 +176,7 @@ The created or existing Relationships are returned in a Tuple2 in the A->B, & B-
   }
 
   /*
-  Protected BiConsumer that accepts a Pair of Realtionships and a property key/value pair
+  Protected BiConsumer that accepts a Pair of Relationships and a property key/value pair
   The supplied property is applied to each of the Relationships
    */
   public BiConsumer<Tuple2<Relationship, Relationship>, Tuple2<String, String>> relationshipPairPropertyConsumer
@@ -188,6 +246,25 @@ Protected BiConsumer that will add a property name/String value pair to a specif
       Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
       try {
         node.setProperty(propertyListTuple._1(), propertyListTuple._2().head());
+        tx.success();
+      } catch (Exception e) {
+        tx.failure();
+        AsyncLoggingService.logError(e.getMessage());
+      } finally {
+        tx.close();
+      }
+    }
+  };
+
+  /*
+  Protected BiConsumer to register an Array Strings as a property values for a specified node
+
+   */
+  public BiConsumer<Node, Tuple2<String, String[]>> nodePropertyValueStringArrayConsumer = (node, propertyListTuple) -> {
+    if (propertyListTuple._2() != null && propertyListTuple._2().length > 0) {
+      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+      try {
+        node.setProperty(propertyListTuple._1(), propertyListTuple._2());
         tx.success();
       } catch (Exception e) {
         tx.failure();

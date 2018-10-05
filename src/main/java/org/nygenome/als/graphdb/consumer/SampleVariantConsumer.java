@@ -1,0 +1,67 @@
+package org.nygenome.als.graphdb.consumer;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import org.neo4j.graphdb.Node;
+import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import org.nygenome.als.graphdb.util.DynamicReaaltionshipTypes;
+import org.nygenome.als.graphdb.util.FrameworkPropertyService;
+import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
+import org.nygenome.als.graphdb.value.SampleVariantSummary;
+import scala.Tuple2;
+/*
+Java Consumer responsible for importing sample variant data
+Creates new Sample variant nodes
+A SampleVariantNode will be specific for each gene in each sample
+and a List of variants as a CSV String
+ */
+
+public class SampleVariantConsumer extends GraphDataConsumer{
+
+ private Consumer<SampleVariantSummary> sampleVariantSummaryConsumer = (svc) -> {
+   // there are too many variants to in a collection
+   // this is the only class that will create SampleVariant nodes and
+   // their relationships
+   Node geneNode = resolveGeneticEntityNodeFunction.apply(svc.ensemblGeneId());
+   Node sampleNode = resolveSampleNodeByExternalIdFunction.apply(svc.extSampleId());
+   Node sampleVariantNode = resolveSampleVariantNode.apply(svc);
+   // create sample <-> sampleVariant relationship
+   lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleNode,sampleVariantNode),
+       new DynamicReaaltionshipTypes("sample_variant"));
+   lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleVariantNode,geneNode),
+       RelTypes.ENCODED_BY);
+ };
+
+
+  @Override
+  public void accept(Path path) {
+    Preconditions.checkArgument(null != path
+        && Files.exists(path, LinkOption.NOFOLLOW_LINKS));
+    new TsvRecordSplitIteratorSupplier(path, SampleVariantSummary.columnHeadings())
+        .get()
+        .map(SampleVariantSummary::parseCSVRecord)
+        .forEach(sampleVariantSummaryConsumer);
+
+  }
+  public static void importData() {
+    Stopwatch sw = Stopwatch.createStarted();
+    FrameworkPropertyService.INSTANCE
+        .getOptionalPathProperty("SAMPLE_VARIANT_SUMUMMARY_FILE")
+        .ifPresent(new SampleVariantConsumer());
+    AsyncLoggingService.logInfo("processed complete sample variant file : " +
+        sw.elapsed(TimeUnit.SECONDS) +" seconds");
+  }
+  public static void main(String[] args) {
+    FrameworkPropertyService.INSTANCE
+        .getOptionalPathProperty("TEST_SAMPLE_VARIANT_SUMUMMARY_FILE")
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SampleVariantConsumer()));
+  }
+
+}

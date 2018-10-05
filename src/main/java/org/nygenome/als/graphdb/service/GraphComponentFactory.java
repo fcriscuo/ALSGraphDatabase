@@ -73,10 +73,28 @@ public enum GraphComponentFactory {
     return unknownNodeSupplier.get();
   };
 
+  private Function<String,Node> createSampleVariantNodeFunction = (svId) -> {
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    try {
+      Node sampleVariantNode = ALSDatabaseImportApp.getGraphInstance()
+          .createNode(LabelTypes.SampleVariant);
+      lib.nodePropertyValueConsumer.accept(sampleVariantNode, new Tuple2<>("ID",svId));
+      tx.success();
+      return sampleVariantNode;
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return unknownNodeSupplier.get();
+  };
+
+  public Function<String,Node> getSampleVariantNodeFunction = (id) ->
+      createSampleVariantNodeFunction.apply(id);
+
   public Function<String, Node> getSnpNodeFunction = (snpId) ->
       (snpMap.containsKey(snpId)) ? snpMap.get(snpId)
           : createSnpNodeFunction.apply(snpId);
-
   /*
   Sample Node
    */

@@ -44,7 +44,7 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
     Tuple2<String, String> relationshipKey = new Tuple2<>(subjectProperty.externalSubjectId(),
         subjectProperty.externalSampleId());
     if (!subjectSampleRelMap.containsKey(relationshipKey)) {
-      AsyncLoggingService.logInfo("creating Subject-Sample relationship between subject  " +
+      AsyncLoggingService.logInfo("creating Subject<->Sample relationship between subject  " +
           subjectProperty.externalSubjectId() + " and sample "
           + subjectProperty.externalSampleId());
       lib.createBiDirectionalRelationship(subjectNode, sampleNode, relationshipKey,

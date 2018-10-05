@@ -3,11 +3,13 @@ package org.nygenome.als.graphdb.value
 import org.apache.commons.csv.CSVRecord
 
 case class SampleVariantSummary(
-                               hugoGeneName:String, ensemblGeneId:String, sampleId:Int,
-                               variantList:Array[String]
+                               hugoGeneName:String, ensemblGeneId:String, extSampleId:String,
+                               numVariants:Int,
+                               variantList:Array[String], id:String
                               ) {}
 object SampleVariantSummary extends ValueTrait{
   val columnHeadings:Array[String] = Array(
+    "external_sample_id",
     "hugo_gene_name",
       "ensembl_gene_id",
       "sample_id",
@@ -28,8 +30,11 @@ object SampleVariantSummary extends ValueTrait{
     new SampleVariantSummary(
       record.get("hugo_gene_name"),
       record.get("ensembl_gene_id"),
-      record.get("sample_id").toInt,
-      record.get("most_deleterious_variant_hgvs_change").split(",")
+      record.get("external_sample_id"),
+      record.get("num_variants").toInt,
+      record.get("most_deleterious_variant_hgvs_change").split(","),
+      record.get("external_sample_id")+":" +record.get("ensembl_gene_id")
+
     )
   }
 }
