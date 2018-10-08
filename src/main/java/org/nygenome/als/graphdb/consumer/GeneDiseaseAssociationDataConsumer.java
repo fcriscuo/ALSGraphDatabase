@@ -6,6 +6,7 @@ import com.google.common.base.Stopwatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
@@ -50,33 +51,24 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
           .resolveUniProtMappingFromGeneSymbol(gda.geneSymbol())
           .get();// get from Optional is OK because of previous filter
       String uniprotId = upm.uniProtId();
-      Node geneNode = resolveGeneticEntityNodeFunction.apply(upm.ensemblGeneId());
-      Node transcriptNode = resolveGeneticEntityNodeFunction.apply(upm.ensemblTranscriptId());
+      Node geneNode = resolveEnsemblGeneNodeFunction.apply(upm.ensemblGeneId());
+      Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(upm.ensemblTranscriptId());
       lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("HGNCSymbol", gda.geneSymbol()));
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
-      String diseaseId = gda.diseaseId();
-      Node diseaseNode = resolveDiseaseNodeFunction.apply(diseaseId);
+      Node diseaseNode = resolveDiseaseNodeFunction.apply(gda.diseaseId());
       lib.nodePropertyValueConsumer
           .accept(diseaseNode, new Tuple2<>("DiseaseName", gda.diseaseName()));
-      // create bi-directional relationships between these nodes
+      // create relationships between these nodes
       // protein <-> transcript
-      lib.createBiDirectionalRelationship(proteinNode, transcriptNode,
-          new Tuple2<>(uniprotId, upm.ensemblTranscriptId()),
-          proteinGeneticEntityMap, RelTypes.ENCODED_BY, RelTypes.EXPRESSED_PROTEIN
-      );
-      lib.createBiDirectionalRelationship(geneNode,transcriptNode,
-          new Tuple2<>(upm.ensemblGeneId(),upm.ensemblTranscriptId()),
-          geneTranscriptMap, RelTypes.TRANSCRIBES,RelTypes.ENCODED_BY);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,transcriptNode),RelTypes.ENCODED_BY);
+      // gene <-> transcript
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),RelTypes.TRANSCRIBES );
       // protein - disease
-      lib.createBiDirectionalRelationship(proteinNode, diseaseNode,
-          new Tuple2<>(uniprotId, gda.diseaseId()),
-          proteinDiseaseRelMap, RelTypes.IMPLICATED_IN, RelTypes.ASSOCIATED_PROTEIN);
-      // gene -disease
-      Tuple2<String, String> geneDiseaseTuple = new Tuple2<>(upm.ensemblGeneId(), diseaseId);
-      lib.createBiDirectionalRelationship(geneNode, diseaseNode, geneDiseaseTuple,
-          geneticEntityDiseaseMap, RelTypes.IMPLICATED_IN, RelTypes.ASSOCIATED_GENETIC_ENTITY);
-      geneticEntityDiseaseMap.get(geneDiseaseTuple).setProperty("ConfidenceLevel", gda.score());
-      geneticEntityDiseaseMap.get(geneDiseaseTuple).setProperty("Reference", gda.source());
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,diseaseNode), RelTypes.IMPLICATED_IN);
+      // gene <-> disease
+      Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, diseaseNode), RelTypes.IMPLICATED_IN);
+      rel.setProperty("ConfidenceLevel", gda.score());
+      rel.setProperty("Reference", gda.source());
       tx.success();
     } catch (Exception e) {
       AsyncLoggingService.logError(e.getMessage());

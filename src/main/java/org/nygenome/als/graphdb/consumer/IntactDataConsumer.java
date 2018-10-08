@@ -14,7 +14,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.util.DynamicReaaltionshipTypes;
+import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
@@ -29,32 +29,24 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
       ! ppi.interactorAId().equals(ppi.interactorBId());
 
   /*
-  Process the human intact data. The file provided from IntAct is excessively
+  Process the human intact data. The file provided from IntAct is very
   large.  Use a SplitIterator to process in chunks
    */
 
   private Consumer<PsiMitab> proteinInteractionConsumer = (ppi) -> {
     Tuple2<String, String> abTuple = new Tuple2<>(ppi.interactorAId(), ppi.interactorBId());
 
-    if (!proteinProteinIntactMap.containsKey(abTuple)) {
       Node proteinNodeA = resolveProteinNodeFunction.apply(ppi.interactorAId());
       Node proteinNodeB = resolveProteinNodeFunction.apply(ppi.interactorBId());
-      //RelTypes relType = Utils.convertStringToRelType(ppi.interactionTypeList().head());
-      // create Relationships within a Transaction
       Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
       try  {
-        RelationshipType interactionType = new DynamicReaaltionshipTypes(
+        RelationshipType interactionType = new DynamicRelationshipTypes(
             ppi.interactionTypeList().head()
         );
-        proteinProteinIntactMap.put(abTuple,
-            proteinNodeA.createRelationshipTo(proteinNodeB, interactionType)
-        );
-        proteinNodeB.createRelationshipTo(proteinNodeA, interactionType);
-        AsyncLoggingService.logInfo("Created new  bi-directional PPI, Protein A: " + ppi.interactorAId()
-            + "  Protein B: " + ppi.interactorBId() + "   rel type: " + interactionType.name());
-
-        // set or update relationship properties
-        Relationship ppRel = proteinProteinIntactMap.get(abTuple);
+        Relationship ppRel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNodeA,proteinNodeB), interactionType);
+        AsyncLoggingService.logInfo("Created new PPI between Protein: " + ppi.interactorAId()
+            + "  and Protein: " + ppi.interactorBId() + "   rel type: " + interactionType.name());
+        // set ppi relationship properties
         ppRel.setProperty("Interaction_method_detection",
             ppi.detectionMethodList().mkString("|"));
         ppRel.setProperty("References",
@@ -72,7 +64,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
     } finally {
         tx.close();
       }
-  }
+
   };
 
   @Override

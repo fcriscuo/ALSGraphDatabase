@@ -12,7 +12,7 @@ import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.DynamicReaaltionshipTypes;
+import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import org.nygenome.als.graphdb.value.SampleVariantSummary;
@@ -39,7 +39,7 @@ public class SampleVariantConsumer extends GraphDataConsumer{
    }
    // create sample <-> sampleVariant relationship
    Relationship sampleToSampleVariantRel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleNode,sampleVariantNode),
-       new DynamicReaaltionshipTypes("sample_variant"));
+       new DynamicRelationshipTypes("sample_variant"));
    lib.setRelationshipIntegerProperty.accept(sampleToSampleVariantRel, new Tuple2<>("VariantCount", svc.numVariants()));
 
    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleVariantNode,geneNode),

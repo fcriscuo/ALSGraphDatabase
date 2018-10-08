@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
@@ -27,13 +28,11 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
     Node snpNode = resolveDiseaseNodeFunction.apply(snp.snpId());
     // create bi-directional relationship between snp & disease
     Tuple2<String,String> relTuple = new Tuple2<>(snp.snpId(), snp.diseaseId());
-   lib.createBiDirectionalRelationship(snpNode,diseaseNode, relTuple,
-        snpDiseaseRelMap,  RelTypes.IMPLICATED_IN,RelTypes.ASSOCIATED_VARIANT
-        );
+    Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(snpNode, diseaseNode),  RelTypes.IMPLICATED_IN);
     Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
     try {
-      snpDiseaseRelMap.get(relTuple).setProperty("ConfidenceLevel",snp.score());
-      snpDiseaseRelMap.get(relTuple).setProperty("Reference",snp.source());
+      rel.setProperty("ConfidenceLevel",snp.score());
+      rel.setProperty("Reference",snp.source());
       tx.success();
     } catch (Exception e) {
       e.printStackTrace();

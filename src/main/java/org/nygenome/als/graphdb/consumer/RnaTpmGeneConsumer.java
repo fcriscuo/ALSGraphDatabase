@@ -31,31 +31,21 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
       Node rnaNode = resolveRnaTpmGeneNode.apply(tpm);
       // Optional.get is OK because we've already filtered on it presence
       // and this is a private method only called from processing the  stream of TSV records
-      Node ensemblGeneNode  = resolveGeneticEntityNodeFunction
+      Node ensemblGeneNode  = resolveEnsemblGeneNodeFunction
           .apply(tpm.uniProtMapping().get().ensemblGeneId());
       Node ensemblTranscriptNode = resolveEnsemblTranscriptNodeFunction
           .apply(tpm.uniProtMapping().get().ensemblTranscriptId());
       Node proteinNode = resolveProteinNodeFunction
           .apply(tpm.uniProtMapping().get().uniProtId());
       // establish a relationship between the RNA node and the protein node
-      lib.createBiDirectionalRelationship(proteinNode, rnaNode,
-          new Tuple2<>(tpm.uniProtMapping().get().uniProtId(), tpm.id()),
-          proteinTPMRelMap, RelTypes.EXPRESSION_LEVEL, RelTypes.EXPRESSED_PROTEIN
-      );
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, rnaNode), RelTypes.EXPRESSION_LEVEL);
       // TODO: add xref to HUGO
 //      lib.createBiDirectionalRelationship(proteinNode, hugoGeneNode,
 //          new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
 //              tpm.uniProtMapping().get().geneSymbol()), proteinXrefRelMap, RelTypes.REFERENCES,
 //          RelTypes.REFERENCES);
-      lib.createBiDirectionalRelationship(proteinNode, ensemblGeneNode,
-          new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
-              tpm.uniProtMapping().get().ensemblGeneId()), proteinXrefRelMap, RelTypes.REFERENCES,
-          RelTypes.REFERENCES);
-      lib.createBiDirectionalRelationship(proteinNode, ensemblTranscriptNode,
-          new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
-              tpm.uniProtMapping().get().ensemblTranscriptId()), proteinXrefRelMap,
-          RelTypes.REFERENCES,
-          RelTypes.REFERENCES);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, ensemblGeneNode), RelTypes.ENCODED_BY);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, ensemblTranscriptNode), RelTypes.ENCODED_BY);
 
   };
 

@@ -42,7 +42,6 @@ public class FunctionLib {
   public FunctionLib() {
   }
 
-
   /*
   Public Function to determine if a specified ensembl id is for
   an esembl gene or an ensembl transcript
@@ -56,8 +55,6 @@ public class FunctionLib {
     }
     return Optional.empty();
   };
-
-
 
   private final Supplier<Node> unknownNodeSupplier = () -> {
     try (Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get()) {
@@ -148,7 +145,6 @@ public Function3<Label,String,String, Node> resolveNodeFunction =
     }
   };
 
-
   /*
   Public Function to find or create a Relationship between two nodes.
   n.b. if the relationship NodeA -> NodeB requires a different relationship type
@@ -177,76 +173,6 @@ public Function3<Label,String,String, Node> resolveNodeFunction =
   };
 
 
-  /*
-Protected method to create two (2) directional relationships between two (2)
-specified nodes. The first relationship is registered in a Map to prevent
-duplication
-The relationship types are also provided
-The created or existing Relationships are returned in a Tuple2 in the A->B, & B->A order
- */
-  public Tuple2<Relationship, Relationship> createBiDirectionalRelationship(Node nodeA, Node nodeB,
-      Tuple2<String, String> keyTuple,
-      Map<Tuple2<String, String>, Relationship> relMap, RelTypes relTypeA, RelTypes relTypeB) {
-    if (!relMap.containsKey(keyTuple)) {
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
-      try {
-        Relationship relA = nodeA.createRelationshipTo(nodeB, relTypeA);
-        Relationship relB = nodeB.createRelationshipTo(nodeA, relTypeB);
-        relMap.put(keyTuple, relA);
-        relMap.put(keyTuple.swap(), relB);
-        tx.success();
-        AsyncLoggingService.logInfo("Created realtionship between " + keyTuple._1() + " and "
-            + keyTuple._2());
-      } catch (Exception e) {
-        tx.failure();
-        AsyncLoggingService.logError(
-            "ERR: failed to create bi-directional realtionship between " + keyTuple._1() + " and "
-                + keyTuple._2());
-        e.printStackTrace();
-        return null;
-      } finally {
-        tx.close();
-      }
-    }
-    return new Tuple2<>(relMap.get(keyTuple), relMap.get(keyTuple.swap()));
-  }
-  // public utility method to create a uni-directional relationship from Node A to Node B
-  public Relationship createUniDirectionalRelationship(Node nodeA, Node nodeB,
-      Tuple2<String, String> keyTuple,
-      Map<Tuple2<String, String>, Relationship> relMap, RelTypes relTypeA) {
-    if (!relMap.containsKey(keyTuple)) {
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
-      try {
-        Relationship relA = nodeA.createRelationshipTo(nodeB, relTypeA);
-        relMap.put(keyTuple, relA);
-        tx.success();
-        AsyncLoggingService
-            .logInfo("Created uni-directional relationship from " + keyTuple._1() + " to "
-                + keyTuple._2());
-      } catch (Exception e) {
-        tx.failure();
-        AsyncLoggingService.logError(
-            "ERR: failed to create uni-directional realtionship between " + keyTuple._1() + " and "
-                + keyTuple._2());
-        e.printStackTrace();
-        return null;
-      } finally {
-        tx.close();
-      }
-    }
-    return relMap.get(keyTuple);
-  }
-
-  /*
-  Protected BiConsumer that accepts a Pair of Relationships and a property key/value pair
-  The supplied property is applied to each of the Relationships
-   */
-  public BiConsumer<Tuple2<Relationship, Relationship>, Tuple2<String, String>> relationshipPairPropertyConsumer
-      = (relPair, keyValue) -> {
-    relPair._1().setProperty(keyValue._1(), keyValue._2());
-    relPair._2().setProperty(keyValue._1(), keyValue._2());
-  };
-
   public Function<String, LabelTypes> resolveGeneOntologyPrincipleFunction = (princ) -> {
     if (princ.toUpperCase().startsWith("MOLECULAR")) {
       return LabelTypes.MolecularFunction;
@@ -271,6 +197,21 @@ Protected BiConsumer that will add a property name/String value pair to a specif
       Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
       try {
         node.setProperty(propertyTuple._1(), propertyTuple._2());
+        tx.success();
+      } catch (Exception e) {
+        tx.failure();
+        AsyncLoggingService.logError(e.getMessage());
+      } finally {
+        tx.close();
+      }
+    }
+  };
+
+  public BiConsumer<Relationship, Tuple2<String,String>> relationshipPropertyValueConsumer = (relationship, propertyTuple) -> {
+    if (!Strings.isNullOrEmpty(propertyTuple._2())) {
+      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+      try {
+        relationship.setProperty(propertyTuple._1(), propertyTuple._2());
         tx.success();
       } catch (Exception e) {
         tx.failure();

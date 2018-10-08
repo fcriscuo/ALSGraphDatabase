@@ -32,9 +32,8 @@ public class AlsSnpConsumer  extends GraphDataConsumer{
     lib.nodePropertyValueConsumer.accept(snpNode, new Tuple2<>("VariantAlleles", snp.alleleVariation()));
     // this will create a Transcript Node if run in stand-alone test mode
     Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(snp.ensemblTranscriptId());
-    // establish a bi-directional relationship between transcript and snp
-    lib.createBiDirectionalRelationship(transcriptNode,snpNode, new Tuple2<>(snp.ensemblTranscriptId(), snp.variantId()),
-        transcriptSnpMap, RelTypes.ASSOCIATED_VARIANT, RelTypes.ASSOCIATED_GENETIC_ENTITY);
+    // establish a relationship between transcript and snp
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(transcriptNode,snpNode) , RelTypes.ASSOCIATED_GENETIC_ENTITY);
   };
 
   @Override

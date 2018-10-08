@@ -40,18 +40,7 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
     lib.nodePropertyValueConsumer.accept(subjectNode,
         new Tuple2<>(subjectProperty.propertyName(), subjectProperty.propertyValue()));
     Node sampleNode = resolveSampleNodeFunction.apply(subjectProperty);
-    // register the relationship between subject and sample if new
-    Tuple2<String, String> relationshipKey = new Tuple2<>(subjectProperty.externalSubjectId(),
-        subjectProperty.externalSampleId());
-    if (!subjectSampleRelMap.containsKey(relationshipKey)) {
-      AsyncLoggingService.logInfo("creating Subject<->Sample relationship between subject  " +
-          subjectProperty.externalSubjectId() + " and sample "
-          + subjectProperty.externalSampleId());
-      lib.createBiDirectionalRelationship(subjectNode, sampleNode, relationshipKey,
-          subjectSampleRelMap,
-          RelTypes.HAS_SAMPLE, RelTypes.SAMPLED_FROM);
-    }
-
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode,sampleNode),RelTypes.HAS_SAMPLE );
   };
 
   private Predicate<StringSubjectProperty> alsPredicate = (ssp) ->

@@ -31,21 +31,8 @@ public class PathwayInfoConsumer extends GraphDataConsumer implements Consumer<P
     // pathway name
       lib.nodePropertyValueConsumer
           .accept(pathwayNode, new Tuple2<>("Pathway", pathway.eventName()));
-     Tuple2<String,String> keyTuple = new Tuple2<>(pathway.uniprotId(),pathway.id());
-      if(!proteinPathwayMap.containsKey(keyTuple)){
-        Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
-        Node proteinNode = resolveProteinNodeFunction.apply(pathway.uniprotId());
-        try {
-          proteinPathwayMap.put(keyTuple,
-              proteinNode.createRelationshipTo(pathwayNode, RelTypes.IN_PATHWAY));
-          tx.success();
-        } catch (Exception e) {
-          tx.failure();
-          e.printStackTrace();
-        } finally {
-          tx.close();
-        }
-      }
+    Node proteinNode = resolveProteinNodeFunction.apply(pathway.uniprotId());
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, pathwayNode),RelTypes.IN_PATHWAY );
   };
 
 /*

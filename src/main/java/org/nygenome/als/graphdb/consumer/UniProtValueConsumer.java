@@ -31,19 +31,12 @@ public class UniProtValueConsumer extends GraphDataConsumer {
 
   private void createProteinGeneOntologyRealtionship(String uniprotId, GeneOntology go) {
     // establish relationship to the protein node
-    Tuple2<String, String> relKey = new Tuple2<>(uniprotId, go.goId());
-    if (!proteinGeneOntologyRelMap.containsKey(relKey)) {
       Node goNode = resolveGeneOntologyNodeFunction.apply(go);
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
-      lib.createUniDirectionalRelationship(proteinNode,goNode,
-          new Tuple2<>(uniprotId, go.goId()),proteinGeneOntologyRelMap,
-          RelTypes.GO_CLASSIFICATION);
-
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, goNode),RelTypes.GO_CLASSIFICATION);
       AsyncLoggingService.logInfo("Created relationship between protein " + uniprotId
           + " and GO id: " + go.goId());
-    }
   }
-
 
   private Consumer<UniProtValue> geneOntologyListConsumer = (upv) -> {
     // complete the association with gene ontology links

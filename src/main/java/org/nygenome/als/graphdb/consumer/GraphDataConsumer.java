@@ -31,40 +31,8 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Logger log = Logger.get(GraphDataConsumer.class);
   protected final Label alsLabel = new DynamicLabel("ALS-associated");
 
-  public enum EnsemblType_e {
-    ENST, ENSG
-  }
-
-  public enum Resource_t {
-    eKaneko, eDisGeNet, ePPI
-  }
 
   protected final FunctionLib lib = new FunctionLib();
-
-
-  protected Map<Tuple2<String, String>, Relationship> proteinGeneOntologyRelMap = Maps.mutable
-      .empty();
-  protected Map<Tuple2<String, String>, Relationship> proteinDiseaseRelMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> proteinGeneticEntityMap = Maps.mutable
-      .empty();
-  protected Map<Tuple2<String, String>, Relationship> geneTranscriptMap = Maps.mutable
-      .empty();
-  protected Map<Tuple2<String, String>, Relationship> transcriptSnpMap = Maps.mutable
-      .empty();
-  protected Map<Tuple2<String, String>, Relationship> geneticEntityDiseaseMap = Maps.mutable
-      .empty();
-  protected Map<Tuple2<String, String>, Relationship> alsWhiteListRelMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> proteinDrugRelMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> transcriptTissueMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> proteinProteinIntactMap = Maps.mutable
-      .empty();
-  protected Map<Tuple2<String, String>, Relationship> proteinPathwayMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> sequenceSimMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> subjectSampleRelMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> proteinTPMRelMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> proteinXrefRelMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> proteinTissRelMap = Maps.mutable.empty();
-  protected Map<Tuple2<String, String>, Relationship> snpDiseaseRelMap = Maps.mutable.empty();
 
   private final Label subjectLabel  = new DynamicLabel("Subject");
   private final Label sampleLabel  = new DynamicLabel("Sample");
@@ -161,9 +129,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
       Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(transcriptId);
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
       Tuple2<String, String> key = new Tuple2<>(uniprotId, transcriptId);
-      lib.createBiDirectionalRelationship(proteinNode, transcriptNode, key,
-          proteinXrefRelMap, RelTypes.MAPS_TO, RelTypes.MAPS_TO
-      );
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, transcriptNode),RelTypes.ENCODED_BY );
     });
   }
 protected Function<SampleVariantSummary,Node> resolveSampleVariantNode = (svc) -> {

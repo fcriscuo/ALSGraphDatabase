@@ -14,7 +14,6 @@ import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.value.HumanTissueAtlas;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -56,14 +55,14 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
   }
 
 
-  private BiConsumer<String,String>  createTissueTranscriptRelationshipConsumer =
+  private BiConsumer<String, String> createTissueTranscriptRelationshipConsumer =
       (transcriptId, tissueId) -> {
-    Node transcripNode = resolveEnsemblTranscriptNodeFunction.apply(transcriptId);
-    Node tissueNode = resolveHumanTissueNodeFunction.apply(tissueId);
-        lib.createBiDirectionalRelationship(tissueNode, transcripNode, new Tuple2<>(transcriptId,tissueId),
-          transcriptTissueMap, RelTypes.TRANSCRIPT,RelTypes.TISSUE_ENHANCED);
+        Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(transcriptId);
+        Node tissueNode = resolveHumanTissueNodeFunction.apply(tissueId);
+        lib.resolveNodeRelationshipFunction
+            .apply(new Tuple2<>(transcriptNode, tissueNode), RelTypes.TISSUE_ENHANCED);
         AsyncLoggingService.logInfo("created transcript-tissue relationship for transcript "
-        +transcriptId +" tissue " +tissueId);
+            + transcriptId + " tissue " + tissueId);
       };
   /*
   Private Consumer that processes a valid HumanTissueAtlas object
@@ -75,43 +74,31 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
     Node tissueNode = resolveHumanTissueNodeFunction.apply(ht.resolveTissueCellTypeLabel());
     lib.nodePropertyValueConsumer.accept(tissueNode, new Tuple2<>("Tissue", ht.tissue()));
     lib.nodePropertyValueConsumer.accept(tissueNode, new Tuple2<>("CellType", ht.cellType()));
-    Tuple2<String, String> keyTuple = new Tuple2<>(ht.uniprotId(),
-        ht.resolveTissueCellTypeLabel());
-    if (!proteinTissRelMap.containsKey(keyTuple)) {
-      Node proteinNode = resolveProteinNodeFunction.apply(ht.uniprotId());
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
-      try {// complete uni-directional relationship between protein and tissue
-        Relationship rel = proteinNode.createRelationshipTo(tissueNode, RelTypes.TISSUE_ENHANCED);
-        rel.setProperty("Level", ht.level());
-        rel.setProperty("Reliability", ht.reliability());
-        proteinTissRelMap.put(keyTuple, rel);
-        tx.success();
-        if( !Strings.isNullOrEmpty(ht.ensemblTranscriptId())){
-          createTissueTranscriptRelationshipConsumer.accept(ht.ensemblTranscriptId(), ht.resolveTissueCellTypeLabel());
-        }
-      } catch (Exception e) {
-        AsyncLoggingService.logError(e.getMessage());
-        tx.failure();
-        e.printStackTrace();
-      } finally {
-        tx.close();
-      }
+    Node proteinNode = resolveProteinNodeFunction.apply(ht.uniprotId());
+    Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, tissueNode),
+        RelTypes.TISSUE_ENHANCED );
+   lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Level", ht.level()));
+    lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Reliability", ht.reliability()));
+    if (!Strings.isNullOrEmpty(ht.ensemblTranscriptId())) {
+      createTissueTranscriptRelationshipConsumer
+          .accept(ht.ensemblTranscriptId(), ht.resolveTissueCellTypeLabel());
     }
   };
-public static void importData() {
-  Stopwatch sw = Stopwatch.createStarted();
-  FrameworkPropertyService.INSTANCE.getOptionalPathProperty("HUMAN_TISSUE_ATLAS_FILE")
-      .ifPresent( new HumanTissueAtlasDataConsumer());
-  AsyncLoggingService.logInfo("read the Human Tissue Atlas data: " +
-      sw.elapsed(TimeUnit.SECONDS) +" seconds");
-}
 
-// main method for standalone testing
-    public static void main (String[]args){
-      FrameworkPropertyService.INSTANCE.getOptionalPathProperty("HUMAN_TISSUE_ATLAS_FILE")
-          .ifPresent(path ->
-              new TestGraphDataConsumer().accept(path, new HumanTissueAtlasDataConsumer()));
-    }
-
-
+  public static void importData() {
+    Stopwatch sw = Stopwatch.createStarted();
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("HUMAN_TISSUE_ATLAS_FILE")
+        .ifPresent(new HumanTissueAtlasDataConsumer());
+    AsyncLoggingService.logInfo("read the Human Tissue Atlas data: " +
+        sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
+
+  // main method for standalone testing
+  public static void main(String[] args) {
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("HUMAN_TISSUE_ATLAS_FILE")
+        .ifPresent(path ->
+            new TestGraphDataConsumer().accept(path, new HumanTissueAtlasDataConsumer()));
+  }
+
+
+}
