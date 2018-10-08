@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
@@ -26,15 +27,21 @@ and a List of variants as a CSV String
 public class SampleVariantConsumer extends GraphDataConsumer{
 
  private Consumer<SampleVariantSummary> sampleVariantSummaryConsumer = (svc) -> {
-   // there are too many variants to in a collection
+   // there are too many variants to store in a collection
    // this is the only class that will create SampleVariant nodes and
    // their relationships
    Node geneNode = resolveGeneticEntityNodeFunction.apply(svc.ensemblGeneId());
    Node sampleNode = resolveSampleNodeByExternalIdFunction.apply(svc.extSampleId());
    Node sampleVariantNode = resolveSampleVariantNode.apply(svc);
+   if (lib.isAlsAssociatedPredicate.test(geneNode)) {
+     lib.novelLabelConsumer.accept(sampleVariantNode,alsLabel);
+     lib.novelLabelConsumer.accept(sampleNode,alsLabel);
+   }
    // create sample <-> sampleVariant relationship
-   lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleNode,sampleVariantNode),
+   Relationship sampleToSampleVariantRel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleNode,sampleVariantNode),
        new DynamicReaaltionshipTypes("sample_variant"));
+   lib.setRelationshipIntegerProperty.accept(sampleToSampleVariantRel, new Tuple2<>("VariantCount", svc.numVariants()));
+
    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleVariantNode,geneNode),
        RelTypes.ENCODED_BY);
  };

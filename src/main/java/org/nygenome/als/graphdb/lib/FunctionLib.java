@@ -3,9 +3,11 @@ package org.nygenome.als.graphdb.lib;
 
 import com.google.common.base.Strings;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 import org.apache.log4j.Logger;
 
@@ -19,6 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.MultipleFoundException;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
@@ -28,6 +31,7 @@ import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
+import scala.Tuple3;
 import scala.collection.immutable.List;
 
 
@@ -37,6 +41,38 @@ public class FunctionLib {
 
   public FunctionLib() {
   }
+/*
+Public Function to find or create a Node
+Parameters are the Node's label type, a key property, and a value for that property
+The value must be a String
+The return is an Optional<Node>
+ */
+
+public Function<Tuple3<Label,String,String>, Node> resolveNodeFunction =
+    tuple3 -> {
+    Label label = tuple3._1();
+    String property = tuple3._2();
+    String value = tuple3._3();
+      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+      try {
+        Node node = ALSDatabaseImportApp.getGraphInstance()
+            .findNode(label,property,value);
+        if (null == node) {
+          node = ALSDatabaseImportApp.getGraphInstance().createNode(label);
+          node.setProperty(property,value);
+        }
+        return node;
+        tx.success();
+      } catch (MultipleFoundException e) {
+        tx.failure();
+        AsyncLoggingService.logError("ERROR: multiple instances of Node " +tuple3.toString());
+        AsyncLoggingService.logError(e.getMessage());
+        e.printStackTrace();
+      } finally {
+        tx.close();
+      }
+      return Optional.empty();
+    };
 
   /*
    A private Consumer that will add a Label to a Node if
@@ -57,6 +93,39 @@ public class FunctionLib {
       tx.close();
     }
   };
+
+  public Predicate<Node> isAlsAssociatedPredicate = (node) ->{
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    try {
+      if (StreamSupport.stream(node.getLabels().spliterator(), false)
+          .anyMatch(label -> label.name().equalsIgnoreCase("ALS-associated")))
+      {
+        tx.success();
+        return true;
+      }
+      tx.success();
+    } catch (Exception e) {
+      tx.failure();
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return false;
+  };
+
+  public BiConsumer<Relationship,Tuple2<String,Integer>> setRelationshipIntegerProperty = (rel, tuple)-> {
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    try {
+      rel.setProperty(tuple._1(),tuple._2());
+      tx.success();
+    } catch (Exception e) {
+      tx.failure();
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+  };
+
 
   /*
   Public Function to find or create a Relationship between two nodes.
@@ -83,35 +152,6 @@ public class FunctionLib {
       tx.close();
     }
     return null;
-  };
-
-  /*
-  Public method to create a bidirectional relationship between nodes
-  Provides support for cases where the number of relationships
-  are too large to keep a map in memory
-   */
-  public Tuple2<Relationship, Relationship> createUnmappedBiDirectionalRelationship(Node nodeA, Node nodeB,
-      Tuple2<String, String> keyTuple,
-       RelTypes relTypeA, RelTypes relTypeB) {
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
-    try {
-      Relationship relA = nodeA.createRelationshipTo(nodeB, relTypeA);
-      Relationship relB = nodeB.createRelationshipTo(nodeA, relTypeB);
-      tx.success();
-      AsyncLoggingService.logInfo("Created realtionship between " + keyTuple._1() + " and "
-          + keyTuple._2());
-      return new Tuple2<>(relA,relB);
-    } catch (Exception e) {
-      tx.failure();
-      AsyncLoggingService.logError(
-          "ERR: failed to create bi-directional realtionship between " + keyTuple._1() + " and "
-              + keyTuple._2());
-      e.printStackTrace();
-      return null;
-    } finally {
-      tx.close();
-    }
-
   };
 
 

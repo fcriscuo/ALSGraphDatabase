@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.eclipse.collections.impl.factory.Sets;
-import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
@@ -15,7 +14,6 @@ import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.EnsemblAlsGene;
-import org.nygenome.als.graphdb.util.DynamicLabel;
 import scala.Tuple2;
 
 /*
@@ -52,17 +50,13 @@ public class AlsGeneConsumer extends GraphDataConsumer{
     lib.novelLabelConsumer.accept(transcriptNode,alsLabel);
      Node proteinNode = resolveProteinNodeFunction.apply(alsGene.uniprotId());
     lib.novelLabelConsumer.accept(proteinNode,alsLabel);
-    // define relationships: gene <-> transcript <-> protein <-> gene
-    lib.createBiDirectionalRelationship(geneNode,transcriptNode,
-        new Tuple2<>(alsGene.ensemblGeneId(), alsGene.ensemblTranscriptId()),
-        geneTranscriptMap, RelTypes.TRANSCRIBES, RelTypes.ENCODED_BY
-        );
-    lib.createBiDirectionalRelationship(proteinNode,transcriptNode,
-        new Tuple2<>(alsGene.uniprotId(), alsGene.ensemblTranscriptId()),
-        proteinGeneticEntityMap, RelTypes.ASSOCIATED_GENETIC_ENTITY,RelTypes.ASSOCIATED_PROTEIN);
-    lib.createBiDirectionalRelationship(proteinNode,geneNode, new Tuple2<>(alsGene.uniprotId(),alsGene.ensemblTranscriptId()),
-        proteinGeneticEntityMap,RelTypes.ASSOCIATED_GENETIC_ENTITY,RelTypes.EXPRESSED_PROTEIN);
-
+    // define relationships: gene - transcript - protein - gene
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),
+        RelTypes.TRANSCRIBES );
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, transcriptNode),
+        RelTypes.ASSOCIATED_GENETIC_ENTITY);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, geneNode),
+        RelTypes.ASSOCIATED_GENETIC_ENTITY);
   });
 
   @Override

@@ -18,6 +18,7 @@ import org.nygenome.als.graphdb.consumer.IntactDataConsumer;
 import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
 import org.nygenome.als.graphdb.consumer.DrugUniprotInfoConsumer;
 import org.nygenome.als.graphdb.consumer.HumanTissueAtlasDataConsumer;
+import org.nygenome.als.graphdb.consumer.SampleVariantConsumer;
 import org.nygenome.als.graphdb.consumer.SubjectPropertyConsumer;
 import org.nygenome.als.graphdb.consumer.UniProtValueConsumer;
 import org.nygenome.als.graphdb.consumer.VariantDiseaseAssociationDataConsumer;
@@ -28,13 +29,9 @@ import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 
 public enum ALSDatabaseImportApp
 {
-
 	INSTANCE;
-
 	private  final Path DB_PATH = Paths.get(FrameworkPropertyService.INSTANCE.getStringProperty("neo4j.db.path"));
 	private  GraphDatabaseService graphDb  = Suppliers.memoize(new GraphDatabaseServiceSupplier(DB_PATH)).get();
-	
-
 	public  enum RelTypes implements RelationshipType {
 		eNoEvent, IN_PATHWAY, BIOMARKER, THERAPEUTIC, GENETIC_VARIATION, KANEKO_ASSOCIATED,
 		PPI_ASSOCIATION, PPI_COLOCALIZATION,
@@ -91,19 +88,8 @@ public enum ALSDatabaseImportApp
 				GeneDiseaseAssociationDataConsumer.importData();
 				// variant disease association
 				VariantDiseaseAssociationDataConsumer.importData();
-
-
-//
-//				AsyncLoggingService.logInfo("readDataFromDisGeNETFile");
-//				protNet.readDataFromDisGeNETFile();
-//				AsyncLoggingService.logInfo("readDataFromKanekoPaper");
-//				protNet.readDataFromKanekoPaper();
-//				AsyncLoggingService.logInfo("readDrugInfo");
-//				protNet.readDrugInfo();
-//				AsyncLoggingService.logInfo("readGEOStudyInfo");
-//				protNet.readGEOStudyInfo();
-//				AsyncLoggingService.logInfo("addSeqSimilarityInfo");
-//				protNet.addSeqSimilarityInfo();
+				// sample variants
+				SampleVariantConsumer.importData();
 
 				stopwatch.stop();
 				AsyncLoggingService.logInfo("Creation of the ALS Neo4j database required "
@@ -112,9 +98,6 @@ public enum ALSDatabaseImportApp
 				AsyncLoggingService.logError(e.getMessage());
 				e.printStackTrace();
 			}
-			
-		
-
 	}
 
 	void shutDown() {
