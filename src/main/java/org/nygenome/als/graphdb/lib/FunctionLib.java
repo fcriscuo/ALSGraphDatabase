@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 import org.apache.log4j.Logger;
 
@@ -30,8 +30,8 @@ import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import scala.Function3;
 import scala.Tuple2;
-import scala.Tuple3;
 import scala.collection.immutable.List;
 
 
@@ -41,18 +41,39 @@ public class FunctionLib {
 
   public FunctionLib() {
   }
+
+
+  /*
+  Public Function to determine if a specified ensembl id is for
+  an esembl gene or an ensembl transcript
+   */
+  public Function<String,Optional<LabelTypes>> resolveEnsemblGeneticEntityLabelFunction = (id) -> {
+    if (id.toUpperCase().startsWith("ENSG")) {
+      return Optional.of(LabelTypes.EnsemblGene);
+    }
+    if (id.toUpperCase().startsWith("ENST")) {
+      return Optional.of(LabelTypes.EnsemblTranscript);
+    }
+    return Optional.empty();
+  };
+
+
+
+  private final Supplier<Node> unknownNodeSupplier = () -> {
+    try (Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get()) {
+      return ALSDatabaseImportApp.getGraphInstance().createNode(LabelTypes.Unknown);
+    }
+  };
 /*
 Public Function to find or create a Node
 Parameters are the Node's label type, a key property, and a value for that property
 The value must be a String
-The return is an Optional<Node>
+The return is a new or existing Node
  */
 
-public Function<Tuple3<Label,String,String>, Node> resolveNodeFunction =
-    tuple3 -> {
-    Label label = tuple3._1();
-    String property = tuple3._2();
-    String value = tuple3._3();
+public Function3<Label,String,String, Node> resolveNodeFunction =
+    (label, property, value) -> {
+
       Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
       try {
         Node node = ALSDatabaseImportApp.getGraphInstance()
@@ -61,17 +82,18 @@ public Function<Tuple3<Label,String,String>, Node> resolveNodeFunction =
           node = ALSDatabaseImportApp.getGraphInstance().createNode(label);
           node.setProperty(property,value);
         }
-        return node;
         tx.success();
+        return node;
       } catch (MultipleFoundException e) {
         tx.failure();
-        AsyncLoggingService.logError("ERROR: multiple instances of Node " +tuple3.toString());
+        AsyncLoggingService.logError("ERROR: multiple instances of Node " +label
+          +"  " +property +"  " +value);
         AsyncLoggingService.logError(e.getMessage());
         e.printStackTrace();
       } finally {
         tx.close();
       }
-      return Optional.empty();
+      return unknownNodeSupplier.get();
     };
 
   /*
@@ -81,8 +103,8 @@ public Function<Tuple3<Label,String,String>, Node> resolveNodeFunction =
   public BiConsumer<Node, Label> novelLabelConsumer = (node, newLabel) -> {
     Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
     try {
-      if (!StreamSupport.stream(node.getLabels().spliterator(), false)
-          .anyMatch(label -> label.name().equalsIgnoreCase(newLabel.name()))) {
+      if (StreamSupport.stream(node.getLabels().spliterator(), false)
+          .noneMatch(label -> label.name().equalsIgnoreCase(newLabel.name()))) {
         node.addLabel(newLabel);
       }
       tx.success();

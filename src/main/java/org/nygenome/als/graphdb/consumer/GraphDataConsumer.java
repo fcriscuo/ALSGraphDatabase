@@ -1,12 +1,9 @@
 package org.nygenome.als.graphdb.consumer;
 
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.twitter.logging.Logger;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
@@ -14,12 +11,8 @@ import org.eclipse.collections.impl.factory.Maps;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
-import org.nygenome.als.graphdb.service.GraphComponentFactory;
 import org.nygenome.als.graphdb.util.DynamicLabel;
 import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.value.GeneOntology;
@@ -48,91 +41,6 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
 
   protected final FunctionLib lib = new FunctionLib();
 
-// Node caches
-  // Use Caffeine API instead of Google Guava to avoid dealing
-  // with concurrent access Exception
-
-  // Protein Node cache
-  private LoadingCache<String, Node> proteinNodeCache = Caffeine.newBuilder()
-      .maximumSize(10_000)
-      .expireAfterWrite(5, TimeUnit.MINUTES)
-      .build(uniprotId -> GraphComponentFactory.INSTANCE.getProteinNodeFunction
-          .apply(uniprotId));
-  // GeneticEntity Node cache
-  private LoadingCache<String, Node> geneticEntityNodeCache = Caffeine.newBuilder()
-      .maximumSize(1_000)
-      .expireAfterWrite(5, TimeUnit.MINUTES)
-      .build(ensemblGeneId -> GraphComponentFactory.INSTANCE.getGeneticEntityNodeFunction
-          .apply(ensemblGeneId));
-  //DrugBank Node Cache
-  private LoadingCache<String, Node> drugBankNodeCache = Caffeine.newBuilder()
-      .maximumSize(1_000)
-      .expireAfterWrite(5, TimeUnit.MINUTES)
-      .build(drugBankId -> GraphComponentFactory.INSTANCE.getDrugBankNodeFunction
-          .apply(drugBankId));
-  // Gene Ontology Cache
-
-  private LoadingCache<GeneOntology, Node> geneOntologyNodeCache = Caffeine.newBuilder()
-      .maximumSize(7_000)
-      .expireAfterWrite(5, TimeUnit.MINUTES)
-      .build(goId -> GraphComponentFactory.INSTANCE.getGeneOntologyNodeFunction
-          .apply(goId));
-
-  // xref Node cache
-  private LoadingCache<Tuple2<String, LabelTypes>, Node> xrefNodeCache = Caffeine.newBuilder()
-      .maximumSize(10_000)
-      .expireAfterWrite(15, TimeUnit.MINUTES)
-      .build(tuple2 -> GraphComponentFactory.INSTANCE.getXrefNodeFunction
-          .apply(tuple2));
-  // RNA TPM Gene Cache
-  private LoadingCache<RnaTpmGene, Node> rnaTpmGeneNodeCache = Caffeine.newBuilder()
-      .maximumSize(10_000)
-      .expireAfterWrite(15, TimeUnit.MINUTES)
-      .build(tuple2 -> GraphComponentFactory.INSTANCE.getRnaTpmGeneNodeFunction
-          .apply(tuple2));
-
-  // Disease cache
-  private LoadingCache<String, Node> diseaseNodeCache = Caffeine.newBuilder()
-      .maximumSize(10_000)
-      .expireAfterWrite(15, TimeUnit.MINUTES)
-      .build(diseaseId -> GraphComponentFactory.INSTANCE.getDiseaseNodeFunction
-          .apply(diseaseId));
-
-  // Pathway cache
-  private LoadingCache<String, Node> pathwayNodeCache = Caffeine.newBuilder()
-      .maximumSize(10_000)
-      .expireAfterWrite(15, TimeUnit.MINUTES)
-      .build(pathwayId -> GraphComponentFactory.INSTANCE.getPathwayNodeFunction
-          .apply(pathwayId));
-  // Tissue cache
-  private LoadingCache<String, Node> tissueNodeCache = Caffeine.newBuilder()
-      .maximumSize(10_000)
-      .expireAfterWrite(15, TimeUnit.MINUTES)
-      .build(tissueId -> GraphComponentFactory.INSTANCE.getHumanTissueNodeFunction
-          .apply(tissueId));
-
-  // Subject cache
-  private LoadingCache<String, Node> subjectNodeCache = Caffeine.newBuilder()
-      .maximumSize(1_000)
-      .expireAfterWrite(15, TimeUnit.MINUTES)
-      .build(subjectId -> GraphComponentFactory.INSTANCE.getSubjectNodeFunction
-          .apply(subjectId));
-
-  // Sample cache
-
-  private LoadingCache<String, Node> sampleNodeCache = Caffeine.newBuilder()
-      .maximumSize(1_000)
-      .expireAfterWrite(15, TimeUnit.MINUTES)
-      .build(sampleId -> GraphComponentFactory.INSTANCE.getSampleNodeFunction
-          .apply(sampleId));
-
-  //SNP cache
-  private LoadingCache<String, Node> snpNodeCache = Caffeine.newBuilder()
-      .maximumSize(20_000)
-      .expireAfterWrite(15, TimeUnit.MINUTES)
-      .build(snpId -> GraphComponentFactory.INSTANCE.getSnpNodeFunction
-          .apply(snpId));
-
 
   protected Map<Tuple2<String, String>, Relationship> proteinGeneOntologyRelMap = Maps.mutable
       .empty();
@@ -158,61 +66,94 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Map<Tuple2<String, String>, Relationship> proteinTissRelMap = Maps.mutable.empty();
   protected Map<Tuple2<String, String>, Relationship> snpDiseaseRelMap = Maps.mutable.empty();
 
-  protected Function<String, Node> resolveSubjectNodeFunction = (extSubjectId) ->
-      subjectNodeCache.get(extSubjectId);
+  private final Label subjectLabel  = new DynamicLabel("Subject");
+  private final Label sampleLabel  = new DynamicLabel("Sample");
+  private final Label tissueLabel = new DynamicLabel("Tissue");
+  private final Label pathwayLabel = new DynamicLabel("Pathway");
+  private final Label diseaseLabel = new DynamicLabel("Disease");
+  private final Label rnaTpmLabel = new DynamicLabel("RnaTpm");
+  private final Label geneticEntityLabel = new DynamicLabel("GeneticEntity");
+  private final Label proteinLabel  = new DynamicLabel("Protein");
+  private final Label drugBankLabel = new DynamicLabel("DrugBank");
+  private final Label transcriptLabel = new DynamicLabel("EnsemblTranscript");
+  private final Label geneLabel = new DynamicLabel("EnsemblGene");
+  private final Label geneOntologyLabel = new DynamicLabel("GeneOntology");
+  private final Label sampleVariantLabel = new DynamicLabel("SampleVariant");
+  private final Label snpLabel = new DynamicLabel("SNP");
+
+
+  protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)-> {
+    Node goNode = lib.resolveNodeFunction.apply(geneOntologyLabel,"GeneOntology",go.goId());
+    lib.novelLabelConsumer.accept(goNode, new DynamicLabel(go.goAspect()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyId", go.goId()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyPrinciple",
+        go.goAspect()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyName", go.goName()));
+    return goNode;
+  };
+
+  protected Function<String, Node> resolveSubjectNodeFunction =
+      (extSubjectId) ->
+     lib.resolveNodeFunction.apply( subjectLabel,
+           "SubjectId",extSubjectId);
 
   protected Function<String, Node> resolveHumanTissueNodeFunction = (tissueId) ->
-      tissueNodeCache.get(tissueId);
+      lib.resolveNodeFunction.apply(tissueLabel,
+          "TissueId",tissueId);
 
   protected Function<String, Node> resolvePathwayNodeFunction = (pathwayId) ->
-      pathwayNodeCache.get(pathwayId);
+      lib.resolveNodeFunction.apply(pathwayLabel,
+          "PathwayId",pathwayId);
 
 
   protected Function<String, Node> resolveDiseaseNodeFunction = (diseaseId) ->
-      diseaseNodeCache.get(diseaseId);
+      lib.resolveNodeFunction.apply(diseaseLabel,
+          "DiseaseId",diseaseId);
 
-  /*
-  Only this Consumer creates RnaTpmGene Nodes so it can be private and set the properties
-   */
-  protected Function<RnaTpmGene, Node> resolveRnaTpmGeneNode = (rnaTpmGene) ->
-      rnaTpmGeneNodeCache.get(rnaTpmGene);
 
-  /*
-  Protected Function that resolves a Gene by either finding an existing Node
-  with a specified ensembl gene id or creating a new Node for that id
-   */
-  protected Function<String, Node> resolveGeneticEntityNodeFunction = (geneticEntityId) ->
-      geneticEntityNodeCache.get(geneticEntityId);
+  protected Function<RnaTpmGene, Node> resolveRnaTpmGeneNode = (rnaTpmGene) -> {
+    Node node = lib.resolveNodeFunction.apply(rnaTpmLabel,
+        "RnaTpmId", rnaTpmGene.id());
+    if (node != null ) {
+      // persist tpm value as a String
+      lib.nodePropertyValueConsumer
+          .accept(node, new Tuple2<>("TPM", String.valueOf(rnaTpmGene.tpm())));
+    }
+    return node;
+  };
 
-  /*
-  Protected Function that resolves a ensembl Gene xref by either finding an
-  existing Node with a specified gene id or by creating a new Node for that id
-   */
-  protected Function<String, Node> resolveEnsemblGeneNodeFunction = (ensemblGeneId) ->
-      xrefNodeCache.get(new Tuple2<>(ensemblGeneId, LabelTypes.EnsemblGene));
-//      (xrefMap.containsKey(ensemblGeneId)) ? xrefMap.get(ensemblGeneId)
-//          : createEnsemblGeneNodeFunction.apply(ensemblGeneId);
 
+  protected Function<String,Node> resolveSampleNodeFunction = (sampleId) ->
+      lib.resolveNodeFunction.apply(sampleLabel, "SampleId", sampleId);
+
+
+  private Function<String, Node> resolveGeneticEntityNodeFunction = (geneticEntityId) ->
+     lib.resolveNodeFunction.apply(geneticEntityLabel,"GeneticEntityId", geneticEntityId);
 
   /*
   Protected Function that resolves a Protein Node for a specified UniProt id
   by either finding an existing Node or by creating a new one
    */
   protected Function<String, Node> resolveProteinNodeFunction = (uniprotId) ->
-      proteinNodeCache.get(uniprotId);
+      lib.resolveNodeFunction.apply(proteinLabel,"UniProtKBID", uniprotId);
 
-  /*
-  Protected Consumer that will create a Protein Node with properties or
-  add properties to an existing Protein Node
-   */
 
   protected Function<String, Node> resolveDrugBankNode = (dbId) ->
-      drugBankNodeCache.get(dbId);
+      lib.resolveNodeFunction.apply(drugBankLabel,"DrugBankId", dbId);
 
   protected Function<String, Node> resolveEnsemblTranscriptNodeFunction =
-      transcriptId ->
-          xrefNodeCache.get(new Tuple2<>(transcriptId, LabelTypes.EnsemblTranscript));
+      transcriptId -> {
+        Node node = resolveGeneticEntityNodeFunction.apply(transcriptId);
+        lib.novelLabelConsumer.accept(node,transcriptLabel);
+        return node;
+      };
 
+  protected Function<String, Node> resolveEnsemblGeneNodeFunction =
+      geneId -> {
+        Node node = resolveGeneticEntityNodeFunction.apply(geneId);
+        lib.novelLabelConsumer.accept(node,geneLabel);
+        return node;
+      };
 
   protected void createEnsemblTranscriptNodes(@Nonnull UniProtValue upv) {
     String uniprotId = upv.uniprotId();
@@ -226,23 +167,16 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     });
   }
 protected Function<SampleVariantSummary,Node> resolveSampleVariantNode = (svc) -> {
-  Node svNode = GraphComponentFactory.INSTANCE.getSampleVariantNodeFunction.apply(svc.id());
+
+  Node svNode =lib.resolveNodeFunction.apply(sampleVariantLabel,"SampleVariantId", svc.id());
   // TODO: add test for ALS gene and add label if so
   // persist the list of variants
   lib.nodePropertyValueStringArrayConsumer.accept(svNode,new Tuple2<>("Variants", svc.variantList()));
   return svNode;
 };
 
-
-  protected Function<String, Node> resolveSampleNodeByExternalIdFunction = (extSampleId)
-      -> sampleNodeCache.get(extSampleId);
-
-
-  protected Function<GeneOntology, Node> resolveGeneOntologyNodeFunction = (go) ->
-      geneOntologyNodeCache.get(go);
-
   protected Function<String, Node> resolveSnpNodeFunction = (snpId) ->
-      snpNodeCache.get(snpId);
+      lib.resolveNodeFunction.apply(snpLabel,"SNP",snpId);
 
 
 }

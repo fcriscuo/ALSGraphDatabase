@@ -27,11 +27,11 @@ and a List of variants as a CSV String
 public class SampleVariantConsumer extends GraphDataConsumer{
 
  private Consumer<SampleVariantSummary> sampleVariantSummaryConsumer = (svc) -> {
-   // there are too many variants to store in a collection
+
    // this is the only class that will create SampleVariant nodes and
    // their relationships
-   Node geneNode = resolveGeneticEntityNodeFunction.apply(svc.ensemblGeneId());
-   Node sampleNode = resolveSampleNodeByExternalIdFunction.apply(svc.extSampleId());
+   Node geneNode = resolveEnsemblGeneNodeFunction.apply(svc.ensemblGeneId());
+   Node sampleNode = resolveSampleNodeFunction.apply(svc.extSampleId());
    Node sampleVariantNode = resolveSampleVariantNode.apply(svc);
    if (lib.isAlsAssociatedPredicate.test(geneNode)) {
      lib.novelLabelConsumer.accept(sampleVariantNode,alsLabel);

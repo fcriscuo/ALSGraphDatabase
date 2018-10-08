@@ -24,7 +24,7 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
 
   private Function<StringSubjectProperty, Node> resolveSampleNodeFunction = (stringSubjectProperty) -> {
     String externalSampleId = stringSubjectProperty.externalSampleId();
-    Node sampleNode = resolveSampleNodeByExternalIdFunction.apply(externalSampleId);
+    Node sampleNode = resolveSampleNodeFunction.apply(externalSampleId);
     // an existing Sample node may not have had these properties set
     lib.nodePropertyValueConsumer
         .accept(sampleNode, new Tuple2<>("ExternalSampleId", externalSampleId));

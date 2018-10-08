@@ -10,6 +10,7 @@ import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.service.DrugBankService;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -50,6 +51,17 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer  {
        }
 
        }
+  private BiConsumer<String, Node> completeDrugBankNodeProperties = (id, node) -> {
+    DrugBankService.INSTANCE.getDrugBankValueById(id)
+        .ifPresent(dbv -> {
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugId", dbv.drugBankId()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugName", dbv.drugName()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugType", dbv.drugType()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("CASNumber", dbv.casNumber()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("RxListLink", dbv.rxListLink()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("NDCLink", dbv.ndcLink()));
+        });
+  };
 
 
     private BiConsumer<RelTypes, UniProtDrug> proteinDrugRelationshiprConsumer
@@ -62,6 +74,7 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer  {
             addDrugTypeLabel(proteinNode);
             drug.drugIdList().forEach((id) -> {
                 Node drugNode = resolveDrugBankNode.apply(id);
+                completeDrugBankNodeProperties.accept(drug.id(),drugNode);
                 proteinDrugRelMap.put(new Tuple2<>(uniprotId, id),
                     proteinNode.createRelationshipTo(drugNode, drugRelType));
             });
