@@ -2,14 +2,6 @@ package org.nygenome.als.graphdb.lib;
 
 
 import com.google.common.base.Strings;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.StreamSupport;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URI;
@@ -17,9 +9,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import org.apache.log4j.Logger;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.MultipleFoundException;
 import org.neo4j.graphdb.Node;
@@ -28,20 +27,16 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import scala.Function3;
 import scala.Tuple2;
+import scala.Tuple3;
 import scala.collection.immutable.List;
 
 
 public class FunctionLib {
 
   private static final Logger log = Logger.getLogger(FunctionLib.class);
-
-  public FunctionLib() {
-  }
-
+  public FunctionLib() {}
   /*
   Public Function to determine if a specified ensembl id is for
   an esembl gene or an ensembl transcript
@@ -68,9 +63,11 @@ The value must be a String
 The return is a new or existing Node
  */
 
-public Function3<Label,String,String, Node> resolveNodeFunction =
-    (label, property, value) -> {
-
+public Function<Tuple3<Label,String,String>,Node> resolveNodeFunction =
+    (tuple3) -> {
+    Label label = tuple3._1();
+        String property = tuple3._2();
+        String value = tuple3._3();
       Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
       try {
         Node node = ALSDatabaseImportApp.getGraphInstance()
@@ -315,5 +312,6 @@ Protected BiConsumer that will add a property name/String value pair to a specif
         + " lines in file " + path.toString());
 
   }
+
 }
 

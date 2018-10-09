@@ -9,8 +9,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
@@ -26,23 +24,11 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
     // set or reset disease name
     lib.nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseName", snp.diseaseName()));
     Node snpNode = resolveDiseaseNodeFunction.apply(snp.snpId());
-    // create bi-directional relationship between snp & disease
-    Tuple2<String,String> relTuple = new Tuple2<>(snp.snpId(), snp.diseaseId());
+    // create  relationship between snp & disease
     Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(snpNode, diseaseNode),  RelTypes.IMPLICATED_IN);
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
-    try {
-      rel.setProperty("ConfidenceLevel",snp.score());
-      rel.setProperty("Reference",snp.source());
-      tx.success();
-    } catch (Exception e) {
-      e.printStackTrace();
-      tx.failure();
-    } finally {
-      tx.close();
-    }
+    lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("ConfidenceLevel",String.valueOf(snp.score())));
+    lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Reference",snp.source()));
   };
-
-
   @Override
   public void accept(Path path) {
     Preconditions.checkArgument(Files.exists(path, LinkOption.NOFOLLOW_LINKS));

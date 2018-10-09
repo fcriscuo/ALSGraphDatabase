@@ -17,6 +17,7 @@ import org.nygenome.als.graphdb.value.DrugBankValue;
 
 public enum DrugBankService {
   INSTANCE;
+  //TODO : use async logger
   private final Logger log = Logger.get(DrugBankService.class);
 
   private final ImmutableMap<String, DrugBankValue> drugBankMap =

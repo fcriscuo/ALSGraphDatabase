@@ -3,14 +3,11 @@ package org.nygenome.als.graphdb.consumer;
 
 import com.twitter.logging.Logger;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
-import org.eclipse.collections.impl.factory.Maps;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.util.DynamicLabel;
@@ -20,6 +17,7 @@ import org.nygenome.als.graphdb.value.RnaTpmGene;
 import org.nygenome.als.graphdb.value.SampleVariantSummary;
 import org.nygenome.als.graphdb.value.UniProtValue;
 import scala.Tuple2;
+import scala.Tuple3;
 
 public abstract class GraphDataConsumer implements Consumer<Path> {
 
@@ -51,7 +49,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
 
 
   protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)-> {
-    Node goNode = lib.resolveNodeFunction.apply(geneOntologyLabel,"GeneOntology",go.goId());
+    Node goNode = lib.resolveNodeFunction.apply(new Tuple3<>(geneOntologyLabel,"GeneOntology",go.goId()));
     lib.novelLabelConsumer.accept(goNode, new DynamicLabel(go.goAspect()));
     lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyId", go.goId()));
     lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyPrinciple",
@@ -62,26 +60,26 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
 
   protected Function<String, Node> resolveSubjectNodeFunction =
       (extSubjectId) ->
-     lib.resolveNodeFunction.apply( subjectLabel,
-           "SubjectId",extSubjectId);
+     lib.resolveNodeFunction.apply( new Tuple3<>(subjectLabel,
+           "SubjectId",extSubjectId));
 
   protected Function<String, Node> resolveHumanTissueNodeFunction = (tissueId) ->
-      lib.resolveNodeFunction.apply(tissueLabel,
-          "TissueId",tissueId);
+      lib.resolveNodeFunction.apply(new Tuple3<>(tissueLabel,
+          "TissueId",tissueId));
 
   protected Function<String, Node> resolvePathwayNodeFunction = (pathwayId) ->
-      lib.resolveNodeFunction.apply(pathwayLabel,
-          "PathwayId",pathwayId);
+      lib.resolveNodeFunction.apply(new Tuple3<>(pathwayLabel,
+          "PathwayId",pathwayId));
 
 
   protected Function<String, Node> resolveDiseaseNodeFunction = (diseaseId) ->
-      lib.resolveNodeFunction.apply(diseaseLabel,
-          "DiseaseId",diseaseId);
+      lib.resolveNodeFunction.apply(new Tuple3<>(diseaseLabel,
+          "DiseaseId",diseaseId));
 
 
   protected Function<RnaTpmGene, Node> resolveRnaTpmGeneNode = (rnaTpmGene) -> {
-    Node node = lib.resolveNodeFunction.apply(rnaTpmLabel,
-        "RnaTpmId", rnaTpmGene.id());
+    Node node = lib.resolveNodeFunction.apply(new Tuple3<>(rnaTpmLabel,
+        "RnaTpmId", rnaTpmGene.id()));
     if (node != null ) {
       // persist tpm value as a String
       lib.nodePropertyValueConsumer
@@ -92,22 +90,22 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
 
 
   protected Function<String,Node> resolveSampleNodeFunction = (sampleId) ->
-      lib.resolveNodeFunction.apply(sampleLabel, "SampleId", sampleId);
+      lib.resolveNodeFunction.apply(new Tuple3<>(sampleLabel, "SampleId", sampleId));
 
 
-  private Function<String, Node> resolveGeneticEntityNodeFunction = (geneticEntityId) ->
-     lib.resolveNodeFunction.apply(geneticEntityLabel,"GeneticEntityId", geneticEntityId);
+  protected Function<String, Node> resolveGeneticEntityNodeFunction = (geneticEntityId) ->
+     lib.resolveNodeFunction.apply(new Tuple3<>(geneticEntityLabel,"GeneticEntityId", geneticEntityId));
 
   /*
   Protected Function that resolves a Protein Node for a specified UniProt id
   by either finding an existing Node or by creating a new one
    */
   protected Function<String, Node> resolveProteinNodeFunction = (uniprotId) ->
-      lib.resolveNodeFunction.apply(proteinLabel,"UniProtKBID", uniprotId);
+      lib.resolveNodeFunction.apply(new Tuple3<>(proteinLabel,"UniProtKBID", uniprotId));
 
 
   protected Function<String, Node> resolveDrugBankNode = (dbId) ->
-      lib.resolveNodeFunction.apply(drugBankLabel,"DrugBankId", dbId);
+      lib.resolveNodeFunction.apply(new Tuple3<>(drugBankLabel,"DrugBankId", dbId));
 
   protected Function<String, Node> resolveEnsemblTranscriptNodeFunction =
       transcriptId -> {
@@ -134,7 +132,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   }
 protected Function<SampleVariantSummary,Node> resolveSampleVariantNode = (svc) -> {
 
-  Node svNode =lib.resolveNodeFunction.apply(sampleVariantLabel,"SampleVariantId", svc.id());
+  Node svNode =lib.resolveNodeFunction.apply(new Tuple3<>(sampleVariantLabel,"SampleVariantId", svc.id()));
   // TODO: add test for ALS gene and add label if so
   // persist the list of variants
   lib.nodePropertyValueStringArrayConsumer.accept(svNode,new Tuple2<>("Variants", svc.variantList()));
@@ -142,7 +140,7 @@ protected Function<SampleVariantSummary,Node> resolveSampleVariantNode = (svc) -
 };
 
   protected Function<String, Node> resolveSnpNodeFunction = (snpId) ->
-      lib.resolveNodeFunction.apply(snpLabel,"SNP",snpId);
+      lib.resolveNodeFunction.apply(new Tuple3<>(snpLabel,"SNP",snpId));
 
 
 }

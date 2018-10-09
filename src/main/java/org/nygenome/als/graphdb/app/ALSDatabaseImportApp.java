@@ -56,7 +56,6 @@ public enum ALSDatabaseImportApp
 	}
 
 	public static void main(final String[] args) {
-
 		ALSDatabaseImportApp.INSTANCE.createDb();
 		ALSDatabaseImportApp.INSTANCE.shutDown();
 	}

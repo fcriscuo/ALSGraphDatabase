@@ -22,7 +22,7 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
   private FunctionLib lib = new FunctionLib();
 
 
-  private Function<StringSubjectProperty, Node> resolveSampleNodeFunction = (stringSubjectProperty) -> {
+  private Function<StringSubjectProperty, Node> completeSampleNodeFunction = (stringSubjectProperty) -> {
     String externalSampleId = stringSubjectProperty.externalSampleId();
     Node sampleNode = resolveSampleNodeFunction.apply(externalSampleId);
     // an existing Sample node may not have had these properties set
@@ -39,7 +39,7 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
     Node subjectNode = resolveSubjectNodeFunction.apply(subjectProperty.externalSubjectId());
     lib.nodePropertyValueConsumer.accept(subjectNode,
         new Tuple2<>(subjectProperty.propertyName(), subjectProperty.propertyValue()));
-    Node sampleNode = resolveSampleNodeFunction.apply(subjectProperty);
+    Node sampleNode = completeSampleNodeFunction.apply(subjectProperty);
     lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode,sampleNode),RelTypes.HAS_SAMPLE );
   };
 
