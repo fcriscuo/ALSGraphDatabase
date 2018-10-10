@@ -10,7 +10,8 @@ case class StringSubjectProperty (
 }
 object StringSubjectProperty extends ValueTrait {
   def parseCSVRecord(record: CSVRecord):StringSubjectProperty  ={
-    new StringSubjectProperty(record.get("subjectId").toInt,
+    new StringSubjectProperty(
+      validIntegerString(record.get("subjectId")),
       record.get("propertyName"), record.get("propertyValue"),
       record.get("externalSubjectId"), record.get("externalSampleId"),
       record.get("sampleId").toInt, record.get("type"),
@@ -18,6 +19,6 @@ object StringSubjectProperty extends ValueTrait {
     )
   }
   val columnHeadings:Array[String] = Array("subjectId","propertyName","propertyValue","externalSubjectId",
-    "nygcSubjectId","subId2","externalSampleId","nygcSampleId","sampleId"
-    ,"subId3","type","analyteType","sampleGroupId","samId2")
+    "nygcSubjectId","externalSampleId","sampleId"
+    ,"type","analyteType")
 }

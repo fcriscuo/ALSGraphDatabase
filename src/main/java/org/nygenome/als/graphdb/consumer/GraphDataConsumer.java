@@ -46,6 +46,9 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   private final Label geneOntologyLabel = new DynamicLabel("GeneOntology");
   private final Label sampleVariantLabel = new DynamicLabel("SampleVariant");
   private final Label snpLabel = new DynamicLabel("SNP");
+  protected final Label neurobankLabel = new DynamicLabel("Neurobank");
+  private final Label neurobankCategoryLabel = new DynamicLabel("NeurobankCategory");
+  private final Label subjectPropertyLabel = new DynamicLabel("SubjectProperty");
 
 
   protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)-> {
@@ -57,6 +60,14 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyName", go.goName()));
     return goNode;
   };
+
+
+
+  protected Function<String,Node> resolveSubjectPropertyNode = (id) ->
+      lib.resolveNodeFunction.apply(new Tuple3<>(subjectPropertyLabel, "Id",id));
+
+  protected Function<String,Node> resolveCategoryNode = (category) ->
+      lib.resolveNodeFunction.apply(new Tuple3<>(neurobankCategoryLabel, "Category",category));
 
   protected Function<String, Node> resolveSubjectNodeFunction =
       (extSubjectId) ->

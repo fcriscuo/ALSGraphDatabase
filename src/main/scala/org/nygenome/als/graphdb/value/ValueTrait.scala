@@ -37,8 +37,17 @@ protected def isHuman(species:String):Boolean = species.trim().equalsIgnoreCase(
 
   def isValidString(x:String):Boolean = x != null && x.trim.length> 0
 
+  def booleanValueFromInt (x:Int):Boolean = x == 1
+
   protected var reduceListToString: Function[List[String], String] =
     (list: List[String]) => list.mkString("|")
+  val onlyDigitsRegex = "^\\d+$".r
+
+  // filter out non-numeric values in numeric field
+  def validIntegerString(s:String):Int = s match {
+    case onlyDigitsRegex() => s.toInt
+    case _ => 0
+  }
 
 
 

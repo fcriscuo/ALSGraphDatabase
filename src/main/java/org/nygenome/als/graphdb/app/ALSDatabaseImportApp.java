@@ -15,6 +15,7 @@ import org.nygenome.als.graphdb.consumer.AlsGeneConsumer;
 import org.nygenome.als.graphdb.consumer.AlsSnpConsumer;
 import org.nygenome.als.graphdb.consumer.GeneDiseaseAssociationDataConsumer;
 import org.nygenome.als.graphdb.consumer.IntactDataConsumer;
+import org.nygenome.als.graphdb.consumer.NeurobankCategoryConsumer;
 import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
 import org.nygenome.als.graphdb.consumer.DrugUniprotInfoConsumer;
 import org.nygenome.als.graphdb.consumer.HumanTissueAtlasDataConsumer;
@@ -39,7 +40,7 @@ public enum ALSDatabaseImportApp
 		DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER, PART_OF, DEG_RELATED_TO, SEQ_SIM,
 		GO_CLASSIFICATION,  TRANSCRIPT, IMPLICATED_IN, HAS_SAMPLE, SAMPLED_FROM, MAPS_TO,
 		EXPRESSION_LEVEL, EXPRESSED_PROTEIN, ENCODED_BY,ASSOCIATED_PROTEIN,ASSOCIATED_GENETIC_ENTITY,
-		REFERENCES, ASSOCIATED_VARIANT,TRANSCRIBES,
+		REFERENCES, ASSOCIATED_VARIANT,TRANSCRIBES,CHILD,PROPERTY
 	}
 
 	public  enum LabelTypes implements Label {
@@ -89,6 +90,8 @@ public enum ALSDatabaseImportApp
 				VariantDiseaseAssociationDataConsumer.importData();
 				// sample variants
 				SampleVariantConsumer.importData();
+				// neurobank categories
+				NeurobankCategoryConsumer.importData();
 
 				stopwatch.stop();
 				AsyncLoggingService.logInfo("Creation of the ALS Neo4j database required "
