@@ -51,7 +51,17 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   private final Label neurobankCategoryLabel = new DynamicLabel("NeurobankCategory");
   private final Label subjectPropertyLabel = new DynamicLabel("SubjectProperty");
   private final Label alsStudyTimepointLabel = new DynamicLabel("AlsStudyTimepoint");
+  private final Label subjectEventPropertyLabel = new DynamicLabel("SubjectEventProperty");
+  private final Label subjectEventPropertyValueLabel = new DynamicLabel("SubjectEventPropertyValue");
 
+
+  /*
+  Consume that ensures that an ALS-associated Node is properly annotated
+   */
+  protected Consumer<Node> annotateNeurobankNodeConsumer = (node)-> {
+    lib.novelLabelConsumer.accept(node, neurobankLabel);
+    lib.novelLabelConsumer.accept(node,alsLabel);
+  };
 
   protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)-> {
     Node goNode = lib.resolveNodeFunction.apply(new Tuple3<>(geneOntologyLabel,"GeneOntology",go.goId()));
@@ -62,6 +72,13 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyName", go.goName()));
     return goNode;
   };
+
+  protected Function<String,Node> resolveSubjectEventPropertyValueNodeFunction = (id) ->
+      lib.resolveNodeFunction.apply(new Tuple3<>(subjectEventPropertyValueLabel,"EventPropertyValue",id));
+
+  protected Function<String,Node> resolveSubjectEventPropertyNodeFunction = (id) ->
+    lib.resolveNodeFunction.apply(new Tuple3<>(subjectEventPropertyLabel,"EventProperty",id));
+
 
 
   protected Function<String, Node> resolveStudyTimepointNode = (id) ->
