@@ -13,6 +13,7 @@ import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.util.DynamicLabel;
 import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.value.GeneOntology;
+import org.nygenome.als.graphdb.value.NeurobankSubjectTimepoint;
 import org.nygenome.als.graphdb.value.RnaTpmGene;
 import org.nygenome.als.graphdb.value.SampleVariantSummary;
 import org.nygenome.als.graphdb.value.UniProtValue;
@@ -49,6 +50,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final Label neurobankLabel = new DynamicLabel("Neurobank");
   private final Label neurobankCategoryLabel = new DynamicLabel("NeurobankCategory");
   private final Label subjectPropertyLabel = new DynamicLabel("SubjectProperty");
+  private final Label alsStudyTimepointLabel = new DynamicLabel("AlsStudyTimepoint");
 
 
   protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)-> {
@@ -62,6 +64,8 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   };
 
 
+  protected Function<String, Node> resolveStudyTimepointNode = (id) ->
+      lib.resolveNodeFunction.apply(new Tuple3<>(alsStudyTimepointLabel,"Name",id));
 
   protected Function<String,Node> resolveSubjectPropertyNode = (id) ->
       lib.resolveNodeFunction.apply(new Tuple3<>(subjectPropertyLabel, "Id",id));

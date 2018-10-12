@@ -12,8 +12,8 @@ case class NeurobankSubjectTimepoint(
                                     timepointEventId:Int,
                                     subjectGuid:String
                                     ) {
-  val id:String = subjectGuid +":" +timepointName
-
+  val id:String = timepointName
+0
 }
 object NeurobankSubjectTimepoint extends ValueTrait {
   def parseCSVRecord(record:CSVRecord):NeurobankSubjectTimepoint = {

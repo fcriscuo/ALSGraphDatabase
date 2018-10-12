@@ -10,7 +10,7 @@ case class NeurobankSubjectTimepointProperty(
                                     propertyValue:String,
                                     timepointId:Int
                                        ) {
-  val id:String = propertyCode
+  val id:String = propertyCategory + ":" +propertyCode
 
 }
 object NeurobankSubjectTimepointProperty extends ValueTrait {

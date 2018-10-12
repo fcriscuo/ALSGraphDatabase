@@ -10,7 +10,7 @@ case class NeurobankSubjectProperty ( subjectId:Int,
                                       eventPropertyName:String,
                                       eventPropertyValue:String
                                     ) {
-  val id:String = eventPropertyCode
+  val id:String = eventCategory +":" +eventPropertyCode
 
 }
 
