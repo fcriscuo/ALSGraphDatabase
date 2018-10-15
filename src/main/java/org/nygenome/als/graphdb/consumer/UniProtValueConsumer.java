@@ -35,7 +35,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, goNode),RelTypes.GO_CLASSIFICATION);
       AsyncLoggingService.logInfo("Created relationship between protein " + uniprotId
-          + " and GO id: " + go.goId());
+          + " and GO id: " + go.goTermAccession());
   }
 
   private Consumer<UniProtValue> geneOntologyListConsumer = (upv) -> {

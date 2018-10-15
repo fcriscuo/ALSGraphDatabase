@@ -28,6 +28,7 @@ import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import org.nygenome.als.graphdb.value.ValueTrait;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.collection.immutable.List;

@@ -8,12 +8,13 @@ import java.util.function.Function;
 import javax.annotation.Nonnull;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.RelationshipType;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
 import org.nygenome.als.graphdb.util.DynamicLabel;
+import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
 import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.value.GeneOntology;
-import org.nygenome.als.graphdb.value.NeurobankSubjectTimepoint;
 import org.nygenome.als.graphdb.value.RnaTpmGene;
 import org.nygenome.als.graphdb.value.SampleVariantSummary;
 import org.nygenome.als.graphdb.value.UniProtValue;
@@ -22,10 +23,6 @@ import scala.Tuple3;
 
 public abstract class GraphDataConsumer implements Consumer<Path> {
 
-  protected final String TAB_DELIM = "\t";  // tab delimited file
-  protected final String COMMA_DELIM = ",";  // comma delimited file
-  protected final String strNoInfo = "NA";
-  protected final String strApostrophe = "`";
   protected final String HUMAN_SPECIES = "homo sapiens";
   protected Logger log = Logger.get(GraphDataConsumer.class);
   protected final Label alsLabel = new DynamicLabel("ALS-associated");
@@ -53,6 +50,10 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   private final Label alsStudyTimepointLabel = new DynamicLabel("AlsStudyTimepoint");
   private final Label subjectEventPropertyLabel = new DynamicLabel("SubjectEventProperty");
   private final Label subjectEventPropertyValueLabel = new DynamicLabel("SubjectEventPropertyValue");
+  private final Label xrefLabel = new DynamicLabel("Xref");
+
+  protected final RelationshipType transcribesRelationType = new DynamicRelationshipTypes("TRANSCRIBES");
+  protected final RelationshipType xrefRelationType = new DynamicRelationshipTypes("References");
 
 
   /*
@@ -64,12 +65,16 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   };
 
   protected Function<GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)-> {
-    Node goNode = lib.resolveNodeFunction.apply(new Tuple3<>(geneOntologyLabel,"GeneOntology",go.goId()));
-    lib.novelLabelConsumer.accept(goNode, new DynamicLabel(go.goAspect()));
-    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyId", go.goId()));
-    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyPrinciple",
-        go.goAspect()));
-    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyName", go.goName()));
+    Node goNode = lib.resolveNodeFunction.apply(new Tuple3<>(geneOntologyLabel,"GeneOntology",go.goTermAccession()));
+    lib.novelLabelConsumer.accept(goNode,xrefLabel);
+    if (GeneOntology.isValidString(go.goDomain())) {
+      lib.novelLabelConsumer.accept(goNode, new DynamicLabel(go.goDomain()));
+    }
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermAccession", go.goTermAccession()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyDomain",
+        go.goDomain()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermName", go.goName()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermDefinition", go.goDefinition()));
     return goNode;
   };
 
