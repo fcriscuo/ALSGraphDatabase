@@ -3,6 +3,7 @@ package org.nygenome.als.graphdb.consumer;
 
 import com.twitter.logging.Logger;
 import java.nio.file.Path;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
@@ -51,6 +52,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   private final Label subjectEventPropertyLabel = new DynamicLabel("SubjectEventProperty");
   private final Label subjectEventPropertyValueLabel = new DynamicLabel("SubjectEventPropertyValue");
   private final Label xrefLabel = new DynamicLabel("Xref");
+  protected final Label hgncLabel = new DynamicLabel("HGNC");
 
   protected final RelationshipType transcribesRelationType = new DynamicRelationshipTypes("TRANSCRIBES");
   protected final RelationshipType xrefRelationType = new DynamicRelationshipTypes("References");
@@ -84,7 +86,15 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected Function<String,Node> resolveSubjectEventPropertyNodeFunction = (id) ->
     lib.resolveNodeFunction.apply(new Tuple3<>(subjectEventPropertyLabel,"EventProperty",id));
 
-
+  /*
+  Function to find or create a new Xref Node
+  Requires a secondary Label to identify the xref source
+   */
+  protected BiFunction<Label,String,Node> resolveXrefNode = (label, id)-> {
+    Node node = lib.resolveNodeFunction.apply(new Tuple3<>(xrefLabel, "XrefId", id));
+    lib.novelLabelConsumer.accept(node, label);
+    return node;
+  };
 
   protected Function<String, Node> resolveStudyTimepointNode = (id) ->
       lib.resolveNodeFunction.apply(new Tuple3<>(alsStudyTimepointLabel,"Name",id));

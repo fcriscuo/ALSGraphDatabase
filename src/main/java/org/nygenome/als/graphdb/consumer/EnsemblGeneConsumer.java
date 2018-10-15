@@ -38,6 +38,11 @@ public class EnsemblGeneConsumer extends GraphDataConsumer{
     // gene - gene ontology relationship
     Node goNode = resolveGeneOntologyNodeFunction.apply(gene.goEntry());
     lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode,goNode), xrefRelationType);
+    // gene - hgnc xref
+    if(EnsemblGene.isValidString(gene.hugoSymbol())) {
+      Node hgncNode = resolveXrefNode.apply(hgncLabel, gene.hugoSymbol());
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode,hgncNode), xrefRelationType);
+    }
   };
 
 
