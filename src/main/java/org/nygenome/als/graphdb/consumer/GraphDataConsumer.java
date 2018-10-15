@@ -53,6 +53,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   private final Label subjectEventPropertyValueLabel = new DynamicLabel("SubjectEventPropertyValue");
   private final Label xrefLabel = new DynamicLabel("Xref");
   protected final Label hgncLabel = new DynamicLabel("HGNC");
+  protected final Label pubMedLabel = new DynamicLabel("PubMed");
 
   protected final RelationshipType transcribesRelationType = new DynamicRelationshipTypes("TRANSCRIBES");
   protected final RelationshipType xrefRelationType = new DynamicRelationshipTypes("References");

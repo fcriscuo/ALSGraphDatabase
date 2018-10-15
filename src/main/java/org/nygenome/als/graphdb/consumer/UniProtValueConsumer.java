@@ -57,6 +57,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
         .map(
             goEntry -> GeneOntology.parseGeneOntologyEntry("Gene Ontology (mol function)", goEntry))
         .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go));
+
   };
 
   private Consumer<UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
@@ -77,6 +78,16 @@ public class UniProtValueConsumer extends GraphDataConsumer {
       StringUtils.convertToJavaString(upv.drugBankIdList())
       .forEach(dbId ->resolveDrugBankNode.apply(dbId));
 
+  private Consumer<UniProtValue> pubMedXrefConsumer = (upv) -> {
+    // PubMed Xrefs
+    Node proteinNode = resolveProteinNodeFunction.apply(upv.uniprotId());
+    StringUtils.convertToJavaString(upv.pubMedIdList())
+        .stream()
+        .map(pubMedId ->resolveXrefNode.apply(pubMedLabel,pubMedId))
+        .forEach(xrefNode -> lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, xrefNode),
+            xrefRelationType));
+  };
+
   private Consumer<UniProtValue> uniProtValueConsumer = (upv -> {
     // create the protein node for this uniprot entry
     uniProtValueToProteinNodeConsumer.accept(upv);
@@ -86,6 +97,8 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     //createEnsemblTranscriptNodes(upv);
     // add drugs associated with this protein
     drugBankIdConsumer.accept(upv);
+    // pubmed
+    pubMedXrefConsumer.accept(upv);
 
   });
   public static void importData() {
