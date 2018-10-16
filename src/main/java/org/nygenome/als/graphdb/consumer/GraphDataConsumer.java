@@ -2,13 +2,16 @@ package org.nygenome.als.graphdb.consumer;
 
 
 import com.twitter.logging.Logger;
+import com.twitter.util.Function3;
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
@@ -19,6 +22,7 @@ import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.RnaTpmGene;
 import org.nygenome.als.graphdb.value.SampleVariantSummary;
 import org.nygenome.als.graphdb.value.UniProtValue;
+
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -31,27 +35,27 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
 
   protected final FunctionLib lib = new FunctionLib();
 
-  private final Label subjectLabel  = new DynamicLabel("Subject");
-  private final Label sampleLabel  = new DynamicLabel("Sample");
-  private final Label tissueLabel = new DynamicLabel("Tissue");
-  private final Label pathwayLabel = new DynamicLabel("Pathway");
-  private final Label diseaseLabel = new DynamicLabel("Disease");
-  private final Label rnaTpmLabel = new DynamicLabel("RnaTpm");
-  private final Label geneticEntityLabel = new DynamicLabel("GeneticEntity");
-  private final Label proteinLabel  = new DynamicLabel("Protein");
-  private final Label drugBankLabel = new DynamicLabel("DrugBank");
-  private final Label transcriptLabel = new DynamicLabel("Transcript");
-  private final Label geneLabel = new DynamicLabel("EnsemblGene");
-  private final Label geneOntologyLabel = new DynamicLabel("GeneOntology");
-  private final Label sampleVariantLabel = new DynamicLabel("SampleVariant");
-  private final Label snpLabel = new DynamicLabel("SNP");
+  protected final Label subjectLabel  = new DynamicLabel("Subject");
+  protected final Label sampleLabel  = new DynamicLabel("Sample");
+  protected final Label tissueLabel = new DynamicLabel("Tissue");
+  protected final Label pathwayLabel = new DynamicLabel("Pathway");
+  protected final Label diseaseLabel = new DynamicLabel("Disease");
+  protected final Label rnaTpmLabel = new DynamicLabel("RnaTpm");
+  protected final Label geneticEntityLabel = new DynamicLabel("GeneticEntity");
+  protected final Label proteinLabel  = new DynamicLabel("Protein");
+  protected final Label drugBankLabel = new DynamicLabel("DrugBank");
+  protected final Label transcriptLabel = new DynamicLabel("Transcript");
+  protected final Label geneLabel = new DynamicLabel("Gene");
+  protected final Label geneOntologyLabel = new DynamicLabel("GeneOntology");
+  protected final Label sampleVariantLabel = new DynamicLabel("SampleVariant");
+  protected final Label snpLabel = new DynamicLabel("SNP");
   protected final Label neurobankLabel = new DynamicLabel("Neurobank");
-  private final Label neurobankCategoryLabel = new DynamicLabel("NeurobankCategory");
-  private final Label subjectPropertyLabel = new DynamicLabel("SubjectProperty");
-  private final Label alsStudyTimepointLabel = new DynamicLabel("AlsStudyTimepoint");
-  private final Label subjectEventPropertyLabel = new DynamicLabel("SubjectEventProperty");
-  private final Label subjectEventPropertyValueLabel = new DynamicLabel("SubjectEventPropertyValue");
-  private final Label xrefLabel = new DynamicLabel("Xref");
+  protected final Label neurobankCategoryLabel = new DynamicLabel("NeurobankCategory");
+  protected final Label subjectPropertyLabel = new DynamicLabel("SubjectProperty");
+  protected final Label alsStudyTimepointLabel = new DynamicLabel("AlsStudyTimepoint");
+  protected final Label subjectEventPropertyLabel = new DynamicLabel("SubjectEventProperty");
+  protected final Label subjectEventPropertyValueLabel = new DynamicLabel("SubjectEventPropertyValue");
+  protected final Label xrefLabel = new DynamicLabel("Xref");
   protected final Label hgncLabel = new DynamicLabel("HGNC");
   protected final Label ensemblLabel = new DynamicLabel("ensembl");
   protected final Label pubMedLabel = new DynamicLabel("PubMed");
@@ -59,12 +63,14 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final Label entrezLabel = new DynamicLabel("Entrez");
   protected final Label omimLabel = new DynamicLabel("Omim");
   protected final Label refSeqLabel = new DynamicLabel("RefSeq");
+
   protected final Label proteinCodingLabel = new DynamicLabel("ProteinCodingGene");
   protected final Label nonCodingRNALabel = new DynamicLabel("Non-codingRNA");
 
   protected final RelationshipType transcribesRelationType = new DynamicRelationshipTypes("TRANSCRIBES");
   protected final RelationshipType xrefRelationType = new DynamicRelationshipTypes("REFERENCES");
   protected final RelationshipType encodedRelationType = new DynamicRelationshipTypes("ENCODED_BY");
+
 
 
   /*
@@ -103,6 +109,22 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     Node node = lib.resolveNodeFunction.apply(new Tuple3<>(xrefLabel, "XrefId", id));
     lib.novelLabelConsumer.accept(node, label);
     return node;
+  };
+
+  /*
+A Protected Function that will find/create an Xref Node using a specified identifier and the
+standard xref Label. The supplied Label will be added if the xref Node does not already have that
+Label. A xref Relationship, between the supplied Node and the resolved xref node, will
+be created and returned
+ */
+  protected Function3<Node,Label,String, Relationship> registerXrefRelationshipFunction
+      = new Function3<Node, Label, String, Relationship>() {
+    @Override
+    public Relationship apply(Node sourceNode, Label secondaryLabel, String xrefId) {
+      Node xrefNode = resolveXrefNode.apply(xrefLabel,xrefId);
+      lib.novelLabelConsumer.accept(xrefNode,secondaryLabel);
+      return lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sourceNode,xrefNode),xrefRelationType);
+    }
   };
 
   protected Function<String, Node> resolveStudyTimepointNode = (id) ->

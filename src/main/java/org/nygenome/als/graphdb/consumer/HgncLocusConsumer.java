@@ -11,6 +11,7 @@ import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.DynamicLabel;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
+import org.nygenome.als.graphdb.util.StringUtils;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.HgncLocus;
 import scala.Tuple2;
@@ -19,13 +20,43 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
 
 
   private BiConsumer<Node,HgncLocus> resolveHgncLocusRelationshipsConsumer = (geNode, hgnc) -> {
-    Node hgncXrefNode = resolveXrefNode.apply(hgncLabel,hgnc.id());
+    Node hgncXrefNode = resolveXrefNode.apply(xrefLabel,hgnc.id());
+    lib.novelLabelConsumer.accept(hgncXrefNode,hgncLabel);
     lib.nodePropertyValueConsumer.accept(hgncXrefNode,new Tuple2<>("HgncID" ,hgnc.hgncId()));
     lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geNode,hgncXrefNode),xrefRelationType);
     if (HgncLocus.isValidString(hgnc.uniprotId())) {
       Node proteinNode = resolveProteinNodeFunction.apply(hgnc.uniprotId());
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,geNode),encodedRelationType );
     }
+    if( HgncLocus.isValidString(hgnc.entrezId())){
+      Node entrezNode = resolveXrefNode.apply(xrefLabel,hgnc.entrezId());
+      lib.novelLabelConsumer.accept(entrezNode,entrezLabel);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geNode,entrezNode),xrefRelationType);
+    }
+    if (HgncLocus.isValidString(hgnc.ensemblGeneId())) {
+      Node geneNode = resolveGeneticEntityNodeFunction.apply(hgnc.ensemblGeneId());
+      lib.novelLabelConsumer.accept(geneNode,ensemblLabel);
+      lib.novelLabelConsumer.accept(geneNode, geneLabel);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geNode,geneNode),xrefRelationType);
+    }
+    // PubMed Xrefs
+    StringUtils.convertToJavaString(hgnc.pubMedIdList())
+        .forEach(pubMedId ->{
+          registerXrefRelationshipFunction.apply(geNode, pubMedLabel, pubMedId);
+        });
+    // RefSeq
+    if(HgncLocus.isValidString(hgnc.refSeqAccession())) {
+      registerXrefRelationshipFunction.apply(geNode,refSeqLabel,hgnc.refSeqAccession());
+    }
+    // Cosmic
+    if(HgncLocus.isValidString(hgnc.cosmicId())) {
+      registerXrefRelationshipFunction.apply(geNode,cosmicLabel,hgnc.cosmicId());
+    }
+    // OMIM
+    if(HgncLocus.isValidString(hgnc.omimId())){
+      registerXrefRelationshipFunction.apply(geNode, omimLabel, hgnc.omimId());
+    }
+
   };
 
   /*
@@ -41,6 +72,9 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
     lib.nodePropertyValueConsumer.accept(geNode, new Tuple2<>("EntityName",hgnc.hgncName()));
     lib.nodePropertyValueConsumer.accept(geNode, new Tuple2<>("EntityLocation",hgnc.hgncLocation()));
     lib.nodePropertyValueConsumer.accept(geNode, new Tuple2<>("GeneFamily",hgnc.geneFamily()));
+    // resolve relationships
+    resolveHgncLocusRelationshipsConsumer.accept(geNode, hgnc);
+
   };
 
   @Override
