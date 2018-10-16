@@ -22,7 +22,9 @@ public class EnsemblGeneConsumer extends GraphDataConsumer{
 
 
   private Consumer<EnsemblGene> ensemblGeneConsumer = (gene) -> {
+
     Node geneNode = resolveEnsemblGeneNodeFunction.apply(gene.ensemblGeneId());
+    lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("Chromosome",gene.chromosome()));
     lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("GeneStart",gene.geneStart()));
     lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("GeneEnd",gene.geneEnd()));
     lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("Strand",gene.stand()));

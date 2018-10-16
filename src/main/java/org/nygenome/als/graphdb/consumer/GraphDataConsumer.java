@@ -40,7 +40,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   private final Label geneticEntityLabel = new DynamicLabel("GeneticEntity");
   private final Label proteinLabel  = new DynamicLabel("Protein");
   private final Label drugBankLabel = new DynamicLabel("DrugBank");
-  private final Label transcriptLabel = new DynamicLabel("EnsemblTranscript");
+  private final Label transcriptLabel = new DynamicLabel("Transcript");
   private final Label geneLabel = new DynamicLabel("EnsemblGene");
   private final Label geneOntologyLabel = new DynamicLabel("GeneOntology");
   private final Label sampleVariantLabel = new DynamicLabel("SampleVariant");
@@ -53,10 +53,18 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   private final Label subjectEventPropertyValueLabel = new DynamicLabel("SubjectEventPropertyValue");
   private final Label xrefLabel = new DynamicLabel("Xref");
   protected final Label hgncLabel = new DynamicLabel("HGNC");
+  protected final Label ensemblLabel = new DynamicLabel("ensembl");
   protected final Label pubMedLabel = new DynamicLabel("PubMed");
+  protected final Label cosmicLabel = new DynamicLabel("Cosmic");
+  protected final Label entrezLabel = new DynamicLabel("Entrez");
+  protected final Label omimLabel = new DynamicLabel("Omim");
+  protected final Label refSeqLabel = new DynamicLabel("RefSeq");
+  protected final Label proteinCodingLabel = new DynamicLabel("ProteinCodingGene");
+  protected final Label nonCodingRNALabel = new DynamicLabel("Non-codingRNA");
 
   protected final RelationshipType transcribesRelationType = new DynamicRelationshipTypes("TRANSCRIBES");
-  protected final RelationshipType xrefRelationType = new DynamicRelationshipTypes("References");
+  protected final RelationshipType xrefRelationType = new DynamicRelationshipTypes("REFERENCES");
+  protected final RelationshipType encodedRelationType = new DynamicRelationshipTypes("ENCODED_BY");
 
 
   /*
@@ -143,6 +151,9 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
 
   protected Function<String, Node> resolveGeneticEntityNodeFunction = (geneticEntityId) ->
      lib.resolveNodeFunction.apply(new Tuple3<>(geneticEntityLabel,"GeneticEntityId", geneticEntityId));
+
+
+
 
   /*
   Protected Function that resolves a Protein Node for a specified UniProt id
