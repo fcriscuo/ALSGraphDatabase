@@ -59,7 +59,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final Label hgncLabel = new DynamicLabel("HGNC");
   protected final Label ensemblLabel = new DynamicLabel("ensembl");
   protected final Label pubMedLabel = new DynamicLabel("PubMed");
-  protected final Label cosmicLabel = new DynamicLabel("Cosmic");
+  protected final Label ccdsLabel = new DynamicLabel("CCDS");
   protected final Label entrezLabel = new DynamicLabel("Entrez");
   protected final Label omimLabel = new DynamicLabel("Omim");
   protected final Label refSeqLabel = new DynamicLabel("RefSeq");

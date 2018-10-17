@@ -21,22 +21,23 @@ Java Singleton that supports a white list of genes that
 have been associated with ALS
 This service class supports annotation of genetic data
 imported into the database
+White list supplied by ALSoD http://alsod.iop.kcl.ac.uk/misc/dataDownload.aspx#C5
  */
 public enum AlsAssociatedGeneService {
   INSTANCE;
 
 private Path alsGeneFilePath = Paths.get(
-    FrameworkPropertyService.INSTANCE.getStringProperty("ALS_GENE_WHITE_LIST_FILE"));
+    FrameworkPropertyService.INSTANCE.getStringProperty("ALSOD_GENE_WHITE_LIST_FILE"));
 
   private final ImmutableMap<String,AlsAssociatedGene> alsAssociatedGeneMap =
       Suppliers.memoize(new  AlsAssociateGeneMapSupplier(alsGeneFilePath)).get();
 
-  public Predicate<String> alsAssociatedGenePedicate = (@Nonnull String name) ->
+  public Predicate<String> alsAssociatedGenePredicate = (@Nonnull String name) ->
       alsAssociatedGeneMap.containsKey(name.toUpperCase());
 
   public Function<String, Optional<AlsAssociatedGene>> resolveAlsAssociatedGeneFunction =
       (@Nonnull String name) ->
-          (alsAssociatedGenePedicate.test(name))
+          (alsAssociatedGenePredicate.test(name))
       ? Optional.of(alsAssociatedGeneMap.get(name.toUpperCase()))
               : Optional.empty();
 

@@ -9,7 +9,7 @@ case class HgncLocus (
                      entrezId:String,
                      geneFamily:String,ensemblGeneId:String,
                      refSeqAccession:String, uniprotId:String,
-                     pubMedIdList:List[String], cosmicId:String,
+                     pubMedIdList:List[String], ccdsId:String,
                      omimId:String
                      ) {
 
@@ -45,7 +45,7 @@ object HgncLocus extends ValueTrait {
         record.get("refseq_accession"),
         record.get("uniprot_ids"),
         parseStringOnPipeFunction(record.get("pubmed_id")),
-        record.get("cosmic"),
+        record.get("ccds_id"),
         record.get("omim_id")
 
 

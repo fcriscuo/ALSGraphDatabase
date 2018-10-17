@@ -20,25 +20,27 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
 
 
   private BiConsumer<Node,HgncLocus> resolveHgncLocusRelationshipsConsumer = (geNode, hgnc) -> {
-    Node hgncXrefNode = resolveXrefNode.apply(xrefLabel,hgnc.id());
-    lib.novelLabelConsumer.accept(hgncXrefNode,hgncLabel);
-    lib.nodePropertyValueConsumer.accept(hgncXrefNode,new Tuple2<>("HgncID" ,hgnc.hgncId()));
-    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geNode,hgncXrefNode),xrefRelationType);
+
+
     if (HgncLocus.isValidString(hgnc.uniprotId())) {
       Node proteinNode = resolveProteinNodeFunction.apply(hgnc.uniprotId());
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,geNode),encodedRelationType );
     }
-    if( HgncLocus.isValidString(hgnc.entrezId())){
-      Node entrezNode = resolveXrefNode.apply(xrefLabel,hgnc.entrezId());
-      lib.novelLabelConsumer.accept(entrezNode,entrezLabel);
-      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geNode,entrezNode),xrefRelationType);
-    }
+
+
     if (HgncLocus.isValidString(hgnc.ensemblGeneId())) {
       Node geneNode = resolveGeneticEntityNodeFunction.apply(hgnc.ensemblGeneId());
       lib.novelLabelConsumer.accept(geneNode,ensemblLabel);
       lib.novelLabelConsumer.accept(geneNode, geneLabel);
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geNode,geneNode),xrefRelationType);
     }
+    // HGNC Xref
+    registerXrefRelationshipFunction.apply(geNode, hgncLabel, hgnc.hugoSymbol());
+    // Entrez Xref
+    if( HgncLocus.isValidString(hgnc.entrezId())){
+      registerXrefRelationshipFunction.apply(geNode,entrezLabel, hgnc.entrezId());
+    }
+
     // PubMed Xrefs
     StringUtils.convertToJavaString(hgnc.pubMedIdList())
         .forEach(pubMedId ->{
@@ -48,9 +50,9 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
     if(HgncLocus.isValidString(hgnc.refSeqAccession())) {
       registerXrefRelationshipFunction.apply(geNode,refSeqLabel,hgnc.refSeqAccession());
     }
-    // Cosmic
-    if(HgncLocus.isValidString(hgnc.cosmicId())) {
-      registerXrefRelationshipFunction.apply(geNode,cosmicLabel,hgnc.cosmicId());
+    // CCDS xref
+    if(HgncLocus.isValidString(hgnc.ccdsId())) {
+      registerXrefRelationshipFunction.apply(geNode,ccdsLabel,hgnc.ccdsId());
     }
     // OMIM
     if(HgncLocus.isValidString(hgnc.omimId())){
