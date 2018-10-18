@@ -34,8 +34,8 @@ public class SampleVariantConsumer extends GraphDataConsumer{
    Node sampleNode = resolveSampleNodeFunction.apply(svc.extSampleId());
    Node sampleVariantNode = resolveSampleVariantNode.apply(svc);
    if (lib.isAlsAssociatedPredicate.test(geneNode)) {
-     lib.novelLabelConsumer.accept(sampleVariantNode,alsLabel);
-     lib.novelLabelConsumer.accept(sampleNode,alsLabel);
+     lib.novelLabelConsumer.accept(sampleVariantNode, alsAssociatedLabel);
+     lib.novelLabelConsumer.accept(sampleNode, alsAssociatedLabel);
    }
    // create sample <-> sampleVariant relationship
    Relationship sampleToSampleVariantRel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleNode,sampleVariantNode),

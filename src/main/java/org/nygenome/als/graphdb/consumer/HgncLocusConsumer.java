@@ -27,7 +27,6 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,geNode),encodedRelationType );
     }
 
-
     if (HgncLocus.isValidString(hgnc.ensemblGeneId())) {
       Node geneNode = resolveGeneticEntityNodeFunction.apply(hgnc.ensemblGeneId());
       lib.novelLabelConsumer.accept(geneNode,ensemblLabel);
@@ -58,7 +57,6 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
     if(HgncLocus.isValidString(hgnc.omimId())){
       registerXrefRelationshipFunction.apply(geNode, omimLabel, hgnc.omimId());
     }
-
   };
 
   /*

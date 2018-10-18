@@ -37,12 +37,15 @@ import scala.collection.immutable.List;
 public class FunctionLib {
 
   private static final Logger log = Logger.getLogger(FunctionLib.class);
-  public FunctionLib() {}
+
+  public FunctionLib() {
+  }
+
   /*
   Public Function to determine if a specified ensembl id is for
   an esembl gene or an ensembl transcript
    */
-  public Function<String,Optional<LabelTypes>> resolveEnsemblGeneticEntityLabelFunction = (id) -> {
+  public Function<String, Optional<LabelTypes>> resolveEnsemblGeneticEntityLabelFunction = (id) -> {
     if (id.toUpperCase().startsWith("ENSG")) {
       return Optional.of(LabelTypes.EnsemblGene);
     }
@@ -57,6 +60,90 @@ public class FunctionLib {
       return ALSDatabaseImportApp.getGraphInstance().createNode(LabelTypes.Unknown);
     }
   };
+
+  /*
+  Public Function to find an existing Node
+  Returns an Optional to accommodate non-existent Nodes
+   */
+  public Function<Tuple3<Label, String, String>, Optional<Node>> findExistingGraphNodeFunction = (tuple3) -> {
+    Label label = tuple3._1();
+    String property = tuple3._2();
+    String value = tuple3._3();
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    try {
+      Node node = ALSDatabaseImportApp.getGraphInstance()
+          .findNode(label, property, value);
+      tx.success();
+      return (node != null) ? Optional.of(node) : Optional.empty();
+    } catch (MultipleFoundException e) {
+      tx.failure();
+      AsyncLoggingService.logError("ERROR: multiple instances of Node " + label
+          + "  " + property + "  " + value);
+      AsyncLoggingService.logError(e.getMessage());
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return Optional.empty();
+  };
+
+
+  /*
+  Public Predicate to determine if a unique Node exists in the database
+  The specified property must have unique values (i.e. key)
+   */
+  public Predicate<Tuple3<Label, String, String>> isExistingNodePredicate = (tuple3) ->
+  {
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    try {
+      return (
+          ALSDatabaseImportApp.getGraphInstance().findNode(tuple3._1(), tuple3._2(), tuple3._3())
+              != null);
+    } catch (MultipleFoundException e) {
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return false;
+  };
+
+  /*
+  Private function that will create a new graph node based on the supplied
+  Label, property, & property value
+  This method should only be invoked after confirming that the Node does not already exist
+   */
+  private Function<Tuple3<Label, String, String>, Node> createGraphNodeFunction = (tuple3) -> {
+    Label label = tuple3._1();
+    String property = tuple3._2();
+    String value = tuple3._3();
+    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    try {
+      Node node = ALSDatabaseImportApp.getGraphInstance().createNode(label);
+      node.setProperty(property, value);
+      tx.success();
+      return node;
+    } catch (Exception e) {
+      tx.failure();
+      AsyncLoggingService.logError("ERROR: creating Node " + label
+          + "  " + property + "  " + value);
+      AsyncLoggingService.logError(e.getMessage());
+      e.printStackTrace();
+    } finally {
+      tx.close();
+    }
+    return unknownNodeSupplier.get();
+  };
+
+  /*
+  Public Function that will find or create a graph Node based on its Label,
+  key property, and String property value
+   */
+  public Function<Tuple3<Label, String, String>, Node> resolveGraphNodeFunction =
+      (tuple3) ->
+          findExistingGraphNodeFunction.apply(tuple3).orElse(createGraphNodeFunction.apply(tuple3));
+
+
+
 /*
 Public Function to find or create a Node
 Parameters are the Node's label type, a key property, and a value for that property
@@ -64,32 +151,32 @@ The value must be a String
 The return is a new or existing Node
  */
 
-public Function<Tuple3<Label,String,String>,Node> resolveNodeFunction =
-    (tuple3) -> {
-    Label label = tuple3._1();
+  public Function<Tuple3<Label, String, String>, Node> resolveGraphNodeFunctionOld =
+      (tuple3) -> {
+        Label label = tuple3._1();
         String property = tuple3._2();
         String value = tuple3._3();
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
-      try {
-        Node node = ALSDatabaseImportApp.getGraphInstance()
-            .findNode(label,property,value);
-        if (null == node) {
-          node = ALSDatabaseImportApp.getGraphInstance().createNode(label);
-          node.setProperty(property,value);
+        Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+        try {
+          Node node = ALSDatabaseImportApp.getGraphInstance()
+              .findNode(label, property, value);
+          if (null == node) {
+            node = ALSDatabaseImportApp.getGraphInstance().createNode(label);
+            node.setProperty(property, value);
+          }
+          tx.success();
+          return node;
+        } catch (MultipleFoundException e) {
+          tx.failure();
+          AsyncLoggingService.logError("ERROR: multiple instances of Node " + label
+              + "  " + property + "  " + value);
+          AsyncLoggingService.logError(e.getMessage());
+          e.printStackTrace();
+        } finally {
+          tx.close();
         }
-        tx.success();
-        return node;
-      } catch (MultipleFoundException e) {
-        tx.failure();
-        AsyncLoggingService.logError("ERROR: multiple instances of Node " +label
-          +"  " +property +"  " +value);
-        AsyncLoggingService.logError(e.getMessage());
-        e.printStackTrace();
-      } finally {
-        tx.close();
-      }
-      return unknownNodeSupplier.get();
-    };
+        return unknownNodeSupplier.get();
+      };
 
   /*
    A private Consumer that will add a Label to a Node if
@@ -111,12 +198,11 @@ public Function<Tuple3<Label,String,String>,Node> resolveNodeFunction =
     }
   };
 
-  public Predicate<Node> isAlsAssociatedPredicate = (node) ->{
+  public Predicate<Node> isAlsAssociatedPredicate = (node) -> {
     Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
     try {
       if (StreamSupport.stream(node.getLabels().spliterator(), false)
-          .anyMatch(label -> label.name().equalsIgnoreCase("ALS-associated")))
-      {
+          .anyMatch(label -> label.name().equalsIgnoreCase("ALS-associated"))) {
         tx.success();
         return true;
       }
@@ -130,10 +216,10 @@ public Function<Tuple3<Label,String,String>,Node> resolveNodeFunction =
     return false;
   };
 
-  public BiConsumer<Relationship,Tuple2<String,Integer>> setRelationshipIntegerProperty = (rel, tuple)-> {
+  public BiConsumer<Relationship, Tuple2<String, Integer>> setRelationshipIntegerProperty = (rel, tuple) -> {
     Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
     try {
-      rel.setProperty(tuple._1(),tuple._2());
+      rel.setProperty(tuple._1(), tuple._2());
       tx.success();
     } catch (Exception e) {
       tx.failure();
@@ -148,17 +234,17 @@ public Function<Tuple3<Label,String,String>,Node> resolveNodeFunction =
   n.b. if the relationship NodeA -> NodeB requires a different relationship type
   than NodeB -> NodeA, then two (2) relationships need to be created
    */
-  public BiFunction<Tuple2<Node,Node>, RelationshipType,Relationship> resolveNodeRelationshipFunction = (nodeTuple, relType) -> {
+  public BiFunction<Tuple2<Node, Node>, RelationshipType, Relationship> resolveNodeRelationshipFunction = (nodeTuple, relType) -> {
     Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
     Node nodeStart = nodeTuple._1();
     Node nodeEnd = nodeTuple._2();
     try {
-     Relationship rel = StreamSupport.stream(nodeStart.getRelationships().spliterator(), false)
-         .filter(relationship -> relationship.getEndNodeId() == nodeEnd.getId())
-         .filter(relationship -> relationship.getType().name().equalsIgnoreCase(relType.name()) )
-         .findFirst().orElse(nodeStart.createRelationshipTo(nodeEnd,relType));
-     AsyncLoggingService.logInfo("created relationship between " +nodeStart.getLabels().toString()
-     +" and " + nodeEnd.getLabels().toString());
+      Relationship rel = StreamSupport.stream(nodeStart.getRelationships().spliterator(), false)
+          .filter(relationship -> relationship.getEndNodeId() == nodeEnd.getId())
+          .filter(relationship -> relationship.getType().name().equalsIgnoreCase(relType.name()))
+          .findFirst().orElse(nodeStart.createRelationshipTo(nodeEnd, relType));
+      AsyncLoggingService.logInfo("created relationship between " + nodeStart.getLabels().toString()
+          + " and " + nodeEnd.getLabels().toString());
       tx.success();
       return rel;
     } catch (Exception e) {
@@ -205,7 +291,7 @@ Protected BiConsumer that will add a property name/String value pair to a specif
     }
   };
 
-  public BiConsumer<Relationship, Tuple2<String,String>> relationshipPropertyValueConsumer = (relationship, propertyTuple) -> {
+  public BiConsumer<Relationship, Tuple2<String, String>> relationshipPropertyValueConsumer = (relationship, propertyTuple) -> {
     if (!Strings.isNullOrEmpty(propertyTuple._2())) {
       Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
       try {

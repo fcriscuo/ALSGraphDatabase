@@ -11,8 +11,12 @@ case class AlsodMutation (
                          hgvsProtein:String, chromosomeLocation:String,
                          dbSNP:String
                          ){
-
+  val id:String = mutationCode
+  val seqChange = seqOriginal +" -> " +seqMutated
+  val aaChange = aaOriginal +" -> " +aaMutated
 }
+
+
 object AlsodMutation extends ValueTrait {
   val columnHeadings: Array[String] = Array(
   "Mutation name","Mutation code","Gene",	"Type","Seq. Original",

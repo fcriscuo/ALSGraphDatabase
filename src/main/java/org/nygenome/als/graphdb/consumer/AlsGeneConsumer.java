@@ -34,7 +34,7 @@ public class AlsGeneConsumer extends GraphDataConsumer{
      Node geneNode = resolveGeneticEntityNodeFunction.apply(alsGene.ensemblGeneId());
      if(!processedAlsGeneSet.contains(alsGene.ensemblGeneId())) {
        // add ALS label if these nodes have not been already labeled
-       lib.novelLabelConsumer.accept(geneNode, alsLabel);
+       lib.novelLabelConsumer.accept(geneNode, alsAssociatedLabel);
        // set/reset gene properties
        lib.nodePropertyValueConsumer
            .accept(geneNode, new Tuple2<>("chromosome", alsGene.chromosome()));
@@ -47,9 +47,9 @@ public class AlsGeneConsumer extends GraphDataConsumer{
        AsyncLoggingService.logInfo("Added new ALS-associated gene: " +alsGene.hugoName());
      }
      Node transcriptNode =  resolveGeneticEntityNodeFunction.apply(alsGene.ensemblTranscriptId());
-    lib.novelLabelConsumer.accept(transcriptNode,alsLabel);
+    lib.novelLabelConsumer.accept(transcriptNode, alsAssociatedLabel);
      Node proteinNode = resolveProteinNodeFunction.apply(alsGene.uniprotId());
-    lib.novelLabelConsumer.accept(proteinNode,alsLabel);
+    lib.novelLabelConsumer.accept(proteinNode, alsAssociatedLabel);
     // define relationships: gene - transcript - protein - gene
     lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),
         RelTypes.TRANSCRIBES );

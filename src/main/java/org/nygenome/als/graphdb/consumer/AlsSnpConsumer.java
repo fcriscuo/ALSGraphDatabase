@@ -26,7 +26,7 @@ public class AlsSnpConsumer  extends GraphDataConsumer{
   private Consumer<EnsemblAlsSnp> alsSnpConsumer = (snp)-> {
     Node snpNode = resolveSnpNodeFunction.apply(snp.variantId());
     // add ALS label if these nodes have not been already labeled
-    lib.novelLabelConsumer.accept(snpNode, alsLabel);
+    lib.novelLabelConsumer.accept(snpNode, alsAssociatedLabel);
     // set/reset SNP properties
     lib.nodeIntegerPropertyValueConsumer.accept(snpNode, new Tuple2<>("DistanceToTranscript", snp.distance()));
     lib.nodePropertyValueConsumer.accept(snpNode, new Tuple2<>("VariantAlleles", snp.alleleVariation()));
