@@ -60,7 +60,7 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
         Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(transcriptId);
         Node tissueNode = resolveHumanTissueNodeFunction.apply(tissueId);
         lib.resolveNodeRelationshipFunction
-            .apply(new Tuple2<>(transcriptNode, tissueNode), RelTypes.TISSUE_ENHANCED);
+            .apply(new Tuple2<>(transcriptNode, tissueNode), tissueEnhancedRelationType);
         AsyncLoggingService.logInfo("created transcript-tissue relationship for transcript "
             + transcriptId + " tissue " + tissueId);
       };
@@ -76,7 +76,7 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
     lib.nodePropertyValueConsumer.accept(tissueNode, new Tuple2<>("CellType", ht.cellType()));
     Node proteinNode = resolveProteinNodeFunction.apply(ht.uniprotId());
     Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, tissueNode),
-        RelTypes.TISSUE_ENHANCED );
+        tissueEnhancedRelationType );
    lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Level", ht.level()));
     lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Reliability", ht.reliability()));
     if (!Strings.isNullOrEmpty(ht.ensemblTranscriptId())) {

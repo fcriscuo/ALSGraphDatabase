@@ -1,7 +1,6 @@
 package org.nygenome.als.graphdb.consumer;
 
 
-import com.twitter.logging.Logger;
 import com.twitter.util.Function3;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
@@ -21,15 +20,14 @@ import org.nygenome.als.graphdb.value.GeneOntology;
 import org.nygenome.als.graphdb.value.RnaTpmGene;
 import org.nygenome.als.graphdb.value.SampleVariantSummary;
 import org.nygenome.als.graphdb.value.UniProtValue;
-
 import scala.Tuple2;
 import scala.Tuple3;
 
 public abstract class GraphDataConsumer implements Consumer<Path> {
 
   protected final String HUMAN_SPECIES = "homo sapiens";
-  protected Logger log = Logger.get(GraphDataConsumer.class);
 
+  // defined Labels
   protected final FunctionLib lib = new FunctionLib();
   protected final Label alsAssociatedLabel = new DynamicLabel("ALS-associated");
   protected final Label subjectLabel  = new DynamicLabel("Subject");
@@ -47,6 +45,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final Label sampleVariantLabel = new DynamicLabel("SampleVariant");
   protected final Label snpLabel = new DynamicLabel("SNP");
   protected final Label neurobankLabel = new DynamicLabel("Neurobank");
+  protected final Label proactLabel = new DynamicLabel("PRO-ACT");
   protected final Label neurobankCategoryLabel = new DynamicLabel("NeurobankCategory");
   protected final Label subjectPropertyLabel = new DynamicLabel("SubjectProperty");
   protected final Label alsStudyTimepointLabel = new DynamicLabel("AlsStudyTimepoint");
@@ -61,13 +60,44 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final Label omimLabel = new DynamicLabel("Omim");
   protected final Label refSeqLabel = new DynamicLabel("RefSeq");
   protected final Label alsodMutationLabel = new DynamicLabel("ALSoDMutation");
-
   protected final Label proteinCodingLabel = new DynamicLabel("ProteinCodingGene");
   protected final Label nonCodingRNALabel = new DynamicLabel("Non-codingRNA");
-
+ // defined relationship types
   protected final RelationshipType transcribesRelationType = new DynamicRelationshipTypes("TRANSCRIBES");
   protected final RelationshipType xrefRelationType = new DynamicRelationshipTypes("REFERENCES");
   protected final RelationshipType encodedRelationType = new DynamicRelationshipTypes("ENCODED_BY");
+  protected final RelationshipType noEventRealtionshipType = new DynamicRelationshipTypes("NO_EVENT");
+  protected final RelationshipType pathwayRelationshipType = new DynamicRelationshipTypes("IN_PATHWAY");
+  protected final RelationshipType biomarkerRelationType = new DynamicRelationshipTypes("IS_BIOMARKER");
+  protected final RelationshipType therapeuticRelationType = new DynamicRelationshipTypes("IS_THERAPEUTIC");
+  protected final RelationshipType geneticVariationRelationType = new DynamicRelationshipTypes("HAS_GENETIC_VARIATION");
+  protected final RelationshipType alsAssoctiatedRelationType = new DynamicRelationshipTypes("IS_ALS_ASSOCIATED");
+  protected final RelationshipType ppiAssociationRelationType = new DynamicRelationshipTypes("ASSOCIATES");
+  protected final RelationshipType ppiColocalizationRelationType = new DynamicRelationshipTypes("CO-LOCALIZES");
+  protected final RelationshipType ppiGeneticInteractionRelationType = new DynamicRelationshipTypes("HAS_GENETIC_INTERACTION");
+  protected final RelationshipType ppiPredictedInteractionRelationType = new DynamicRelationshipTypes("HAS_PREDICTED_INTERACTION");
+  protected final RelationshipType tissueEnhancedRelationType = new DynamicRelationshipTypes("IS_ENHANCED_IN");
+  protected final RelationshipType drugTargetRelationType = new DynamicRelationshipTypes("IS_DRUG_TARGET");
+  protected final RelationshipType drugEnzymeRelationType = new DynamicRelationshipTypes("IS_DRUG_ENZYME");
+  protected final RelationshipType drugTransporterRelationType = new DynamicRelationshipTypes("IS_DRUG_TRANSPORTER");
+  protected final RelationshipType drugCarrierRelationType = new DynamicRelationshipTypes("IS_DRUG_CARRIER");
+  protected final RelationshipType partOfRelationType = new DynamicRelationshipTypes("IS_PART_OF");
+  protected final RelationshipType degRealtedToRelationType = new DynamicRelationshipTypes("IS_DEG_RELATED_TO");
+  protected final RelationshipType seqSimRelationType = new DynamicRelationshipTypes("HAS SEQ_SIMILARITY_TO");
+  protected final RelationshipType goClassificatioRelationType = new DynamicRelationshipTypes("HAS_GO_CLASSIFICATION");
+  protected final RelationshipType transcriptRelationType = new DynamicRelationshipTypes("TRANSCRIBES");
+  protected final RelationshipType implicatedInRelationType = new DynamicRelationshipTypes("IS_IMPLICATED_IN");
+  protected final RelationshipType sampleRelationType = new DynamicRelationshipTypes("HAS_SAMPLE");
+  protected final RelationshipType sampledFromRelationType = new DynamicRelationshipTypes("SAMPLED_FROM");
+  protected final RelationshipType mapsToRelationType = new DynamicRelationshipTypes("MAPS_TO");
+  protected final RelationshipType expressionLevelRelationType = new DynamicRelationshipTypes("HAS_EXPRESS_LEVEL");
+  protected final RelationshipType expressedProteinRelationType = new DynamicRelationshipTypes("EXPRESSES_PROTEIN");
+  protected final RelationshipType associatedProteinRelationType = new DynamicRelationshipTypes("ASSOCIATED_PROTEIN");
+  protected final RelationshipType geneticEntityRelationType = new DynamicRelationshipTypes("ASSOCIATED_GENETIC_ENTITY");
+  protected final RelationshipType variantRelationType = new DynamicRelationshipTypes("ASSOCIATED_VARIANT");
+  protected final RelationshipType childRelationType = new DynamicRelationshipTypes("IS_CHILD_OF");
+  protected final RelationshipType propertyRelationType = new DynamicRelationshipTypes("HAS_PROPERTY");
+  protected final RelationshipType subjectEventRelationType = new DynamicRelationshipTypes("HAS_SUBJECT_EVENT");
 
   /*
   Consumer that ensures that an ALS-associated Node is properly annotated
@@ -167,7 +197,6 @@ be created and returned
     return node;
   };
 
-
   protected Function<String,Node> resolveSampleNodeFunction = (sampleId) ->
       lib.resolveGraphNodeFunction.apply(new Tuple3<>(sampleLabel, "SampleId", sampleId));
 
@@ -175,10 +204,6 @@ be created and returned
   protected Function<String, Node> resolveGeneticEntityNodeFunction = (geneticEntityId) ->
      lib.resolveGraphNodeFunction
          .apply(new Tuple3<>(geneticEntityLabel,"GeneticEntityId", geneticEntityId));
-
-
-
-
   /*
   Protected Function that resolves a Protein Node for a specified UniProt id
   by either finding an existing Node or by creating a new one
@@ -210,14 +235,14 @@ be created and returned
       Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(transcriptId);
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
       Tuple2<String, String> key = new Tuple2<>(uniprotId, transcriptId);
-      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, transcriptNode),RelTypes.ENCODED_BY );
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, transcriptNode),
+          encodedRelationType );
     });
   }
 protected Function<SampleVariantSummary,Node> resolveSampleVariantNode = (svc) -> {
 
   Node svNode =lib.resolveGraphNodeFunction
       .apply(new Tuple3<>(sampleVariantLabel,"SampleVariantId", svc.id()));
-  // TODO: add test for ALS gene and add label if so
   // persist the list of variants
   lib.nodePropertyValueStringArrayConsumer.accept(svNode,new Tuple2<>("Variants", svc.variantList()));
   return svNode;

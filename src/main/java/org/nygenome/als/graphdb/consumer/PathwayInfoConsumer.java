@@ -32,7 +32,7 @@ public class PathwayInfoConsumer extends GraphDataConsumer implements Consumer<P
       lib.nodePropertyValueConsumer
           .accept(pathwayNode, new Tuple2<>("Pathway", pathway.eventName()));
     Node proteinNode = resolveProteinNodeFunction.apply(pathway.uniprotId());
-      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, pathwayNode),RelTypes.IN_PATHWAY );
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, pathwayNode),pathwayRelationshipType );
   };
 
 /*

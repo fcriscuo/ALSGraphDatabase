@@ -52,11 +52,11 @@ public class AlsGeneConsumer extends GraphDataConsumer{
     lib.novelLabelConsumer.accept(proteinNode, alsAssociatedLabel);
     // define relationships: gene - transcript - protein - gene
     lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),
-        RelTypes.TRANSCRIBES );
+        transcribesRelationType );
     lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, transcriptNode),
-        RelTypes.ASSOCIATED_GENETIC_ENTITY);
+        geneticEntityRelationType);
     lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, geneNode),
-        RelTypes.ASSOCIATED_GENETIC_ENTITY);
+        geneticEntityRelationType);
   });
 
   @Override

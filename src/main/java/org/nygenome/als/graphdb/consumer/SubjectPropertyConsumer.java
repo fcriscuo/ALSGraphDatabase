@@ -40,7 +40,8 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
     lib.nodePropertyValueConsumer.accept(subjectNode,
         new Tuple2<>(subjectProperty.propertyName(), subjectProperty.propertyValue()));
     Node sampleNode = completeSampleNodeFunction.apply(subjectProperty);
-    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode,sampleNode),RelTypes.HAS_SAMPLE );
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode,sampleNode),
+        sampledFromRelationType );
   };
 
   private Predicate<StringSubjectProperty> alsPredicate = (ssp) ->

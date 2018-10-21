@@ -12,9 +12,7 @@ case class NeurobankSubjectEventProperty(
  val eventValueId: String = subjectGuid +":" +timepointName +":" +propertyName
   val eventPropertyId = eventCategory +":" +propertyCode
 }
-/*
-subject_id	subject_guid	timepoint_name	timepoint_id	event_category	form_name	property_category	property_code	property_name	property_value
- */
+
 object NeurobankSubjectEventProperty extends ValueTrait {
   val columnHeadings:Array[String] = Array("subject_id"," subject_guid","timepoint_name","timepoint_id",
     "event_category","form_name","property_category","property_code","property_name","property_value")

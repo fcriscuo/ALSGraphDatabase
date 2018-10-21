@@ -60,13 +60,14 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
           .accept(diseaseNode, new Tuple2<>("DiseaseName", gda.diseaseName()));
       // create relationships between these nodes
       // protein <-> transcript
-      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,transcriptNode),RelTypes.ENCODED_BY);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,transcriptNode),encodedRelationType);
       // gene <-> transcript
-      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),RelTypes.TRANSCRIBES );
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),transcribesRelationType );
       // protein - disease
-      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,diseaseNode), RelTypes.IMPLICATED_IN);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,diseaseNode), implicatedInRelationType);
       // gene <-> disease
-      Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, diseaseNode), RelTypes.IMPLICATED_IN);
+      Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, diseaseNode),
+         implicatedInRelationType);
       rel.setProperty("ConfidenceLevel", gda.score());
       rel.setProperty("Reference", gda.source());
       tx.success();

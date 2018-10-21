@@ -40,7 +40,7 @@ public class NeurobankSubjectTimepointConsumer extends GraphDataConsumer {
     lib.novelLabelConsumer.accept(timepointNode, alsAssociatedLabel);
     // establish a Relationship between these 2 Nodes
     Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode, timepointNode),
-        RelTypes.SUBJECT_EVENT);
+       subjectEventRelationType);
     // add properties to this Relationship
     lib.relationshipPropertyValueConsumer.accept(rel,
         new Tuple2<>("Timepoint",String.valueOf(timepoint.timepoint())));

@@ -38,14 +38,17 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
       Node proteinNode = resolveProteinNodeFunction
           .apply(tpm.uniProtMapping().get().uniProtId());
       // establish a relationship between the RNA node and the protein node
-    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, rnaNode), RelTypes.EXPRESSION_LEVEL);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, rnaNode),
+        expressionLevelRelationType);
       // TODO: add xref to HUGO
 //      lib.createBiDirectionalRelationship(proteinNode, hugoGeneNode,
 //          new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
 //              tpm.uniProtMapping().get().geneSymbol()), proteinXrefRelMap, RelTypes.REFERENCES,
 //          RelTypes.REFERENCES);
-    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, ensemblGeneNode), RelTypes.ENCODED_BY);
-    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, ensemblTranscriptNode), RelTypes.ENCODED_BY);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, ensemblGeneNode),
+        encodedRelationType);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, ensemblTranscriptNode),
+        encodedRelationType);
 
   };
 

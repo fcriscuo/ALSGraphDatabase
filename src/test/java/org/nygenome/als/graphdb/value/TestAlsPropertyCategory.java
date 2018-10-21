@@ -3,14 +3,14 @@ package org.nygenome.als.graphdb.value;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 
-public class TestNeurobankCategory {
+public class TestAlsPropertyCategory {
 
   public static void main(String[] args) {
-    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("NEUROBANK_CATEGORY_FILE")
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("ALS_PROPERTY_CATEGORY_FILE")
         .ifPresent((path) -> new TsvRecordStreamSupplier(path)
             .get()
-            .map(NeurobankCategory::parseCSVRecord)
-            .limit(50)
+            .map(AlsPropertyCategory::parseCSVRecord)
+            //.limit(50)
             .forEach(System.out::println)
         );
   }

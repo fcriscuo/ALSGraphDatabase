@@ -27,7 +27,7 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
     lib.nodePropertyValueConsumer.accept(subjectPropertyNode, new Tuple2<>("PropertyCode",property.eventPropertyCode()));
     lib.nodePropertyValueConsumer.accept(subjectPropertyNode, new Tuple2<>("PropertyName",property.eventPropertyName()));
     Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode, subjectPropertyNode),
-        RelTypes.PROPERTY);
+        propertyRelationType);
     lib.relationshipPropertyValueConsumer.accept(rel,new Tuple2<>("propertyValue", property.eventPropertyValue()));
 
 

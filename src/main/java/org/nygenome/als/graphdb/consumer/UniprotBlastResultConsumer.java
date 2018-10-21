@@ -28,7 +28,8 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
       Node hitNode = resolveProteinNodeFunction.apply(blastResult.hitUniprotId());
       Tuple2<String,String>  keyTuple = new Tuple2<>(blastResult.sourceUniprotId(),blastResult.hitUniprotId() );
       // create or find existing Relationship pair
-      Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sourceNode, hitNode), RelTypes.SEQ_SIM);
+      Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sourceNode, hitNode),
+          seqSimRelationType);
       rel.setProperty("BLAST_score", String.valueOf(blastResult.score() ));
       rel.setProperty("eValue",  blastResult.eValue());
       tx.success();

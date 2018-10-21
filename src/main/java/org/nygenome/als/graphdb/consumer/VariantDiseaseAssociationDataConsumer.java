@@ -25,7 +25,8 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
     lib.nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseName", snp.diseaseName()));
     Node snpNode = resolveDiseaseNodeFunction.apply(snp.snpId());
     // create  relationship between snp & disease
-    Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(snpNode, diseaseNode),  RelTypes.IMPLICATED_IN);
+    Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(snpNode, diseaseNode),
+        implicatedInRelationType);
     lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("ConfidenceLevel",String.valueOf(snp.score())));
     lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Reference",snp.source()));
   };

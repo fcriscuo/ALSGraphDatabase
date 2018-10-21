@@ -43,7 +43,7 @@ public class SampleVariantConsumer extends GraphDataConsumer{
    lib.setRelationshipIntegerProperty.accept(sampleToSampleVariantRel, new Tuple2<>("VariantCount", svc.numVariants()));
 
    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleVariantNode,geneNode),
-       RelTypes.ENCODED_BY);
+      encodedRelationType);
  };
 
 

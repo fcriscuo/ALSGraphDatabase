@@ -33,7 +33,8 @@ public class AlsSnpConsumer  extends GraphDataConsumer{
     // this will create a Transcript Node if run in stand-alone test mode
     Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(snp.ensemblTranscriptId());
     // establish a relationship between transcript and snp
-    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(transcriptNode,snpNode) , RelTypes.ASSOCIATED_GENETIC_ENTITY);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(transcriptNode,snpNode) ,
+        geneticEntityRelationType);
   };
 
   @Override

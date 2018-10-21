@@ -49,6 +49,11 @@ protected def isHuman(species:String):Boolean = species.trim().equalsIgnoreCase(
     case _ => 0
   }
 
+  def generateProActGuid(id:Int):String = {
+    "PROACT" + "%08d".format(id)
+  }
+
+
 
 
 }
