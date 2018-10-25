@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.log4j.Logger;
+import org.eclipse.collections.impl.factory.Stacks;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.MultipleFoundException;
 import org.neo4j.graphdb.Node;
@@ -121,6 +123,8 @@ public class FunctionLib {
       Node node = ALSDatabaseImportApp.getGraphInstance().createNode(label);
       node.setProperty(property, value);
       tx.success();
+      AsyncLoggingService.logInfo("++++createGraphNode function node count = " +
+          ALSDatabaseImportApp.getGraphInstance().getAllNodes().stream().count() );
       return node;
     } catch (Exception e) {
       tx.failure();
@@ -139,8 +143,13 @@ public class FunctionLib {
   key property, and String property value
    */
   public Function<Tuple3<Label, String, String>, Node> resolveGraphNodeFunction =
-      (tuple3) ->
-          findExistingGraphNodeFunction.apply(tuple3).orElse(createGraphNodeFunction.apply(tuple3));
+      (tuple3) -> {
+       Optional<Node> nodeOpt=  findExistingGraphNodeFunction.apply(tuple3);
+       if(nodeOpt.isPresent()) {
+         return nodeOpt.get();
+       }
+       return createGraphNodeFunction.apply(tuple3);
+      };
 
 
 

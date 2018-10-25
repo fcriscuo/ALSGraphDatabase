@@ -3,10 +3,13 @@ package org.nygenome.als.graphdb.consumer;
 
 import com.twitter.util.Function3;
 import java.nio.file.Path;
+import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
+import org.eclipse.collections.api.stack.MutableStack;
+import org.eclipse.collections.impl.factory.Stacks;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -62,6 +65,13 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final Label alsodMutationLabel = new DynamicLabel("ALSoDMutation");
   protected final Label proteinCodingLabel = new DynamicLabel("ProteinCodingGene");
   protected final Label nonCodingRNALabel = new DynamicLabel("Non-codingRNA");
+
+  protected final Label proactAdverseEventLabel = new DynamicLabel("AdverseEvent");
+  protected final Label systemOrganClassLabel = new DynamicLabel("SystemOrganClass");
+  protected final Label highLevelGroupTermLabel = new DynamicLabel("HighLevelGroupTerm");
+  protected final Label highLevelTermLabel = new DynamicLabel("HighLevelTerm");
+  protected final Label preferredTermLabel = new DynamicLabel("PreferredTerm");
+  protected final Label lowestLevelTermLabel = new DynamicLabel("LowestLevelTerm");
  // defined relationship types
   protected final RelationshipType transcribesRelationType = new DynamicRelationshipTypes("TRANSCRIBES");
   protected final RelationshipType xrefRelationType = new DynamicRelationshipTypes("REFERENCES");
@@ -96,8 +106,21 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final RelationshipType geneticEntityRelationType = new DynamicRelationshipTypes("ASSOCIATED_GENETIC_ENTITY");
   protected final RelationshipType variantRelationType = new DynamicRelationshipTypes("ASSOCIATED_VARIANT");
   protected final RelationshipType childRelationType = new DynamicRelationshipTypes("IS_CHILD_OF");
+  protected final RelationshipType categorizesRelType = new DynamicRelationshipTypes("CATEGORIZES");
   protected final RelationshipType propertyRelationType = new DynamicRelationshipTypes("HAS_PROPERTY");
   protected final RelationshipType subjectEventRelationType = new DynamicRelationshipTypes("HAS_SUBJECT_EVENT");
+  protected final RelationshipType goBioProcessRelType = new DynamicRelationshipTypes("HAS_GO_BIO_PROCESS");
+  protected final RelationshipType goCellComponentRelType = new DynamicRelationshipTypes("HAS_GO_CELLULAR_COMPONENT");
+  protected final RelationshipType goMolFunctionRelType = new DynamicRelationshipTypes("HAS_GO_MOLECULAR_FUNCTION");
+  protected final RelationshipType pubMedXrefRelType = new DynamicRelationshipTypes("HAS_PUBMED_XREF");
+
+  protected Function<String,Node> resolveProactAdverseEventNode = (id) ->{
+   Node aeNode = lib.resolveGraphNodeFunction.apply(new Tuple3<>(proactAdverseEventLabel,
+     "AdverseEventId",id  ));
+   lib.novelLabelConsumer.accept(aeNode, alsAssociatedLabel);
+   lib.novelLabelConsumer.accept(aeNode, proactLabel);
+   return aeNode;
+ };
 
   /*
   Consumer that ensures that an ALS-associated Node is properly annotated
@@ -186,6 +209,7 @@ be created and returned
           "DiseaseId",diseaseId));
 
 
+
   protected Function<RnaTpmGene, Node> resolveRnaTpmGeneNode = (rnaTpmGene) -> {
     Node node = lib.resolveGraphNodeFunction.apply(new Tuple3<>(rnaTpmLabel,
         "RnaTpmId", rnaTpmGene.id()));
@@ -250,6 +274,8 @@ protected Function<SampleVariantSummary,Node> resolveSampleVariantNode = (svc) -
 
   protected Function<String, Node> resolveSnpNodeFunction = (snpId) ->
       lib.resolveGraphNodeFunction.apply(new Tuple3<>(snpLabel,"SNP",snpId));
+
+
 
 
 }

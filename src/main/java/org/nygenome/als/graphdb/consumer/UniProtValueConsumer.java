@@ -6,8 +6,10 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.RelationshipType;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.UniProtValue;
@@ -29,12 +31,13 @@ public class UniProtValueConsumer extends GraphDataConsumer {
         .forEach(uniProtValueConsumer);
   }
 
-  private void createProteinGeneOntologyRealtionship(String uniprotId, GeneOntology go) {
+  private void createProteinGeneOntologyRealtionship(String uniprotId, GeneOntology go, RelationshipType relType) {
     // establish relationship to the protein node
       Node goNode = resolveGeneOntologyNodeFunction.apply(go);
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
+
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, goNode),
-          goClassificatioRelationType);
+          relType);
       AsyncLoggingService.logInfo("Created relationship between protein " + uniprotId
           + " and GO id: " + go.goTermAccession());
   }
@@ -45,19 +48,22 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     StringUtils.convertToJavaString(upv.goBioProcessList())
         .stream()
         .map(goEntry -> GeneOntology.parseGeneOntologyEntry("Gene Ontology (bio process)", goEntry))
-        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go));
+        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go,
+           goBioProcessRelType));
     // cellular  component
     StringUtils.convertToJavaString(upv.goCellComponentList())
         .stream()
         .map(goEntry -> GeneOntology
             .parseGeneOntologyEntry("Gene Ontology (cellular component)", goEntry))
-        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go));
+        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go,
+            goCellComponentRelType));
     // molecular function
     StringUtils.convertToJavaString(upv.goMolFuncList())
         .stream()
         .map(
             goEntry -> GeneOntology.parseGeneOntologyEntry("Gene Ontology (mol function)", goEntry))
-        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go));
+        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go,
+            goMolFunctionRelType));
 
   };
 
@@ -86,7 +92,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
         .stream()
         .map(pubMedId ->resolveXrefNode.apply(pubMedLabel,pubMedId))
         .forEach(xrefNode -> lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, xrefNode),
-            xrefRelationType));
+            pubMedXrefRelType));
   };
 
   private Consumer<UniProtValue> uniProtValueConsumer = (upv -> {
