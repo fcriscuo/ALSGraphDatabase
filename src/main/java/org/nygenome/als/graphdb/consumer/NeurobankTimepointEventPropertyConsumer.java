@@ -17,26 +17,29 @@ import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.NeurobankSubjectEventProperty;
 import scala.Tuple2;
 
-public class NeurobankSubjectEventPropertyConsumer extends GraphDataConsumer {
+public class
+NeurobankTimepointEventPropertyConsumer extends GraphDataConsumer {
 
-  public NeurobankSubjectEventPropertyConsumer(RunMode runMode) {
+  public NeurobankTimepointEventPropertyConsumer(RunMode runMode) {
     super(runMode);
   }
 
-  private final RelationshipType subjectEventValueRelType = new DynamicRelationshipTypes(
-      "EVENT_MEASREMENT");
-  private final RelationshipType subjectEventCategoryRelType = new DynamicRelationshipTypes(
-      "CATEGORIZES");
-  private final RelationshipType eventValueEventPropertyRelType = new DynamicRelationshipTypes(
-      "CATEGORIZES");
-  private final RelationshipType eventValueTimepointRelType = new DynamicRelationshipTypes(
-      "OCCURRED_AT");
+  private final RelationshipType eventValueSubjectRelType = new DynamicRelationshipTypes(
+      "HAS_PROPERTY");
+  private final RelationshipType eventValueEventRelType = new DynamicRelationshipTypes(
+      "HAS_EVENT_OCCURRANCE"
+  );
+  private final RelationshipType eventTimepointRelType = new DynamicRelationshipTypes(
+      "OCCURRED_AT"
+  );
 
   private Consumer<NeurobankSubjectEventProperty> neurobankSubjectEventPropertyConsumer =
       (property) -> {
 
-        Node subjectNode = resolveSubjectNodeFunction.apply(property.subjectGuid());
-        Node timepointNode = resolveStudyTimepointNode.apply(property.timepointName());
+        // create the chain of nodes
+        Node subjectNode = resolveSubjectNodeFunction.apply(property.subjectTuple());
+        Node timepointNode = resolveEventTimepointNodeFunction.apply(property.timepointTuple());
+        Node eventNode = resolveSubjectEventNodeFunction.apply(property.subjectEventTuple());
         // event property node
         Node eventPropertyNode = resolveSubjectEventPropertyNodeFunction
             .apply(property.eventPropertyId());
@@ -46,32 +49,33 @@ public class NeurobankSubjectEventPropertyConsumer extends GraphDataConsumer {
             .accept(eventPropertyNode, new Tuple2<>("PropertyCode", property.propertyCode()));
         lib.nodePropertyValueConsumer
             .accept(eventPropertyNode, new Tuple2<>("PropertyName", property.propertyName()));
-        // event property value
-        Node eventPropertyValueNode = resolveSubjectEventPropertyValueNodeFunction
-            .apply(property.eventValueId());
-        lib.nodePropertyValueConsumer.accept(eventPropertyValueNode,
-            new Tuple2<>("PropertyValue", property.propertyValue()));
+        lib.nodePropertyValueConsumer.accept(eventPropertyNode,
+            new Tuple2<>("Value", property.propertyValue()));
         // ensure that Neurobank-associated nodes are annotated
-        Lists.mutable.of(subjectNode, timepointNode, eventPropertyNode, eventPropertyValueNode)
+        Lists.mutable.of(subjectNode, timepointNode, eventNode, eventPropertyNode)
             .forEach(annotateNeurobankNodeConsumer);
         // complete Node Relationships
-        // subject <-> property value
+        // property value -> subject
         lib.resolveNodeRelationshipFunction
-            .apply(new Tuple2<>(subjectNode, eventPropertyValueNode), subjectEventValueRelType
+            .apply(new Tuple2<>(eventPropertyNode, subjectNode), eventValueSubjectRelType
             );
-        // event property <-> category
-        Node eventCategoryNode = resolveCategoryNode.apply(property.propertyCategory());
+        // property value -> event
+        lib.resolveNodeRelationshipFunction.apply(
+            new Tuple2(eventPropertyNode,eventNode), eventValueEventRelType
+        );
+
+        // event  <-> timepoint
         lib.resolveNodeRelationshipFunction
-            .apply(new Tuple2<>(eventPropertyNode, eventCategoryNode),
-                subjectEventCategoryRelType);
-        // event property value <-> event property
+            .apply(new Tuple2<>(eventNode, timepointNode), eventTimepointRelType
+            );
+        // associate nodes with categories
+        Node propertyCategoryNode = resolveCategoryNode.apply(property.propertyCategory());
         lib.resolveNodeRelationshipFunction
-            .apply(new Tuple2<>(eventPropertyValueNode, eventPropertyNode),
-                eventValueEventPropertyRelType);
-        // event property value <-> timepoint
-        lib.resolveNodeRelationshipFunction
-            .apply(new Tuple2<>(eventPropertyValueNode, timepointNode)
-                , eventValueTimepointRelType);
+            .apply(new Tuple2<>(eventPropertyNode, propertyCategoryNode),
+                categorizesRelType);
+        Node eventCategoryNode = resolveCategoryNode.apply(property.eventCategory());
+        lib.resolveNodeRelationshipFunction.apply( new Tuple2<>(eventNode,eventCategoryNode),
+            categorizesRelType);
       };
 
   @Override
@@ -86,7 +90,7 @@ public class NeurobankSubjectEventPropertyConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_EVENT_PROPERTY_FILE")
-        .ifPresent(new NeurobankSubjectEventPropertyConsumer(RunMode.PROD));
+        .ifPresent(new NeurobankTimepointEventPropertyConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed neurobank subject event property file : " +
         sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
@@ -97,7 +101,7 @@ public class NeurobankSubjectEventPropertyConsumer extends GraphDataConsumer {
         .getOptionalPathProperty("NEUROBANK_SUBJECT_EVENT_PROPERTY_FILE")
         .ifPresent(
             path -> new TestGraphDataConsumer()
-                .accept(path, new NeurobankSubjectEventPropertyConsumer(RunMode.TEST)));
+                .accept(path, new NeurobankTimepointEventPropertyConsumer(RunMode.TEST)));
   }
 
 }

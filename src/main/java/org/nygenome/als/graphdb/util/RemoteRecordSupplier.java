@@ -17,11 +17,11 @@ public abstract class RemoteRecordSupplier {
   protected Reader initRemoteReader(String fileName){
     try {
       session = jsch.getSession(
-          FrameworkPropertyService.INSTANCE.getStringProperty("sftp_user"),
+          System.getenv("SFTP_USER"),
           sftpServer,
           22);
       session.setConfig("StrictHostKeyChecking", "no");
-      session.setPassword(FrameworkPropertyService.INSTANCE.getStringProperty("sftp_password"));
+      session.setPassword(System.getenv("SFTP_PASSWORD"));
       session.connect();
 
       Channel channel = session.openChannel("sftp");

@@ -15,7 +15,7 @@ import org.nygenome.als.graphdb.consumer.DrugUniprotInfoConsumer;
 import org.nygenome.als.graphdb.consumer.GeneDiseaseAssociationDataConsumer;
 import org.nygenome.als.graphdb.consumer.IntactDataConsumer;
 import org.nygenome.als.graphdb.consumer.NeurobankCategoryConsumer;
-import org.nygenome.als.graphdb.consumer.NeurobankSubjectEventPropertyConsumer;
+import org.nygenome.als.graphdb.consumer.NeurobankTimepointEventPropertyConsumer;
 import org.nygenome.als.graphdb.consumer.NeurobankSubjectPropertyConsumer;
 import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
 import org.nygenome.als.graphdb.consumer.SampleVariantConsumer;
@@ -83,7 +83,7 @@ public enum ALSDatabaseImportApp {
       // neurobank subject properties
       NeurobankSubjectPropertyConsumer.importProdData();
       // neurobank subject timepoints
-      NeurobankSubjectEventPropertyConsumer.importProdData();
+      NeurobankTimepointEventPropertyConsumer.importProdData();
 
       stopwatch.stop();
       AsyncLoggingService.logInfo("Creation of the ALS Neo4j database required "

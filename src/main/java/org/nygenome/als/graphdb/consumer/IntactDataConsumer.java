@@ -84,8 +84,8 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
   // used for testing with default headings file
   @Override
   public void accept(Path path) {
-    Path headPath = Paths.get("/data/als/heading_intact.txt");
-    accept(path, headPath);
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("PPI_INTACT_HEADINGS_FILE")
+        .ifPresent(headPath -> accept(path,headPath));
   }
 
   public static void importProdData() {
@@ -100,7 +100,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
   // main method for stand alone testing
   // use short file: short_human_intact.tsv
   public static void main(String[] args) {
-    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("PPI_INTACT_FILE")
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_PPI_INTACT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer().accept(path, new IntactDataConsumer(RunMode.TEST)));
   }

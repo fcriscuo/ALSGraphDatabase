@@ -9,7 +9,7 @@ public class TestNeurobankSubjectTimepoint {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("NEUROBANK_SUBJECT_TIMEPOINT_FILE")
         .ifPresent((path) -> new TsvRecordStreamSupplier(path)
             .get()
-            .map(NeurobankSubjectTimepoint::parseCSVRecord)
+            .map(NeurobankEventTimepoint::parseCSVRecord)
             .limit(200)
             .forEach(System.out::println)
         );

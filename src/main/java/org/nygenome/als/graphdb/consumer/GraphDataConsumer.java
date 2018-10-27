@@ -52,6 +52,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final Label neurobankCategoryLabel = new DynamicLabel("NeurobankCategory");
   protected final Label subjectPropertyLabel = new DynamicLabel("SubjectProperty");
   protected final Label alsStudyTimepointLabel = new DynamicLabel("AlsStudyTimepoint");
+  protected final Label alsStudyTimepointEventLabel = new DynamicLabel("AlsStudyTimepointEvent");
   protected final Label subjectEventPropertyLabel = new DynamicLabel("SubjectEventProperty");
   protected final Label subjectEventPropertyValueLabel = new DynamicLabel("SubjectEventPropertyValue");
   protected final Label xrefLabel = new DynamicLabel("Xref");
@@ -109,6 +110,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final RelationshipType categorizesRelType = new DynamicRelationshipTypes("CATEGORIZES");
   protected final RelationshipType propertyRelationType = new DynamicRelationshipTypes("HAS_PROPERTY");
   protected final RelationshipType subjectEventRelationType = new DynamicRelationshipTypes("HAS_SUBJECT_EVENT");
+  protected final RelationshipType timepointtRelationType = new DynamicRelationshipTypes("OCCURRED_AT");
   protected final RelationshipType goBioProcessRelType = new DynamicRelationshipTypes("HAS_GO_BIO_PROCESS");
   protected final RelationshipType goCellComponentRelType = new DynamicRelationshipTypes("HAS_GO_CELLULAR_COMPONENT");
   protected final RelationshipType goMolFunctionRelType = new DynamicRelationshipTypes("HAS_GO_MOLECULAR_FUNCTION");
@@ -192,8 +194,22 @@ be created and returned
     }
   };
 
-  protected Function<String, Node> resolveStudyTimepointNode = (id) ->
-      lib.resolveGraphNodeFunction.apply(new Tuple3<>(alsStudyTimepointLabel,"Name",id));
+  protected Function<Tuple2<String,String>, Node>  resolveEventTimepointNodeFunction = (tuple) ->{
+    Node node =  lib.resolveGraphNodeFunction.apply(new Tuple3<>(alsStudyTimepointLabel,"TimepointName",tuple._2()));
+    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("TimepintId",tuple._1()));
+    return node;
+  };
+  /*
+  resolveSubjectEventNodeFunction.apply(property.subjectEventTuple());
+   */
+  protected Function<Tuple2<String,String>,Node> resolveSubjectEventNodeFunction = (tuple) -> {
+    Node node = lib.resolveGraphNodeFunction.apply(new Tuple3<>(alsStudyTimepointEventLabel,
+        "EventCategory",tuple._1()));
+    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("FormName", tuple._2()));
+    return node;
+  };
+
+
 
   protected Function<String,Node> resolveSubjectPropertyNode = (id) ->
       lib.resolveGraphNodeFunction.apply(new Tuple3<>(subjectPropertyLabel, "Id",id));
@@ -201,10 +217,15 @@ be created and returned
   protected Function<String,Node> resolveCategoryNode = (category) ->
       lib.resolveGraphNodeFunction.apply(new Tuple3<>(neurobankCategoryLabel, "Category",category));
 
-  protected Function<String, Node> resolveSubjectNodeFunction =
-      (extSubjectId) ->
-     lib.resolveGraphNodeFunction.apply( new Tuple3<>(subjectLabel,
-           "SubjectId",extSubjectId));
+  protected Function<Tuple2<String,String>, Node> resolveSubjectNodeFunction =
+      (subjectTuple) -> {
+        Node node = lib.resolveGraphNodeFunction.apply(new Tuple3<>(subjectLabel,
+            "SubjectGuid", subjectTuple._2()));
+        lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("SubjectId", subjectTuple._1()));
+        return node;
+      };
+
+
 
   protected Function<String, Node> resolveHumanTissueNodeFunction = (tissueId) ->
       lib.resolveGraphNodeFunction.apply(new Tuple3<>(tissueLabel,

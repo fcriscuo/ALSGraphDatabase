@@ -158,39 +158,6 @@ public class FunctionLib {
        return createGraphNodeFunction.apply(tuple3);
       };
 
-/*
-Public Function to find or create a Node
-Parameters are the Node's label type, a key property, and a value for that property
-The value must be a String
-The return is a new or existing Node
- */
-
-  public Function<Tuple3<Label, String, String>, Node> resolveGraphNodeFunctionOld =
-      (tuple3) -> {
-        Label label = tuple3._1();
-        String property = tuple3._2();
-        String value = tuple3._3();
-        Transaction tx = this.graphDb.beginTx();
-        try {
-          Node node = this.graphDb
-              .findNode(label, property, value);
-          if (null == node) {
-            node = this.graphDb.createNode(label);
-            node.setProperty(property, value);
-          }
-          tx.success();
-          return node;
-        } catch (MultipleFoundException e) {
-          tx.failure();
-          AsyncLoggingService.logError("ERROR: multiple instances of Node " + label
-              + "  " + property + "  " + value);
-          AsyncLoggingService.logError(e.getMessage());
-          e.printStackTrace();
-        } finally {
-          tx.close();
-        }
-        return unknownNodeSupplier.get();
-      };
 
   /*
    A private Consumer that will add a Label to a Node if

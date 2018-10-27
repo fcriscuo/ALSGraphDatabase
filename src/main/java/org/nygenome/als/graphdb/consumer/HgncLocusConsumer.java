@@ -23,8 +23,6 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
 
 
   private BiConsumer<Node,HgncLocus> resolveHgncLocusRelationshipsConsumer = (geNode, hgnc) -> {
-
-
     if (HgncLocus.isValidString(hgnc.uniprotId())) {
       Node proteinNode = resolveProteinNodeFunction.apply(hgnc.uniprotId());
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,geNode),encodedRelationType );
@@ -90,7 +88,7 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
         .forEach(hgncLocusConsumer);
   }
 
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("HGNC_COMPLETE_FILE")

@@ -37,16 +37,18 @@ public class AlsGeneConsumer extends GraphDataConsumer{
   private Consumer<EnsemblAlsGene> alsGeneConsumer = (alsGene -> {
      Node geneNode = resolveGeneticEntityNodeFunction.apply(alsGene.ensemblGeneId());
      if(!processedAlsGeneSet.contains(alsGene.ensemblGeneId())) {
+       // label this genetic entity as a Gene
+
        // add ALS label if these nodes have not been already labeled
        lib.novelLabelConsumer.accept(geneNode, alsAssociatedLabel);
        // set/reset gene properties
        lib.nodePropertyValueConsumer
-           .accept(geneNode, new Tuple2<>("chromosome", alsGene.chromosome()));
+           .accept(geneNode, new Tuple2<>("Chromosome", alsGene.chromosome()));
        lib.nodeIntegerPropertyValueConsumer
-           .accept(geneNode, new Tuple2<>("start pos", alsGene.geneStart()));
+           .accept(geneNode, new Tuple2<>("GeneStart", alsGene.geneStart()));
        lib.nodeIntegerPropertyValueConsumer
-           .accept(geneNode, new Tuple2<>("end end", alsGene.geneEnd()));
-       lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("strand", alsGene.strand()));
+           .accept(geneNode, new Tuple2<>("GeneEnd", alsGene.geneEnd()));
+       lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("Strand", alsGene.strand()));
        processedAlsGeneSet.add(alsGene.ensemblGeneId());
        AsyncLoggingService.logInfo("Added new ALS-associated gene: " +alsGene.hugoName());
      }
