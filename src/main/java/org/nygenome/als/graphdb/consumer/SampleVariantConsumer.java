@@ -11,6 +11,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -25,6 +26,8 @@ and a List of variants as a CSV String
  */
 
 public class SampleVariantConsumer extends GraphDataConsumer{
+
+  public SampleVariantConsumer(RunMode runMode) {super(runMode);}
 
  private Consumer<SampleVariantSummary> sampleVariantSummaryConsumer = (svc) -> {
 
@@ -46,7 +49,6 @@ public class SampleVariantConsumer extends GraphDataConsumer{
       encodedRelationType);
  };
 
-
   @Override
   public void accept(Path path) {
     Preconditions.checkArgument(null != path
@@ -57,18 +59,18 @@ public class SampleVariantConsumer extends GraphDataConsumer{
         .forEach(sampleVariantSummaryConsumer);
 
   }
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("SAMPLE_VARIANT_SUMUMMARY_FILE")
-        .ifPresent(new SampleVariantConsumer());
+        .ifPresent(new SampleVariantConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed complete sample variant file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_SAMPLE_VARIANT_SUMUMMARY_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SampleVariantConsumer()));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SampleVariantConsumer(RunMode.TEST)));
   }
 
 }

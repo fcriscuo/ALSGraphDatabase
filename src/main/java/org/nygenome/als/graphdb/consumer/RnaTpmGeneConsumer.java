@@ -1,13 +1,17 @@
 package org.nygenome.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import org.nygenome.als.graphdb.value.RnaTpmGene;
@@ -20,6 +24,8 @@ Because it is antidipated that tthese files will be extremely large,
 a streamin utility based on a Splititerator is used
  */
 public class RnaTpmGeneConsumer extends GraphDataConsumer {
+
+  public RnaTpmGeneConsumer(RunMode runMode) {super(runMode);}
 
   /*
   private Consumer to process a RnaTpmGene object
@@ -64,6 +70,15 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
         .forEach(rnaTpmGeneConsumer);
   }
 
+  public static void importProdData() {
+    Stopwatch sw = Stopwatch.createStarted();
+    FrameworkPropertyService.INSTANCE
+        .getOptionalPathProperty("RNA_TPM_GENE_FILE")
+        .ifPresent(new RnaTpmGeneConsumer(RunMode.PROD));
+    AsyncLoggingService.logInfo("read rna tpm  data: " +
+        sw.elapsed(TimeUnit.SECONDS) +" seconds");
+  }
+
   /*
   main method for standalone testing of this Consumer
   Uses a truncated version of the actual source file
@@ -73,7 +88,7 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
     FrameworkPropertyService.INSTANCE
            .getOptionalPathProperty("TEST_RNA_TPM_GENE_FILE")
             .ifPresent(path->
-                new TestGraphDataConsumer().accept(path,new RnaTpmGeneConsumer()));
+                new TestGraphDataConsumer().accept(path,new RnaTpmGeneConsumer(RunMode.TEST)));
     }
 
 

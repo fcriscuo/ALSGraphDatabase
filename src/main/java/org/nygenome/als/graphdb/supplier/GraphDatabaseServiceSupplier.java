@@ -2,53 +2,109 @@ package org.nygenome.als.graphdb.supplier;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.Utils;
-
-import javax.annotation.Nonnull;
 
 public class GraphDatabaseServiceSupplier implements Supplier<GraphDatabaseService> {
 
   private GraphDatabaseService graphDb;
 
-  public GraphDatabaseServiceSupplier(@Nonnull  Path path) {
+  public enum RunMode {TEST, PROD,READ_ONLY}
 
-    Preconditions.checkArgument(Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS),
-        path +" is not a Path to a directory");
-    // clear out any existing database
+  private Consumer<Path> configureTestGraphConsumer = (path) -> {
     try {
+      // in test mode any existing database is cleared
       Utils.deleteDirectoryAndChildren(path);
     } catch (IOException e) {
       e.printStackTrace();
     }
     this.graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(path.toFile());
     registerShutdownHook(graphDb);
+  };
+
+
+  private Consumer<Path> configureProductionGraphConsumer = (path) -> {
+    this.graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(path.toFile());
+    registerShutdownHook(graphDb);
+  };
+
+  // read-only access to production database
+  private Consumer<Path> configureReadOnlyGraphConsumer = (path) -> {
+   this.graphDb = new GraphDatabaseFactory()
+        .newEmbeddedDatabaseBuilder(path.toFile())
+        .setConfig(GraphDatabaseSettings.read_only, "true")
+        .newGraphDatabase();
+    registerShutdownHook(graphDb);
+  };
+
+  public GraphDatabaseServiceSupplier(RunMode runMode) {
+    switch (runMode) {
+      case TEST:
+        FrameworkPropertyService.INSTANCE.getOptionalPathProperty("testing.db.path")
+            .ifPresent(configureTestGraphConsumer);
+        AsyncLoggingService.logInfo("new ALS Neo4j database will be created.");
+        break;
+      case PROD:
+        FrameworkPropertyService.INSTANCE.getOptionalPathProperty("neo4j.db.path")
+            .ifPresent(configureProductionGraphConsumer);
+        AsyncLoggingService.logInfo("Production ALS Neo4j database will be created/updated.");
+        break;
+      case READ_ONLY:default:
+        FrameworkPropertyService.INSTANCE.getOptionalPathProperty("neo4j.db.path")
+            .ifPresent(configureReadOnlyGraphConsumer);
+          AsyncLoggingService.logError("Read-only access to production graph database");
+    }
+  }
+
+/*
+legacy  deprecated constructor
+use workaround until client code has been refactored
+ */
+  public GraphDatabaseServiceSupplier(@Nonnull Path path) {
+
+    Preconditions.checkArgument(Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS),
+        path + " is not a Path to a directory");
+    if (path.toString().contains("temp")) {
+      new GraphDatabaseServiceSupplier(RunMode.TEST);
+    } else if (path.toString().contains("readonly")){
+      new GraphDatabaseServiceSupplier(RunMode.READ_ONLY);
+    }else {
+      new GraphDatabaseServiceSupplier(RunMode.PROD);
+    }
+//    // clear out any existing database
+//    try {
+//      Utils.deleteDirectoryAndChildren(path);
+//    } catch (IOException e) {
+//      e.printStackTrace();
+//    }
+//    this.graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(path.toFile());
+//    registerShutdownHook(graphDb);
   }
 
   public static void main(String[] args) {
-    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("testing.db.path")
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("readonly.db.path")
         .ifPresent(path -> {
-          GraphDatabaseService  graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( path.toFile() )
-              .setConfig( GraphDatabaseSettings.read_only, "true" )
-              .newGraphDatabase();
-         try( Transaction tx = graphDb.beginTx()) {
-           graphDb.getAllLabels().forEach(label -> System.out.println(label.name()));
-         } catch (Exception e ) {
-           e.printStackTrace();
-         }
-
-
-
+          GraphDatabaseService graphDb = new GraphDatabaseServiceSupplier(RunMode.READ_ONLY).get();
+          try (Transaction tx = graphDb.beginTx()) {
+            graphDb.getAllLabels()
+                .stream()
+                .limit(200L)
+                .forEach(label -> System.out.println(label.name()));
+            System.out.println("Node count = " +graphDb.getAllNodes().stream().count());
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
         });
   }
 

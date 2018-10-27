@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -28,6 +28,7 @@ StudyTimepoints will have a Relationship to a previous StudyTimepoint establishi
 an order for their occurrence
  */
 public class NeurobankSubjectTimepointConsumer extends GraphDataConsumer {
+  NeurobankSubjectTimepointConsumer(RunMode runMode) {super(runMode);}
 
   private Consumer<NeurobankSubjectTimepoint> neurobankSubjectTimepointConsumer = (timepoint) -> {
     Node subjectNode = resolveSubjectNodeFunction.apply(timepoint.subjectGuid());
@@ -56,11 +57,11 @@ public class NeurobankSubjectTimepointConsumer extends GraphDataConsumer {
         .forEach(neurobankSubjectTimepointConsumer);
   }
 
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_TIMEPOINT_FILE")
-        .ifPresent(new NeurobankSubjectTimepointConsumer());
+        .ifPresent(new NeurobankSubjectTimepointConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed neurobank subject timepoint file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -68,6 +69,6 @@ public class NeurobankSubjectTimepointConsumer extends GraphDataConsumer {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_TIMEPOINT_FILE")
         .ifPresent(
-            path -> new TestGraphDataConsumer().accept(path, new NeurobankSubjectTimepointConsumer()));
+            path -> new TestGraphDataConsumer().accept(path, new NeurobankSubjectTimepointConsumer(RunMode.TEST)));
   }
 }

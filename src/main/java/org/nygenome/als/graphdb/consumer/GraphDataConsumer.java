@@ -3,19 +3,17 @@ package org.nygenome.als.graphdb.consumer;
 
 import com.twitter.util.Function3;
 import java.nio.file.Path;
-import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.Nonnull;
-import org.eclipse.collections.api.stack.MutableStack;
-import org.eclipse.collections.impl.factory.Stacks;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.lib.FunctionLib;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.DynamicLabel;
 import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
 import org.nygenome.als.graphdb.util.StringUtils;
@@ -28,10 +26,12 @@ import scala.Tuple3;
 
 public abstract class GraphDataConsumer implements Consumer<Path> {
 
+
+
   protected final String HUMAN_SPECIES = "homo sapiens";
 
   // defined Labels
-  protected final FunctionLib lib = new FunctionLib();
+  protected  FunctionLib lib;
   protected final Label alsAssociatedLabel = new DynamicLabel("ALS-associated");
   protected final Label subjectLabel  = new DynamicLabel("Subject");
   protected final Label sampleLabel  = new DynamicLabel("Sample");
@@ -114,6 +114,16 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final RelationshipType goMolFunctionRelType = new DynamicRelationshipTypes("HAS_GO_MOLECULAR_FUNCTION");
   protected final RelationshipType pubMedXrefRelType = new DynamicRelationshipTypes("HAS_PUBMED_XREF");
 
+
+  private RunMode runMode;
+  protected  GraphDataConsumer(@Nonnull RunMode runMode) {
+    this.lib = new FunctionLib(runMode);
+    this.runMode = runMode;
+  }
+
+  public Supplier<RunMode> consumerRunModeSupplier = () -> this.runMode;
+
+
   protected Function<String,Node> resolveProactAdverseEventNode = (id) ->{
    Node aeNode = lib.resolveGraphNodeFunction.apply(new Tuple3<>(proactAdverseEventLabel,
      "AdverseEventId",id  ));
@@ -121,6 +131,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
    lib.novelLabelConsumer.accept(aeNode, proactLabel);
    return aeNode;
  };
+
 
   /*
   Consumer that ensures that an ALS-associated Node is properly annotated
@@ -208,8 +219,6 @@ be created and returned
       lib.resolveGraphNodeFunction.apply(new Tuple3<>(diseaseLabel,
           "DiseaseId",diseaseId));
 
-
-
   protected Function<RnaTpmGene, Node> resolveRnaTpmGeneNode = (rnaTpmGene) -> {
     Node node = lib.resolveGraphNodeFunction.apply(new Tuple3<>(rnaTpmLabel,
         "RnaTpmId", rnaTpmGene.id()));
@@ -274,9 +283,6 @@ protected Function<SampleVariantSummary,Node> resolveSampleVariantNode = (svc) -
 
   protected Function<String, Node> resolveSnpNodeFunction = (snpId) ->
       lib.resolveGraphNodeFunction.apply(new Tuple3<>(snpLabel,"SNP",snpId));
-
-
-
 
 }
 

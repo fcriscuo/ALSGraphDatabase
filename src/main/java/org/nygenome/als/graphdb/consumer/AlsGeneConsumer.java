@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.eclipse.collections.impl.factory.Sets;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -25,6 +25,10 @@ Additional ALS genes may be added to this collection manually
 
  */
 public class AlsGeneConsumer extends GraphDataConsumer{
+
+  public AlsGeneConsumer(RunMode runMode) {
+    super(runMode);
+  }
 
   // keep track of what genes have been processed to avoid
   // repetitive property setting
@@ -67,17 +71,22 @@ public class AlsGeneConsumer extends GraphDataConsumer{
         .forEach(alsGeneConsumer);
     AsyncLoggingService.logInfo("ALS-associated gene count = " +processedAlsGeneSet.size());
   }
-  public static void importData() {
+
+
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_ALS_GENES_FILE")
-        .ifPresent(new AlsGeneConsumer());
+        .ifPresent(new AlsGeneConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed ensembl als genes file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
+
+  // Test mode
   public static void main(String[] args) {
-    FrameworkPropertyService.INSTANCE
+   FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_ALS_GENES_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new AlsGeneConsumer()));
+        .ifPresent(path ->
+            new TestGraphDataConsumer().accept(path, new AlsGeneConsumer(RunMode.TEST)));
   }
 }

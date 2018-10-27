@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -18,35 +19,38 @@ A Java Consumer responsible for creating/update Gene Nodes based on
 data attributes selected from ensembl's download page
 May create/update Gene Ontology Nodes as well
  */
-public class EnsemblGeneConsumer extends GraphDataConsumer{
+public class EnsemblGeneConsumer extends GraphDataConsumer {
 
+
+  public EnsemblGeneConsumer(RunMode runMode) {
+    super(runMode);
+  }
 
   private Consumer<EnsemblGene> ensemblGeneConsumer = (gene) -> {
-
     Node geneNode = resolveEnsemblGeneNodeFunction.apply(gene.ensemblGeneId());
-    lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("Chromosome",gene.chromosome()));
-    lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("GeneStart",gene.geneStart()));
-    lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("GeneEnd",gene.geneEnd()));
-    lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("Strand",gene.stand()));
+    lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("Chromosome", gene.chromosome()));
+    lib.nodeIntegerPropertyValueConsumer
+        .accept(geneNode, new Tuple2<>("GeneStart", gene.geneStart()));
+    lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("GeneEnd", gene.geneEnd()));
+    lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("Strand", gene.stand()));
     Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(gene.ensemblTranscriptId());
-    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode,transcriptNode),
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),
         transcribesRelationType);
     // gene - protein relationship
-    if(EnsemblGene.isValidString(gene.uniprotId())) {
+    if (EnsemblGene.isValidString(gene.uniprotId())) {
       Node proteinNode = resolveProteinNodeFunction.apply(gene.uniprotId());
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, proteinNode),
           transcribesRelationType);
     }
     // gene - gene ontology relationship
     Node goNode = resolveGeneOntologyNodeFunction.apply(gene.goEntry());
-    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode,goNode), xrefRelationType);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, goNode), xrefRelationType);
     // gene - hgnc xref
-    if(EnsemblGene.isValidString(gene.hugoSymbol())) {
+    if (EnsemblGene.isValidString(gene.hugoSymbol())) {
       Node hgncNode = resolveXrefNode.apply(hgncLabel, gene.hugoSymbol());
-      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode,hgncNode), xrefRelationType);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, hgncNode), xrefRelationType);
     }
   };
-
 
   @Override
   public void accept(Path path) {
@@ -60,13 +64,15 @@ public class EnsemblGeneConsumer extends GraphDataConsumer{
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_GENE_INFO_FILE")
-        .ifPresent(new EnsemblGeneConsumer());
+        .ifPresent(new EnsemblGeneConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed ensembl gene info file: " +
-        sw.elapsed(TimeUnit.SECONDS) +" seconds");
+        sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
+
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_ENSEMBL_GENE_INFO_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new EnsemblGeneConsumer()));
+        .ifPresent(path -> new TestGraphDataConsumer()
+            .accept(path, new EnsemblGeneConsumer(RunMode.TEST)));
   }
 }

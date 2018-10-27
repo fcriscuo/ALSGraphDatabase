@@ -9,6 +9,7 @@ import java.util.function.Function;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -17,7 +18,8 @@ import scala.Tuple2;
 import scala.Tuple3;
 
 public class ProActAdverseEventConsumer extends GraphDataConsumer {
-  private static final String ADVERSE_EVENT_CATEGORY = "Adverse Event";
+
+  public ProActAdverseEventConsumer(RunMode runMode) {super(runMode);}
 
   /*
   Private Function to create the hierarchy of event categories
@@ -74,13 +76,13 @@ public class ProActAdverseEventConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("PROACT_ADVERSE_EVENT_FILE")
-        .ifPresent(new ProActAdverseEventConsumer());
+        .ifPresent(new ProActAdverseEventConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed proact adverse event file: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_PROACT_ADVERSE_EVENT_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new ProActAdverseEventConsumer()));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new ProActAdverseEventConsumer(RunMode.TEST)));
   }
 }

@@ -8,6 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.DynamicLabel;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -17,6 +18,8 @@ import org.nygenome.als.graphdb.value.HgncLocus;
 import scala.Tuple2;
 
 public class HgncLocusConsumer  extends GraphDataConsumer{
+
+  public HgncLocusConsumer(RunMode runMode) { super(runMode);}
 
 
   private BiConsumer<Node,HgncLocus> resolveHgncLocusRelationshipsConsumer = (geNode, hgnc) -> {
@@ -91,7 +94,7 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("HGNC_COMPLETE_FILE")
-        .ifPresent(new HgncLocusConsumer());
+        .ifPresent(new HgncLocusConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed HGNC locus file: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -99,6 +102,6 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_HGNC_COMPLETE_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new HgncLocusConsumer()));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new HgncLocusConsumer(RunMode.TEST)));
   }
 }

@@ -7,21 +7,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.UniProtValue;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.StringUtils;
+import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.GeneOntology;
+import org.nygenome.als.graphdb.value.UniProtValue;
 import scala.Tuple2;
-
 
 public class UniProtValueConsumer extends GraphDataConsumer {
 
-  public UniProtValueConsumer() {}
+  public UniProtValueConsumer(RunMode runMode) {super(runMode);}
   @Override
   public void accept(Path path) {
     Preconditions.checkArgument(path != null);
@@ -108,18 +106,19 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     pubMedXrefConsumer.accept(upv);
 
   });
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIPROT_HUMAN_FILE")
-        .ifPresent(new UniProtValueConsumer());
+        .ifPresent(new UniProtValueConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("read uniprot data: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds.");
   }
 
   public static void main(String[] args) {
+
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_UNIPROT_HUMAN_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path, new UniProtValueConsumer()));
+            new TestGraphDataConsumer().accept(path, new UniProtValueConsumer(RunMode.TEST)));
   }
 
 

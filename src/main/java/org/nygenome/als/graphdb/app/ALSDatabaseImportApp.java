@@ -3,8 +3,6 @@ package org.nygenome.als.graphdb.app;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Suppliers;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -25,16 +23,13 @@ import org.nygenome.als.graphdb.consumer.SubjectPropertyConsumer;
 import org.nygenome.als.graphdb.consumer.UniProtValueConsumer;
 import org.nygenome.als.graphdb.consumer.VariantDiseaseAssociationDataConsumer;
 import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-
 
 public enum ALSDatabaseImportApp {
   INSTANCE;
-  private final Path DB_PATH = Paths
-      .get(FrameworkPropertyService.INSTANCE.getStringProperty("neo4j.db.path"));
-  private GraphDatabaseService graphDb = Suppliers
-      .memoize(new GraphDatabaseServiceSupplier(DB_PATH)).get();
+  private final GraphDatabaseService graphDb = Suppliers
+      .memoize(new GraphDatabaseServiceSupplier(RunMode.PROD)).get();
 
   public enum RelTypes implements RelationshipType {
       DRUG_TARGET,
@@ -47,10 +42,7 @@ public enum ALSDatabaseImportApp {
     BiologicalProcess, CellularComponents, Unknown, Drug_Target, Drug_Enzyme, Drug_Transporter,
     Drug_Carrier,  Variant}
 
-  // convenience method to satisfy legacy usages
-  public static GraphDatabaseService getGraphInstance() {
-    return ALSDatabaseImportApp.INSTANCE.graphDb;
-  }
+
 
   public static void main(final String[] args) {
     ALSDatabaseImportApp.INSTANCE.createDb();
@@ -64,34 +56,34 @@ public enum ALSDatabaseImportApp {
     try {
       Stopwatch stopwatch = Stopwatch.createStarted();
       //Uniprot data
-      UniProtValueConsumer.importData();
+      UniProtValueConsumer.importProdData();
       // Pathway
-      PathwayInfoConsumer.importData();
+      PathwayInfoConsumer.importProdData();
       // protein - protein interactions
-      IntactDataConsumer.importData();
+      IntactDataConsumer.importProdData();
       // ALS genes
-      AlsGeneConsumer.importData();
+      AlsGeneConsumer.importProdData();
       //ALS SNP
-      AlsSnpConsumer.importData();
+      AlsSnpConsumer.importProdData();
       //Subject properties
-      SubjectPropertyConsumer.importData();
+      SubjectPropertyConsumer.importProdData();
       // Tissue data consumer
       // TODO: limit to ALS genes
-      //HumanTissueAtlasDataConsumer.importData();
+      //HumanTissueAtlasDataConsumer.importProdData();
       // Drug data
-      DrugUniprotInfoConsumer.importData();
+      DrugUniprotInfoConsumer.importProdData();
       // gene disease associations
-      GeneDiseaseAssociationDataConsumer.importData();
+      GeneDiseaseAssociationDataConsumer.importProdData();
       // variant disease association
-      VariantDiseaseAssociationDataConsumer.importData();
+      VariantDiseaseAssociationDataConsumer.importProdData();
       // sample variants
-      SampleVariantConsumer.importData();
+      SampleVariantConsumer.importProdData();
       // neurobank categories
-      NeurobankCategoryConsumer.importData();
+      NeurobankCategoryConsumer.importProdData();
       // neurobank subject properties
-      NeurobankSubjectPropertyConsumer.importData();
+      NeurobankSubjectPropertyConsumer.importProdData();
       // neurobank subject timepoints
-      NeurobankSubjectEventPropertyConsumer.importData();
+      NeurobankSubjectEventPropertyConsumer.importProdData();
 
       stopwatch.stop();
       AsyncLoggingService.logInfo("Creation of the ALS Neo4j database required "

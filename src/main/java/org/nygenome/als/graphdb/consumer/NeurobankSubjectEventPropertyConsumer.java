@@ -3,13 +3,13 @@ package org.nygenome.als.graphdb.consumer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.eclipse.collections.impl.factory.Lists;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -18,6 +18,10 @@ import org.nygenome.als.graphdb.value.NeurobankSubjectEventProperty;
 import scala.Tuple2;
 
 public class NeurobankSubjectEventPropertyConsumer extends GraphDataConsumer {
+
+  public NeurobankSubjectEventPropertyConsumer(RunMode runMode) {
+    super(runMode);
+  }
 
   private final RelationshipType subjectEventValueRelType = new DynamicRelationshipTypes(
       "EVENT_MEASREMENT");
@@ -78,21 +82,22 @@ public class NeurobankSubjectEventPropertyConsumer extends GraphDataConsumer {
         .forEach(neurobankSubjectEventPropertyConsumer);
   }
 
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_EVENT_PROPERTY_FILE")
-        .ifPresent(new NeurobankSubjectEventPropertyConsumer());
+        .ifPresent(new NeurobankSubjectEventPropertyConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed neurobank subject event property file : " +
         sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
 
+  // import  these data individually
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_EVENT_PROPERTY_FILE")
         .ifPresent(
             path -> new TestGraphDataConsumer()
-                .accept(path, new NeurobankSubjectEventPropertyConsumer()));
+                .accept(path, new NeurobankSubjectEventPropertyConsumer(RunMode.TEST)));
   }
 
 }

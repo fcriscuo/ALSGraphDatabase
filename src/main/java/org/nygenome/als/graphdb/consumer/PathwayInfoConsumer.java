@@ -9,6 +9,7 @@ import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -19,6 +20,8 @@ import java.nio.file.Path;
 
 
 public class PathwayInfoConsumer extends GraphDataConsumer implements Consumer<Path>{
+
+  public PathwayInfoConsumer(RunMode runMode) {super(runMode);}
 
 
   /*
@@ -46,14 +49,14 @@ specified path
                 .filter(pathway -> !pathway.uniprotId().startsWith("A") )
                 .filter(pathway-> Pathway.isHuman(pathway.species()) )// only human entries
                 .forEach(pathwayConsumer);
-
-
     }
-    public static void importData() {
+
+
+    public static void importProdData() {
       Stopwatch sw = Stopwatch.createStarted();
       FrameworkPropertyService.INSTANCE
           .getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
-          .ifPresent(new PathwayInfoConsumer());
+          .ifPresent(new PathwayInfoConsumer(RunMode.PROD));
       AsyncLoggingService.logInfo("read pathway data: " +
           sw.elapsed(TimeUnit.SECONDS) +" seconds");
     }
@@ -62,7 +65,7 @@ specified path
       FrameworkPropertyService.INSTANCE
           .getOptionalPathProperty("UNIPROT_REACTOME_HOMOSAPIENS_MAPPING")
           .ifPresent(path->
-              new TestGraphDataConsumer().accept(path,new PathwayInfoConsumer()));
+              new TestGraphDataConsumer().accept(path,new PathwayInfoConsumer(RunMode.TEST)));
 
     }
 

@@ -6,8 +6,8 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -22,6 +22,10 @@ the AlsGeneConsumer, so protein, gene, and transcript nodes will
 have been created
  */
 public class AlsSnpConsumer  extends GraphDataConsumer{
+
+  public AlsSnpConsumer(RunMode runMode){
+    super(runMode);
+  }
 
   private Consumer<EnsemblAlsSnp> alsSnpConsumer = (snp)-> {
     Node snpNode = resolveSnpNodeFunction.apply(snp.variantId());
@@ -44,17 +48,19 @@ public class AlsSnpConsumer  extends GraphDataConsumer{
         .map(EnsemblAlsSnp::parseCSVRecord)
         .forEach(alsSnpConsumer);
   }
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_ALS_SNP_FILE")
-        .ifPresent(new AlsSnpConsumer());
+        .ifPresent(new AlsSnpConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed ensembl als snp file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
+
+  // stand alone test
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_ENSEMBL_ALS_SNP_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new AlsSnpConsumer()));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new AlsSnpConsumer(RunMode.TEST)));
   }
 }

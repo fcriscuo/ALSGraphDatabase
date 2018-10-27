@@ -8,9 +8,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+//import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.lib.FunctionLib;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.value.StringSubjectProperty;
@@ -19,8 +20,8 @@ import scala.Tuple2;
 
 public class SubjectPropertyConsumer extends GraphDataConsumer {
 
-  private FunctionLib lib = new FunctionLib();
 
+  public SubjectPropertyConsumer(RunMode runMode) {super(runMode);}
 
   private Function<StringSubjectProperty, Node> completeSampleNodeFunction = (stringSubjectProperty) -> {
     String externalSampleId = stringSubjectProperty.externalSampleId();
@@ -58,10 +59,10 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
         .map(StringSubjectProperty::parseCSVRecord)
         .forEach(stringSubjectPropertyConsumer);
   }
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("SUBJECT_PROPERTY_FILE")
-        .ifPresent(new SubjectPropertyConsumer());
+        .ifPresent(new SubjectPropertyConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed subject properties file: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -69,6 +70,6 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
 
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("SUBJECT_PROPERTY_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SubjectPropertyConsumer()));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SubjectPropertyConsumer(RunMode.TEST)));
   }
 }

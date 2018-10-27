@@ -14,6 +14,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
@@ -23,10 +24,14 @@ import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import org.nygenome.als.graphdb.value.PsiMitab;
 import scala.Tuple2;
 
-public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<Path,Path> {
+public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<Path, Path> {
+
+  public IntactDataConsumer(RunMode runMode) {
+    super(runMode);
+  }
 
   private Predicate<PsiMitab> selfInteractionPredicate = (ppi) ->
-      ! ppi.interactorAId().equals(ppi.interactorBId());
+      !ppi.interactorAId().equals(ppi.interactorBId());
 
   /*
   Process the human intact data. The file provided from IntAct is very
@@ -36,35 +41,30 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
   private Consumer<PsiMitab> proteinInteractionConsumer = (ppi) -> {
     Tuple2<String, String> abTuple = new Tuple2<>(ppi.interactorAId(), ppi.interactorBId());
 
-      Node proteinNodeA = resolveProteinNodeFunction.apply(ppi.interactorAId());
-      Node proteinNodeB = resolveProteinNodeFunction.apply(ppi.interactorBId());
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
-      try  {
-        RelationshipType interactionType = new DynamicRelationshipTypes(
-            ppi.interactionTypeList().head()
-        );
-        Relationship ppRel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNodeA,proteinNodeB), interactionType);
-        AsyncLoggingService.logInfo("Created new PPI between Protein: " + ppi.interactorAId()
-            + "  and Protein: " + ppi.interactorBId() + "   rel type: " + interactionType.name());
-        // set ppi relationship properties
-        ppRel.setProperty("Interaction_method_detection",
-            ppi.detectionMethodList().mkString("|"));
-        ppRel.setProperty("References",
-            ppi.publicationIdList().mkString("|"));
-        ppRel.setProperty("Negative",String.valueOf(ppi.negative()));
-        if (null != ppi.confidenceValuesList() && ppi.confidenceValuesList().size() > 0) {
-          ppRel.setProperty("Confidence_level",
-              Double.parseDouble(ppi.confidenceValuesList().last()));
-        }
-        tx.success();
-      }
-     catch(Exception e){
-      AsyncLoggingService.logError(e.getMessage());
-      tx.failure();
-    } finally {
-        tx.close();
-      }
+    Node proteinNodeA = resolveProteinNodeFunction.apply(ppi.interactorAId());
+    Node proteinNodeB = resolveProteinNodeFunction.apply(ppi.interactorBId());
+    RelationshipType interactionType = new DynamicRelationshipTypes(
+        ppi.interactionTypeList().head()
+    );
+    Relationship ppRel = lib.resolveNodeRelationshipFunction
+        .apply(new Tuple2<>(proteinNodeA, proteinNodeB), interactionType);
+    AsyncLoggingService.logInfo("Created new PPI between Protein: " + ppi.interactorAId()
+        + "  and Protein: " + ppi.interactorBId() + "   rel type: " + interactionType.name());
+    // set ppi relationship properties
+    lib.relationshipPropertyValueConsumer.accept(ppRel, new Tuple2<>("Interaction_method_detection",
+        ppi.detectionMethodList().mkString("|") ));
+    lib.relationshipPropertyValueConsumer.accept(ppRel, new Tuple2<>(
+        "References",
+            ppi.publicationIdList().mkString("|")
+        ));
+    lib.relationshipPropertyValueConsumer.accept(ppRel,
+        new Tuple2<>("Neagtive", String.valueOf(ppi.negative())));
 
+    if (null != ppi.confidenceValuesList() && ppi.confidenceValuesList().size() > 0) {
+      lib.relationshipPropertyValueConsumer.accept(ppRel,
+          new Tuple2<>("Confidence_level",
+              ppi.confidenceValuesList().last()));
+    }
   };
 
   @Override
@@ -74,7 +74,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
     String[] columnHeadings = PsiMitab.INTACT_HEADER_STRING().split("\\t");
 //    String[] columnHeadings = Utils.resolveColumnHeadingsFunction
 //        .apply(path_headings);
-    new TsvRecordSplitIteratorSupplier(path_data,columnHeadings).get()
+    new TsvRecordSplitIteratorSupplier(path_data, columnHeadings).get()
         .map(PsiMitab::parseCSVRecord)
         .filter(selfInteractionPredicate)
         .forEach(proteinInteractionConsumer);
@@ -88,20 +88,21 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
     accept(path, headPath);
   }
 
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("PPI_INTACT_FILE")
-        .ifPresent(new IntactDataConsumer());
+        .ifPresent(new IntactDataConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("read protein-protein interaction file: "
-        +sw.elapsed(TimeUnit.SECONDS) +" seconds");
+        + sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
- // main method for stand alone testing
+
+  // main method for stand alone testing
   // use short file: short_human_intact.tsv
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("PPI_INTACT_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path, new IntactDataConsumer()));
+            new TestGraphDataConsumer().accept(path, new IntactDataConsumer(RunMode.TEST)));
   }
 }
 

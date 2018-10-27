@@ -1,8 +1,6 @@
 package org.nygenome.als.graphdb.lib;
 
-
 import com.google.common.base.Strings;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -10,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -19,8 +16,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nonnull;
 import org.apache.log4j.Logger;
-import org.eclipse.collections.impl.factory.Stacks;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.MultipleFoundException;
 import org.neo4j.graphdb.Node;
@@ -29,19 +27,30 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.value.ValueTrait;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.collection.immutable.List;
 
-
 public class FunctionLib {
 
   private static final Logger log = Logger.getLogger(FunctionLib.class);
-
-  public FunctionLib() {
+  private GraphDatabaseService graphDb;
+  public FunctionLib(@Nonnull  RunMode runMode) {
+    this.graphDb = new GraphDatabaseServiceSupplier(runMode).get();
   }
+  /*
+  ppRel.setProperty("Interaction_method_detection",
+        ppi.detectionMethodList().mkString("|"));
+   */
+  public BiConsumer<Relationship,Tuple2<String,String>> defineRelationshipPropertyConsumer
+      = (rel,tuple2) -> {
+    try (Transaction tx = graphDb.beginTx()) {
+      rel.setProperty(tuple2._1(),tuple2._2());
+    }
+  };
 
   /*
   Public Function to determine if a specified ensembl id is for
@@ -58,8 +67,8 @@ public class FunctionLib {
   };
 
   private final Supplier<Node> unknownNodeSupplier = () -> {
-    try (Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get()) {
-      return ALSDatabaseImportApp.getGraphInstance().createNode(LabelTypes.Unknown);
+    try (Transaction tx = graphDb.beginTx()) {
+      return this.graphDb.createNode(LabelTypes.Unknown);
     }
   };
 
@@ -71,9 +80,9 @@ public class FunctionLib {
     Label label = tuple3._1();
     String property = tuple3._2();
     String value = tuple3._3();
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    Transaction tx = this.graphDb.beginTx();
     try {
-      Node node = ALSDatabaseImportApp.getGraphInstance()
+      Node node = this.graphDb
           .findNode(label, property, value);
       tx.success();
       return (node != null) ? Optional.of(node) : Optional.empty();
@@ -96,10 +105,10 @@ public class FunctionLib {
    */
   public Predicate<Tuple3<Label, String, String>> isExistingNodePredicate = (tuple3) ->
   {
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    Transaction tx = this.graphDb.beginTx();
     try {
       return (
-          ALSDatabaseImportApp.getGraphInstance().findNode(tuple3._1(), tuple3._2(), tuple3._3())
+          this.graphDb.findNode(tuple3._1(), tuple3._2(), tuple3._3())
               != null);
     } catch (MultipleFoundException e) {
       e.printStackTrace();
@@ -118,13 +127,11 @@ public class FunctionLib {
     Label label = tuple3._1();
     String property = tuple3._2();
     String value = tuple3._3();
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    Transaction tx = this.graphDb.beginTx();
     try {
-      Node node = ALSDatabaseImportApp.getGraphInstance().createNode(label);
+      Node node = this.graphDb.createNode(label);
       node.setProperty(property, value);
       tx.success();
-      AsyncLoggingService.logInfo("++++createGraphNode function node count = " +
-          ALSDatabaseImportApp.getGraphInstance().getAllNodes().stream().count() );
       return node;
     } catch (Exception e) {
       tx.failure();
@@ -151,8 +158,6 @@ public class FunctionLib {
        return createGraphNodeFunction.apply(tuple3);
       };
 
-
-
 /*
 Public Function to find or create a Node
 Parameters are the Node's label type, a key property, and a value for that property
@@ -165,12 +170,12 @@ The return is a new or existing Node
         Label label = tuple3._1();
         String property = tuple3._2();
         String value = tuple3._3();
-        Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+        Transaction tx = this.graphDb.beginTx();
         try {
-          Node node = ALSDatabaseImportApp.getGraphInstance()
+          Node node = this.graphDb
               .findNode(label, property, value);
           if (null == node) {
-            node = ALSDatabaseImportApp.getGraphInstance().createNode(label);
+            node = this.graphDb.createNode(label);
             node.setProperty(property, value);
           }
           tx.success();
@@ -192,7 +197,7 @@ The return is a new or existing Node
    that Label is new
     */
   public BiConsumer<Node, Label> novelLabelConsumer = (node, newLabel) -> {
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    Transaction tx = this.graphDb.beginTx();
     try {
       if (StreamSupport.stream(node.getLabels().spliterator(), false)
           .noneMatch(label -> label.name().equalsIgnoreCase(newLabel.name()))) {
@@ -208,7 +213,7 @@ The return is a new or existing Node
   };
 
   public Predicate<Node> isAlsAssociatedPredicate = (node) -> {
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    Transaction tx = this.graphDb.beginTx();
     try {
       if (StreamSupport.stream(node.getLabels().spliterator(), false)
           .anyMatch(label -> label.name().equalsIgnoreCase("ALS-associated"))) {
@@ -226,7 +231,7 @@ The return is a new or existing Node
   };
 
   public BiConsumer<Relationship, Tuple2<String, Integer>> setRelationshipIntegerProperty = (rel, tuple) -> {
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    Transaction tx = this.graphDb.beginTx();
     try {
       rel.setProperty(tuple._1(), tuple._2());
       tx.success();
@@ -244,7 +249,7 @@ The return is a new or existing Node
   than NodeB -> NodeA, then two (2) relationships need to be created
    */
   public BiFunction<Tuple2<Node, Node>, RelationshipType, Relationship> resolveNodeRelationshipFunction = (nodeTuple, relType) -> {
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+    Transaction tx = this.graphDb.beginTx();
     Node nodeStart = nodeTuple._1();
     Node nodeEnd = nodeTuple._2();
     try {
@@ -252,7 +257,7 @@ The return is a new or existing Node
           .filter(relationship -> relationship.getEndNodeId() == nodeEnd.getId())
           .filter(relationship -> relationship.getType().name().equalsIgnoreCase(relType.name()))
           .findFirst().orElse(nodeStart.createRelationshipTo(nodeEnd, relType));
-      AsyncLoggingService.logInfo("created relationship between " + nodeStart.getLabels().toString()
+      AsyncLoggingService.logDebug("created relationship between " + nodeStart.getLabels().toString()
           + " and " + nodeEnd.getLabels().toString());
       tx.success();
       return rel;
@@ -287,7 +292,7 @@ Protected BiConsumer that will add a property name/String value pair to a specif
 */
   public BiConsumer<Node, Tuple2<String, String>> nodePropertyValueConsumer = (node, propertyTuple) -> {
     if (!Strings.isNullOrEmpty(propertyTuple._2())) {
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+      Transaction tx = this.graphDb.beginTx();
       try {
         node.setProperty(propertyTuple._1(), propertyTuple._2());
         tx.success();
@@ -302,7 +307,7 @@ Protected BiConsumer that will add a property name/String value pair to a specif
 
   public BiConsumer<Relationship, Tuple2<String, String>> relationshipPropertyValueConsumer = (relationship, propertyTuple) -> {
     if (!Strings.isNullOrEmpty(propertyTuple._2())) {
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+      Transaction tx = this.graphDb.beginTx();
       try {
         relationship.setProperty(propertyTuple._1(), propertyTuple._2());
         tx.success();
@@ -321,7 +326,7 @@ Protected BiConsumer that will add a property name/String value pair to a specif
 */
   public BiConsumer<Node, Tuple2<String, Integer>> nodeIntegerPropertyValueConsumer = (node, propertyTuple) -> {
     if (null != propertyTuple._2()) {
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+      Transaction tx = this.graphDb.beginTx();
       try {
         node.setProperty(propertyTuple._1(), propertyTuple._2());
         tx.success();
@@ -339,7 +344,7 @@ Protected BiConsumer that will add a property name/String value pair to a specif
    */
   public BiConsumer<Node, Tuple2<String, List<String>>> nodePropertyValueListConsumer = (node, propertyListTuple) -> {
     if (propertyListTuple._2() != null && propertyListTuple._2().size() > 0) {
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+      Transaction tx = this.graphDb.beginTx();
       try {
         node.setProperty(propertyListTuple._1(), propertyListTuple._2().head());
         tx.success();
@@ -358,7 +363,7 @@ Protected BiConsumer that will add a property name/String value pair to a specif
    */
   public BiConsumer<Node, Tuple2<String, String[]>> nodePropertyValueStringArrayConsumer = (node, propertyListTuple) -> {
     if (propertyListTuple._2() != null && propertyListTuple._2().length > 0) {
-      Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
+      Transaction tx = this.graphDb.beginTx();
       try {
         node.setProperty(propertyListTuple._1(), propertyListTuple._2());
         tx.success();
@@ -401,7 +406,7 @@ Protected BiConsumer that will add a property name/String value pair to a specif
   };
 
   public static void main(String... args) {
-    Path path = new FunctionLib().readResourceFileFunction.apply
+    Path path = new FunctionLib(RunMode.READ_ONLY).readResourceFileFunction.apply
         ("intact.txt");
     log.info("File exists = " + path.toString());
     log.info("There are " + FunctionLib.generateLineStreamFromPath(path).count()

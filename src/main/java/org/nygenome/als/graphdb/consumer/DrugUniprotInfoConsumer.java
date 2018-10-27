@@ -4,7 +4,6 @@ import com.google.common.base.Stopwatch;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import org.apache.log4j.Logger;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
@@ -12,6 +11,7 @@ import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
 import org.nygenome.als.graphdb.service.DrugBankService;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
@@ -26,13 +26,13 @@ Will create new Protein nodes if uniprotId value is novel
 
 public class DrugUniprotInfoConsumer extends GraphDataConsumer {
 
-  private static final Logger log = Logger.getLogger(DrugUniprotInfoConsumer.class);
-  private final RelTypes eRelType;
+  private RelTypes eRelType;
 
-  /*
-  DRUG_TARGET,
-  DRUG_ENZYME, DRUG_TRANSPORTER, DRUG_CARRIER
-   */
+  public DrugUniprotInfoConsumer(RunMode runMode, ALSDatabaseImportApp.RelTypes eRelType) {
+    super(runMode);
+    this.eRelType = eRelType;
+  }
+
   private void addDrugTypeLabel(Node node) {
     String drugInteractionType = eRelType.name();
     switch (drugInteractionType) {
@@ -51,7 +51,6 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer {
       default:
         AsyncLoggingService.logError(drugInteractionType + " is an invalid drug type");
     }
-
   }
 
   /*
@@ -74,7 +73,6 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer {
       = (drugRelType, drug) -> {
     String uniprotId = drug.uniprotId();
     // check if the protein node exists
-    try (Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get()) {
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
       // label the Protein Node with its drug characteristic
       addDrugTypeLabel(proteinNode);
@@ -84,11 +82,7 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer {
         lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, drugNode),
             drugRelType);
       });
-      tx.success();
-    } catch (Exception e) {
-      AsyncLoggingService.logError(e.getMessage());
-      e.printStackTrace();
-    }
+
   };
 
 /*
@@ -97,10 +91,6 @@ Sample line from csv
 P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,Haemophilus influenzae (strain ATCC 51907 / DSM 11121 / KW20 / Rd),DB00303
      */
 
-  public DrugUniprotInfoConsumer(ALSDatabaseImportApp.RelTypes eRelType) {
-    this.eRelType = eRelType;
-  }
-
   @Override
   public void accept(Path path) {
     new CsvRecordStreamSupplier(path).get()
@@ -108,23 +98,23 @@ P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,H
         .forEach(uniProtDrug -> proteinDrugRelationshiprConsumer.accept(eRelType, uniProtDrug));
   }
 
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_TARGET_UNIRPOT_FILE")
-        .ifPresent(new DrugUniprotInfoConsumer(RelTypes.DRUG_TARGET));
+        .ifPresent(new DrugUniprotInfoConsumer(RunMode.PROD, RelTypes.DRUG_TARGET));
     // Drug Enzyme
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_ENZYME_UNIRPOT_FILE")
-        .ifPresent(new DrugUniprotInfoConsumer(RelTypes.DRUG_ENZYME));
+        .ifPresent(new DrugUniprotInfoConsumer(RunMode.PROD, RelTypes.DRUG_ENZYME));
     // Drug Transporter
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_TRANSPORTER_UNIRPOT_FILE")
-        .ifPresent(new DrugUniprotInfoConsumer(RelTypes.DRUG_TRANSPORTER));
+        .ifPresent(new DrugUniprotInfoConsumer(RunMode.PROD, RelTypes.DRUG_TRANSPORTER));
     //Drug Carrier
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_CARRIER_UNIRPOT_FILE")
-        .ifPresent(new DrugUniprotInfoConsumer(RelTypes.DRUG_CARRIER));
+        .ifPresent(new DrugUniprotInfoConsumer(RunMode.PROD, RelTypes.DRUG_CARRIER));
     AsyncLoggingService.logInfo("drug data import completed: "
         + sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
@@ -136,27 +126,28 @@ P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,H
         .getOptionalPathProperty("DRUG_TARGET_UNIRPOT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer()
-                .accept(path, new DrugUniprotInfoConsumer(RelTypes.DRUG_TARGET)));
+                .accept(path, new DrugUniprotInfoConsumer(RunMode.TEST, RelTypes.DRUG_TARGET)));
     // Drug Enzyme
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_ENZYME_UNIRPOT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer()
-                .accept(path, new DrugUniprotInfoConsumer(RelTypes.DRUG_ENZYME)));
+                .accept(path, new DrugUniprotInfoConsumer(RunMode.TEST, RelTypes.DRUG_ENZYME)));
     // Drug Transporter
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_TRANSPORTER_UNIRPOT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer()
-                .accept(path, new DrugUniprotInfoConsumer(RelTypes.DRUG_TRANSPORTER)));
+                .accept(path,
+                    new DrugUniprotInfoConsumer(RunMode.TEST, RelTypes.DRUG_TRANSPORTER)));
     //Drug Carrier
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_CARRIER_UNIRPOT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer()
-                .accept(path, new DrugUniprotInfoConsumer(RelTypes.DRUG_CARRIER)));
+                .accept(path, new DrugUniprotInfoConsumer(RunMode.TEST, RelTypes.DRUG_CARRIER)));
   }
-
+ // test mode
   public static void main(String[] args) {
     DrugUniprotInfoConsumer.testImportData();
 

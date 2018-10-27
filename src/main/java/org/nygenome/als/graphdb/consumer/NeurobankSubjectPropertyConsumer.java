@@ -9,6 +9,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -16,6 +17,8 @@ import org.nygenome.als.graphdb.value.NeurobankSubjectProperty;
 import scala.Tuple2;
 
 public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
+
+  public NeurobankSubjectPropertyConsumer(RunMode runMode) {super(runMode);}
 
   private Consumer<NeurobankSubjectProperty> neurobankSubjectPropertyConsumer = (property)-> {
     // resolve new or existing subject node
@@ -29,8 +32,6 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
     Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode, subjectPropertyNode),
         propertyRelationType);
     lib.relationshipPropertyValueConsumer.accept(rel,new Tuple2<>("propertyValue", property.eventPropertyValue()));
-
-
   };
 
   @Override
@@ -40,11 +41,11 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
         .map(NeurobankSubjectProperty::parseCSVRecord)
         .forEach(neurobankSubjectPropertyConsumer);
   }
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_PROPERTY_FILE")
-        .ifPresent(new NeurobankSubjectPropertyConsumer());
+        .ifPresent(new NeurobankSubjectPropertyConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed neurobank category file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -52,6 +53,6 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_PROPERTY_FILE")
         .ifPresent(
-            path -> new TestGraphDataConsumer().accept(path, new NeurobankSubjectPropertyConsumer()));
+            path -> new TestGraphDataConsumer().accept(path, new NeurobankSubjectPropertyConsumer(RunMode.TEST)));
   }
 }

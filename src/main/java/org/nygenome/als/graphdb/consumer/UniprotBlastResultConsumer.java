@@ -10,15 +10,19 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
+import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import org.nygenome.als.graphdb.value.UniProtBlastResult;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class UniprotBlastResultConsumer extends GraphDataConsumer {
+
+  public UniprotBlastResultConsumer(RunMode runMode) {
+    super(runMode);
+  }
 
   private Consumer<UniProtBlastResult> uniProtBlastResultConsumer = (blastResult) -> {
     // create a bi-directional Relationship between both proteins
@@ -26,17 +30,19 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
     try {
       Node sourceNode = resolveProteinNodeFunction.apply(blastResult.sourceUniprotId());
       Node hitNode = resolveProteinNodeFunction.apply(blastResult.hitUniprotId());
-      Tuple2<String,String>  keyTuple = new Tuple2<>(blastResult.sourceUniprotId(),blastResult.hitUniprotId() );
+      Tuple2<String, String> keyTuple = new Tuple2<>(blastResult.sourceUniprotId(),
+          blastResult.hitUniprotId());
       // create or find existing Relationship pair
-      Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sourceNode, hitNode),
-          seqSimRelationType);
-      rel.setProperty("BLAST_score", String.valueOf(blastResult.score() ));
-      rel.setProperty("eValue",  blastResult.eValue());
+      Relationship rel = lib.resolveNodeRelationshipFunction
+          .apply(new Tuple2<>(sourceNode, hitNode),
+              seqSimRelationType);
+      rel.setProperty("BLAST_score", String.valueOf(blastResult.score()));
+      rel.setProperty("eValue", blastResult.eValue());
       tx.success();
-    } catch(Exception e){
-      AsyncLoggingService.logError("ERR: UniprotBlastResultConsumer  " +e.getMessage());
+    } catch (Exception e) {
+      AsyncLoggingService.logError("ERR: UniprotBlastResultConsumer  " + e.getMessage());
       tx.failure();
-    }finally {
+    } finally {
       tx.close();
     }
   };
@@ -52,20 +58,20 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
         .forEach(uniProtBlastResultConsumer);
   }
 
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("SEQ_SIM_FILE")
-        .ifPresent(new UniprotBlastResultConsumer());
+        .ifPresent(new UniprotBlastResultConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed sequence similarity file : " +
-        sw.elapsed(TimeUnit.SECONDS) +" seconds");
+        sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
 
   // main method for stand alone testing using test data
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_SEQ_SIM_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new UniprotBlastResultConsumer()));
+        .ifPresent(path -> new TestGraphDataConsumer()
+            .accept(path, new UniprotBlastResultConsumer(RunMode.TEST)));
   }
-
 
 }

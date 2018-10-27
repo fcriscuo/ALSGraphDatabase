@@ -11,6 +11,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
+import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 import org.nygenome.als.graphdb.util.AsyncLoggingService;
 import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
@@ -18,6 +19,7 @@ import org.nygenome.als.graphdb.value.VariantDiseaseAssociation;
 import scala.Tuple2;
 
 public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
+  public VariantDiseaseAssociationDataConsumer(RunMode runMode) {super(runMode);}
 
   private Consumer<VariantDiseaseAssociation> variantDiseaseAssociationConsumer = (snp) ->{
     Node diseaseNode = resolveDiseaseNodeFunction.apply(snp.diseaseId());
@@ -39,11 +41,11 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
         .forEach(variantDiseaseAssociationConsumer);
   }
 
-  public static void importData() {
+  public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("VARIANT_DISEASE_ASSOC_DISGENET_FILE")
-        .ifPresent(new VariantDiseaseAssociationDataConsumer());
+        .ifPresent(new VariantDiseaseAssociationDataConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed variant disease associaton file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -51,7 +53,7 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("VARIANT_DISEASE_ASSOC_DISGENET_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path,new VariantDiseaseAssociationDataConsumer()));
+            new TestGraphDataConsumer().accept(path,new VariantDiseaseAssociationDataConsumer(RunMode.TEST)));
   }
 
 }
