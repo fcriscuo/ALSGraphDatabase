@@ -22,7 +22,7 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
 
   private Consumer<NeurobankSubjectProperty> neurobankSubjectPropertyConsumer = (property)-> {
     // resolve new or existing subject node
-    Node subjectNode = resolveSubjectNodeFunction.apply(property.subjectGuid());
+    Node subjectNode = resolveSubjectNodeFunction.apply(property.subjectTuple());
     lib.novelLabelConsumer.accept(subjectNode, alsAssociatedLabel);
     lib.novelLabelConsumer.accept(subjectNode,neurobankLabel);
     // resolve new or existing subject property node

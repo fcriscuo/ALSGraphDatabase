@@ -22,11 +22,6 @@ ALS study timepoints represent a sequence of visits for an ALS patients
 where disease-related measurements (i.e. properties) are completed to
 monitor the progression of the disease in an individual patient
 This supports temporal longitudinal data
-This class will create Relationships between Subject nodes and StudyTimepoint nodes
-These Realyionships will have properties containing the specific timepoint  value for that
-Subject as well as the interval from the previous timepoint for that Subject
-StudyTimepoints will have a Relationship to a previous StudyTimepoint establishing
-an order for their occurrence
  */
 public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
 
@@ -36,8 +31,7 @@ public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
     Node subjectNode = resolveSubjectNodeFunction.apply(
       timepoint.subjectTuple() );
     Node timepointNode = resolveEventTimepointNodeFunction.apply(timepoint.timepointTuple());
-    // ensure that this timepoint has the ALS and Neurobank labels
-    // ensure that Neurobank-associated nodes are annotated
+    // ensure that these nodes have the ALS and Neurobank labels
     Lists.mutable.of(subjectNode, timepointNode)
         .forEach(annotateNeurobankNodeConsumer);
     // establish a Relationship between these 2 Nodes

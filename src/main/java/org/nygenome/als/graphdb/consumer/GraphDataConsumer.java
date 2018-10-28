@@ -195,8 +195,8 @@ be created and returned
   };
 
   protected Function<Tuple2<String,String>, Node>  resolveEventTimepointNodeFunction = (tuple) ->{
-    Node node =  lib.resolveGraphNodeFunction.apply(new Tuple3<>(alsStudyTimepointLabel,"TimepointName",tuple._2()));
-    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("TimepintId",tuple._1()));
+    Node node =  lib.resolveGraphNodeFunction.apply(new Tuple3<>(alsStudyTimepointLabel,"TimepointId",tuple._1()));
+    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("TimepintName",tuple._2()));
     return node;
   };
   /*
