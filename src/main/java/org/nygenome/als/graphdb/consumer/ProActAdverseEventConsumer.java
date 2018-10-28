@@ -51,7 +51,7 @@ public class ProActAdverseEventConsumer extends GraphDataConsumer {
 
   private Consumer<ProActAdverseEvent> proactAdverseEventConsumer = (event) -> {
     Node lowestLevelTermNode = resolveEventCategoryNodeFunction.apply(event);
-    Node subjectNode  = resolveSubjectNodeFunction.apply(event.subjectGuid());
+    Node subjectNode  = resolveSubjectNodeFunction.apply(event.subjectTuple());
     lib.novelLabelConsumer.accept(subjectNode, alsAssociatedLabel);
     lib.novelLabelConsumer.accept(subjectNode,proactLabel);
     // establish  relationship between subject and adverse event

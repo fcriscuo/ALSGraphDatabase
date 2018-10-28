@@ -3,15 +3,17 @@ package org.nygenome.als.graphdb.value
 import org.apache.commons.csv.CSVRecord
 
 case class StringSubjectProperty (
-               subjectId:Int, propertyName:String, propertyValue:String,
+               subjectId:String, propertyName:String, propertyValue:String,
                externalSubjectId:String, externalSampleId:String,
                sampleId:Int,sampleType:String, analyteType:String)
 {
+
+  def subjectTuple:Tuple2[String,String] = Tuple2(subjectId,externalSubjectId)
 }
 object StringSubjectProperty extends ValueTrait {
   def parseCSVRecord(record: CSVRecord):StringSubjectProperty  ={
     new StringSubjectProperty(
-      validIntegerString(record.get("subjectId")),
+      record.get("subjectId"),
       record.get("propertyName"), record.get("propertyValue"),
       record.get("externalSubjectId"), record.get("externalSampleId"),
       record.get("sampleId").toInt, record.get("type"),

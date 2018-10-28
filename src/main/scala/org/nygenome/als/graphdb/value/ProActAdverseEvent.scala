@@ -2,7 +2,7 @@ package org.nygenome.als.graphdb.value
 
 import org.apache.commons.csv.CSVRecord
 
-case class ProActAdverseEvent (subjectId:Int ,
+case class ProActAdverseEvent (subjectId:String ,
                                subjectGuid:String,
                                lowestLevelTerm:String,preferredTerm:String,
                                highLevelTerm:String,highLevelGroupTerm:String,
@@ -11,6 +11,7 @@ case class ProActAdverseEvent (subjectId:Int ,
                                socCode:String,severity:String,outcome:String,
                                startDateDelta:Int,endDateDelta:Int){
   val id:String = subjectGuid +":" + preferredTerm + ":" + startDateDelta.toString
+  val subjectTuple:Tuple2[String,String] = Tuple2(subjectId,subjectGuid)
 }
 
 object ProActAdverseEvent extends ValueTrait {
@@ -21,7 +22,7 @@ object ProActAdverseEvent extends ValueTrait {
 
   def parseCSVRecord(record: CSVRecord): ProActAdverseEvent = {
     ProActAdverseEvent(
-      record.get(columnHeadings(0)).toInt,
+      record.get(columnHeadings(0)),
       generateProActGuid(record.get(columnHeadings(0)).toInt),
       record.get(columnHeadings(1)),
       record.get(columnHeadings(2)),

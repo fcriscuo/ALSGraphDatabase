@@ -56,7 +56,7 @@ public enum ALSDatabaseImportApp {
     try {
       Stopwatch stopwatch = Stopwatch.createStarted();
       //Uniprot data
-      UniProtValueConsumer.importProdData();
+      //UniProtValueConsumer.importProdData();
       // Pathway
       PathwayInfoConsumer.importProdData();
       // protein - protein interactions

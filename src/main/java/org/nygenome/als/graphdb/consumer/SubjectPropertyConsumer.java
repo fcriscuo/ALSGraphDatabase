@@ -37,7 +37,7 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
   };
 
   private Consumer<StringSubjectProperty> stringSubjectPropertyConsumer = (subjectProperty) -> {
-    Node subjectNode = resolveSubjectNodeFunction.apply(subjectProperty.externalSubjectId());
+    Node subjectNode = resolveSubjectNodeFunction.apply(subjectProperty.subjectTuple());
     lib.nodePropertyValueConsumer.accept(subjectNode,
         new Tuple2<>(subjectProperty.propertyName(), subjectProperty.propertyValue()));
     Node sampleNode = completeSampleNodeFunction.apply(subjectProperty);
