@@ -47,6 +47,7 @@ public class AlsSnpConsumer  extends GraphDataConsumer{
     new TsvRecordStreamSupplier(path).get()
         .map(EnsemblAlsSnp::parseCSVRecord)
         .forEach(alsSnpConsumer);
+    lib.shutDown();
   }
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();

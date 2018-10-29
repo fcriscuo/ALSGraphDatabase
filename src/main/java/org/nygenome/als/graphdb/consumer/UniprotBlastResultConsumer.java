@@ -50,6 +50,7 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
         // filter out self similarity
         .filter(blastRes -> !blastRes.sourceUniprotId().equalsIgnoreCase(blastRes.hitUniprotId()))
         .forEach(uniProtBlastResultConsumer);
+    lib.shutDown();
   }
 
   public static void importProdData() {

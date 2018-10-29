@@ -70,6 +70,7 @@ public class ProActAdverseEventConsumer extends GraphDataConsumer {
     new CsvRecordStreamSupplier(path).get()
         .map(ProActAdverseEvent::parseCSVRecord)
         .forEach(proactAdverseEventConsumer);
+    lib.shutDown();
   }
 
   public static void importData() {

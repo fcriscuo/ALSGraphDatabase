@@ -13,16 +13,17 @@ import javax.annotation.Nonnull;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.impl.factory.Maps;
 import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
+import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.value.DrugBankValue;
 
 public enum DrugBankService {
   INSTANCE;
   //TODO : use async logger
   private final Logger log = Logger.get(DrugBankService.class);
-
+ private final Path drugLinksFilePath = Paths.get(FrameworkPropertyService.INSTANCE.getStringProperty("DRUG_LINKS_FILE"));
   private final ImmutableMap<String, DrugBankValue> drugBankMap =
-      Suppliers.memoize(new DrugBankValueMapSupplier(Paths.get("/data/als/DrugBank/druglinks.csv")))
-      .get();
+      Suppliers.memoize(new DrugBankValueMapSupplier(drugLinksFilePath)).get();
+
 
   public Optional<DrugBankValue> getDrugBankValueById(@Nonnull String id) {
     if(drugBankMap.containsKey(id)) {

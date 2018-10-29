@@ -27,6 +27,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
         .map(UniProtValue::parseCSVRecord)
         //.filter(upv->UniProtValue.isValidString(upv.uniprotId()))
         .forEach(uniProtValueConsumer);
+    lib.shutDown();
   }
 
   private void createProteinGeneOntologyRealtionship(String uniprotId, GeneOntology go, RelationshipType relType) {

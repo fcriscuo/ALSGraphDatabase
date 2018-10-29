@@ -25,7 +25,7 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
     Node diseaseNode = resolveDiseaseNodeFunction.apply(snp.diseaseId());
     // set or reset disease name
     lib.nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseName", snp.diseaseName()));
-    Node snpNode = resolveDiseaseNodeFunction.apply(snp.snpId());
+    Node snpNode = resolveSnpNodeFunction.apply(snp.snpId());
     // create  relationship between snp & disease
     Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(snpNode, diseaseNode),
         implicatedInRelationType);
@@ -39,6 +39,7 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
         .get()
         .map(VariantDiseaseAssociation::parseCSVRecord)
         .forEach(variantDiseaseAssociationConsumer);
+    lib.shutDown();
   }
 
   public static void importProdData() {
@@ -51,7 +52,7 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
   }
   // main method for stand alone testing
   public static void main(String[] args) {
-    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("VARIANT_DISEASE_ASSOC_DISGENET_FILE")
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_VARIANT_DISEASE_ASSOC_DISGENET_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer().accept(path,new VariantDiseaseAssociationDataConsumer(RunMode.TEST)));
   }

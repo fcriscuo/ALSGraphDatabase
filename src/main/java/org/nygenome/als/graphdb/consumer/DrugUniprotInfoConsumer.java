@@ -37,16 +37,16 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer {
     String drugInteractionType = eRelType.name();
     switch (drugInteractionType) {
       case ("DRUG_TARGET"):
-        node.addLabel(LabelTypes.Drug_Target);
+        lib.novelLabelConsumer.accept(node,LabelTypes.Drug_Target);
         break;
       case ("DRUG_ENZYME"):
-        node.addLabel(LabelTypes.Drug_Enzyme);
+        lib.novelLabelConsumer.accept(node,LabelTypes.Drug_Enzyme);
         break;
       case ("DRUG_TRANSPORTER"):
-        node.addLabel(LabelTypes.Drug_Transporter);
+        lib.novelLabelConsumer.accept(node,LabelTypes.Drug_Transporter);
         break;
       case ("DRUG_CARRIER"):
-        node.addLabel(LabelTypes.Drug_Carrier);
+        lib.novelLabelConsumer.accept(node,LabelTypes.Drug_Carrier);
         break;
       default:
         AsyncLoggingService.logError(drugInteractionType + " is an invalid drug type");
@@ -96,6 +96,7 @@ P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,H
     new CsvRecordStreamSupplier(path).get()
         .map(UniProtDrug::parseCSVRecord)
         .forEach(uniProtDrug -> proteinDrugRelationshiprConsumer.accept(eRelType, uniProtDrug));
+    lib.shutDown();
   }
 
   public static void importProdData() {

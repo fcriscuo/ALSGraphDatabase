@@ -86,6 +86,7 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
         .filter(HgncLocus::isApprovedLocus)
         .filter(HgncLocus::isApprovedLocusTypeGroup)
         .forEach(hgncLocusConsumer);
+    lib.shutDown();
   }
 
   public static void importProdData() {

@@ -78,6 +78,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
         .map(PsiMitab::parseCSVRecord)
         .filter(selfInteractionPredicate)
         .forEach(proteinInteractionConsumer);
+    lib.shutDown();
   }
 
   // required override

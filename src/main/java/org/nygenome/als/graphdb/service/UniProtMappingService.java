@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.impl.factory.Lists;
 import org.eclipse.collections.impl.factory.Maps;
+import org.nygenome.als.graphdb.util.FrameworkPropertyService;
 import org.nygenome.als.graphdb.value.UniProtMapping;
 import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
 import java.nio.file.Paths;
@@ -66,7 +67,8 @@ public enum UniProtMappingService {
     private ImmutableMap<String, UniProtMapping> resolveMapFromFile() {
       Map<String, UniProtMapping> tmpMap = new HashMap<>();
       // TODO: make file name a property
-      new TsvRecordStreamSupplier(Paths.get("/data/als/ensembl_uniprot_hgnc_map.tsv"))
+      new TsvRecordStreamSupplier
+          (Paths.get(FrameworkPropertyService.INSTANCE.getStringProperty("ENSEMBL_UNIPROT_HGNC_FILE")))
           .get()
           .filter(record -> !Strings.isNullOrEmpty(record.get("UniProtKB/Swiss-Prot ID")))
           .forEach((record) ->

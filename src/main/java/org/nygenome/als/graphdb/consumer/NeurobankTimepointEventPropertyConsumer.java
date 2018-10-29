@@ -84,6 +84,7 @@ NeurobankTimepointEventPropertyConsumer extends GraphDataConsumer {
     new TsvRecordStreamSupplier(path).get()
         .map(NeurobankSubjectEventProperty::parseCSVRecord)
         .forEach(neurobankSubjectEventPropertyConsumer);
+    lib.shutDown();
   }
 
   public static void importProdData() {
@@ -98,7 +99,7 @@ NeurobankTimepointEventPropertyConsumer extends GraphDataConsumer {
   // import  these data individually
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
-        .getOptionalPathProperty("NEUROBANK_SUBJECT_EVENT_PROPERTY_FILE")
+        .getOptionalPathProperty("TEST_NEUROBANK_SUBJECT_TIMEPOINT_PROPERTY_FILE")
         .ifPresent(
             path -> new TestGraphDataConsumer()
                 .accept(path, new NeurobankTimepointEventPropertyConsumer(RunMode.TEST)));

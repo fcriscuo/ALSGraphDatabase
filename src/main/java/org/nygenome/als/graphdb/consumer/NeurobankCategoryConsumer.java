@@ -38,6 +38,7 @@ public class NeurobankCategoryConsumer extends GraphDataConsumer {
     new TsvRecordStreamSupplier(path).get()
         .map(AlsPropertyCategory::parseCSVRecord)
         .forEach(neurobankCategoryConsumer);
+    lib.shutDown();
   }
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();

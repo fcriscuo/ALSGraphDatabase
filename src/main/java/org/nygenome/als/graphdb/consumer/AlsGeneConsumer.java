@@ -71,6 +71,7 @@ public class AlsGeneConsumer extends GraphDataConsumer{
     new TsvRecordStreamSupplier(path).get()
         .map(EnsemblAlsGene::parseCSVRecord)
         .forEach(alsGeneConsumer);
+    lib.shutDown();
     AsyncLoggingService.logInfo("ALS-associated gene count = " +processedAlsGeneSet.size());
   }
 

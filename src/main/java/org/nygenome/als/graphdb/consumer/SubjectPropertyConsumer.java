@@ -58,6 +58,7 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
     new TsvRecordStreamSupplier(path).get()
         .map(StringSubjectProperty::parseCSVRecord)
         .forEach(stringSubjectPropertyConsumer);
+    lib.shutDown();
   }
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
@@ -69,7 +70,7 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
   public static void main(String... args) {
 
     FrameworkPropertyService.INSTANCE
-        .getOptionalPathProperty("SUBJECT_PROPERTY_FILE")
+        .getOptionalPathProperty("TEST_SUBJECT_PROPERTY_FILE")
         .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SubjectPropertyConsumer(RunMode.TEST)));
   }
 }

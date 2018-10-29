@@ -50,6 +50,7 @@ public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
     new TsvRecordStreamSupplier(path).get()
         .map(NeurobankEventTimepoint::parseCSVRecord)
         .forEach(neurobankSubjectTimepointConsumer);
+    lib.shutDown();
   }
 
   public static void importProdData() {

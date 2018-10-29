@@ -70,6 +70,7 @@ public class AlsodMutationConsumer extends GraphDataConsumer {
     new TsvRecordStreamSupplier(path).get()
         .map(AlsodMutation::parseCSVRecord)
         .forEach(alsodMutationConsumer);
+    lib.shutDown();
   }
 
   public static void importProdData() {

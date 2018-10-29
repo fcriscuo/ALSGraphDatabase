@@ -40,6 +40,7 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
     new TsvRecordStreamSupplier(path).get()
         .map(NeurobankSubjectProperty::parseCSVRecord)
         .forEach(neurobankSubjectPropertyConsumer);
+    lib.shutDown();
   }
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
@@ -51,7 +52,7 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
   }
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
-        .getOptionalPathProperty("NEUROBANK_SUBJECT_PROPERTY_FILE")
+        .getOptionalPathProperty("TEST_NEUROBANK_SUBJECT_PROPERTY_FILE")
         .ifPresent(
             path -> new TestGraphDataConsumer().accept(path, new NeurobankSubjectPropertyConsumer(RunMode.TEST)));
   }

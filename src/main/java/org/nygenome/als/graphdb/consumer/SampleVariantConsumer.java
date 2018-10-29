@@ -57,6 +57,7 @@ public class SampleVariantConsumer extends GraphDataConsumer{
         .get()
         .map(SampleVariantSummary::parseCSVRecord)
         .forEach(sampleVariantSummaryConsumer);
+    lib.shutDown();
 
   }
   public static void importProdData() {

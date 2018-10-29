@@ -58,6 +58,7 @@ public class EnsemblGeneConsumer extends GraphDataConsumer {
     new TsvRecordStreamSupplier(path).get()
         .map(EnsemblGene::parseCSVRecord)
         .forEach(ensemblGeneConsumer);
+    lib.shutDown();
   }
 
   public static void importData() {

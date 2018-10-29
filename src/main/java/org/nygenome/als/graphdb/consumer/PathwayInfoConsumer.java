@@ -49,6 +49,7 @@ specified path
                 .filter(pathway -> !pathway.uniprotId().startsWith("A") )
                 .filter(pathway-> Pathway.isHuman(pathway.species()) )// only human entries
                 .forEach(pathwayConsumer);
+        lib.shutDown();
     }
 
 

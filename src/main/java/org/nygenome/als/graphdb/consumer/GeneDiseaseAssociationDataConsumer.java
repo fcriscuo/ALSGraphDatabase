@@ -69,8 +69,8 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
       // gene <-> disease
       Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, diseaseNode),
          implicatedInRelationType);
-      rel.setProperty("ConfidenceLevel", gda.score());
-      rel.setProperty("Reference", gda.source());
+      lib.relationshipPropertyValueConsumer.accept(rel,new Tuple2<>("ConfidenceLevel", String.valueOf(gda.score())));
+      lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Reference", gda.source()));
 
   };
 
@@ -85,7 +85,7 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
 
   // main method for stand alone testing
   public static void main(String... args) {
-    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("GENE_DISEASE_ASSOC_DISGENET_FILE")
+    FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_GENE_DISEASE_ASSOC_DISGENET_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer().accept(path, new GeneDiseaseAssociationDataConsumer(RunMode.TEST)));
 

@@ -1,13 +1,9 @@
 package org.nygenome.als.graphdb.supplier;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.function.Consumer;
-import javax.annotation.Nonnull;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;

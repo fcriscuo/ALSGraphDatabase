@@ -55,7 +55,7 @@ public enum ALSDatabaseImportApp {
       //Uniprot data
       //UniProtValueConsumer.importProdData();
       // Pathway
-      PathwayInfoConsumer.importProdData();
+      //PathwayInfoConsumer.importProdData();
       // protein - protein interactions
       IntactDataConsumer.importProdData();
       // ALS genes
