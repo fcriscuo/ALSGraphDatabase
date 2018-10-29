@@ -26,10 +26,10 @@ Creates a temporary Neo4j graph
  */
 public class TestGraphDataConsumer implements BiConsumer<Path, GraphDataConsumer> {
 
-  private final GraphDatabaseService graphDb;
+
 
   public TestGraphDataConsumer() {
-     graphDb = new GraphDatabaseServiceSupplier(RunMode.TEST).get();
+
  }
   @Override
   public void accept(Path path, GraphDataConsumer graphDataConsumer) {
@@ -47,12 +47,6 @@ public class TestGraphDataConsumer implements BiConsumer<Path, GraphDataConsumer
     stopwatch.stop();
     System.out.println( "GraphDataConsumer: " + graphDataConsumer.getClass().getName()
         +"  required : " + stopwatch.elapsed(TimeUnit.SECONDS) +" seconds.");
-    try (Transaction tx = graphDb.beginTx()) {
-      AsyncLoggingService.logInfo("++++total graph node count = " +
-          graphDb.getAllNodes().stream().count() );
-    } catch (Exception e){
-      e.printStackTrace();
-    }
-    graphDb.shutdown();
+
   }
 }

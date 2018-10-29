@@ -19,6 +19,7 @@ import org.nygenome.als.graphdb.consumer.NeurobankTimepointEventPropertyConsumer
 import org.nygenome.als.graphdb.consumer.NeurobankSubjectPropertyConsumer;
 import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
 import org.nygenome.als.graphdb.consumer.SampleVariantConsumer;
+import org.nygenome.als.graphdb.consumer.ShutdownConsumer;
 import org.nygenome.als.graphdb.consumer.SubjectPropertyConsumer;
 import org.nygenome.als.graphdb.consumer.UniProtValueConsumer;
 import org.nygenome.als.graphdb.consumer.VariantDiseaseAssociationDataConsumer;
@@ -28,8 +29,8 @@ import org.nygenome.als.graphdb.util.AsyncLoggingService;
 
 public enum ALSDatabaseImportApp {
   INSTANCE;
-  private final GraphDatabaseService graphDb = Suppliers
-      .memoize(new GraphDatabaseServiceSupplier(RunMode.PROD)).get();
+//  private final GraphDatabaseService graphDb = Suppliers
+//      .memoize(new GraphDatabaseServiceSupplier(RunMode.PROD)).get();
 
   public enum RelTypes implements RelationshipType {
       DRUG_TARGET,
@@ -46,11 +47,7 @@ public enum ALSDatabaseImportApp {
 
   public static void main(final String[] args) {
     ALSDatabaseImportApp.INSTANCE.createDb();
-    ALSDatabaseImportApp.INSTANCE.shutDown();
   }
-
-  public Supplier<Transaction> transactionSupplier = () ->
-      graphDb.beginTx();
 
   void createDb() {
     try {
@@ -84,6 +81,8 @@ public enum ALSDatabaseImportApp {
       NeurobankSubjectPropertyConsumer.importProdData();
       // neurobank subject timepoints
       NeurobankTimepointEventPropertyConsumer.importProdData();
+      // shutdown the database
+      ShutdownConsumer.importProdData();
 
       stopwatch.stop();
       AsyncLoggingService.logInfo("Creation of the ALS Neo4j database required "
@@ -93,12 +92,6 @@ public enum ALSDatabaseImportApp {
       AsyncLoggingService.logError(e.getMessage());
       e.printStackTrace();
     }
-  }
-
-  void shutDown() {
-    AsyncLoggingService.logInfo("Shutting down database ...");
-    graphDb.shutdown();
-
   }
 
 

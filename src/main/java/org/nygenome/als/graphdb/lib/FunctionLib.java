@@ -25,7 +25,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
 import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
 import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
 import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
@@ -40,6 +39,11 @@ public class FunctionLib {
   private GraphDatabaseService graphDb;
   public FunctionLib(@Nonnull  RunMode runMode) {
     this.graphDb = new GraphDatabaseServiceSupplier(runMode).get();
+  }
+
+  public void shutDown() {
+    AsyncLoggingService.logInfo("Shutting down database ...");
+    graphDb.shutdown();
   }
   /*
   ppRel.setProperty("Interaction_method_detection",

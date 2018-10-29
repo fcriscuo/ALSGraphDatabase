@@ -25,9 +25,7 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
   }
 
   private Consumer<UniProtBlastResult> uniProtBlastResultConsumer = (blastResult) -> {
-    // create a bi-directional Relationship between both proteins
-    Transaction tx = ALSDatabaseImportApp.INSTANCE.transactionSupplier.get();
-    try {
+
       Node sourceNode = resolveProteinNodeFunction.apply(blastResult.sourceUniprotId());
       Node hitNode = resolveProteinNodeFunction.apply(blastResult.hitUniprotId());
       Tuple2<String, String> keyTuple = new Tuple2<>(blastResult.sourceUniprotId(),
@@ -36,15 +34,11 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
       Relationship rel = lib.resolveNodeRelationshipFunction
           .apply(new Tuple2<>(sourceNode, hitNode),
               seqSimRelationType);
-      rel.setProperty("BLAST_score", String.valueOf(blastResult.score()));
-      rel.setProperty("eValue", blastResult.eValue());
-      tx.success();
-    } catch (Exception e) {
-      AsyncLoggingService.logError("ERR: UniprotBlastResultConsumer  " + e.getMessage());
-      tx.failure();
-    } finally {
-      tx.close();
-    }
+      lib.relationshipPropertyValueConsumer.accept(rel,
+          new Tuple2<>("BLAST_score", String.valueOf(blastResult.score())));
+      lib.relationshipPropertyValueConsumer.accept(rel,
+          new Tuple2<>("eValue", blastResult.eValue()));
+
   };
 
   @Override

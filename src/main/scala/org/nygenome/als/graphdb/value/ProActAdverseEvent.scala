@@ -12,6 +12,7 @@ case class ProActAdverseEvent (subjectId:String ,
                                startDateDelta:Int,endDateDelta:Int){
   val id:String = subjectGuid +":" + preferredTerm + ":" + startDateDelta.toString
   val subjectTuple:Tuple2[String,String] = Tuple2(subjectId,subjectGuid)
+
 }
 
 object ProActAdverseEvent extends ValueTrait {

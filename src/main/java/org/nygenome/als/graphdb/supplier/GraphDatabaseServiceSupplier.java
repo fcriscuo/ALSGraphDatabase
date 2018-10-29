@@ -53,7 +53,7 @@ public class GraphDatabaseServiceSupplier implements Supplier<GraphDatabaseServi
       case TEST:
         FrameworkPropertyService.INSTANCE.getOptionalPathProperty("testing.db.path")
             .ifPresent(configureTestGraphConsumer);
-        AsyncLoggingService.logInfo("new ALS Neo4j database will be created.");
+        AsyncLoggingService.logInfo("new test ALS Neo4j database will be created.");
         break;
       case PROD:
         FrameworkPropertyService.INSTANCE.getOptionalPathProperty("neo4j.db.path")
@@ -67,30 +67,7 @@ public class GraphDatabaseServiceSupplier implements Supplier<GraphDatabaseServi
     }
   }
 
-/*
-legacy  deprecated constructor
-use workaround until client code has been refactored
- */
-  public GraphDatabaseServiceSupplier(@Nonnull Path path) {
 
-    Preconditions.checkArgument(Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS),
-        path + " is not a Path to a directory");
-    if (path.toString().contains("temp")) {
-      new GraphDatabaseServiceSupplier(RunMode.TEST);
-    } else if (path.toString().contains("readonly")){
-      new GraphDatabaseServiceSupplier(RunMode.READ_ONLY);
-    }else {
-      new GraphDatabaseServiceSupplier(RunMode.PROD);
-    }
-//    // clear out any existing database
-//    try {
-//      Utils.deleteDirectoryAndChildren(path);
-//    } catch (IOException e) {
-//      e.printStackTrace();
-//    }
-//    this.graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(path.toFile());
-//    registerShutdownHook(graphDb);
-  }
 
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("readonly.db.path")
