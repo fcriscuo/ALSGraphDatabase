@@ -21,7 +21,7 @@ trait ValueTrait {
     }
     results.toList
   }
-protected def isHuman(species:String):Boolean = species.trim().equalsIgnoreCase(HUMAN_SPECIES)
+ def isHuman(species:java.lang.String):Boolean = species.trim().equalsIgnoreCase(HUMAN_SPECIES)
 
   class AsArrayList[T](input: List[T]) {
     def asArrayList : java.util.ArrayList[T] = new java.util.ArrayList[T](input.asJava)

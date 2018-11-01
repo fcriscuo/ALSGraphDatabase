@@ -228,8 +228,6 @@ public class FunctionLib {
           .filter(relationship -> relationship.getEndNodeId() == nodeEnd.getId())
           .filter(relationship -> relationship.getType().name().equalsIgnoreCase(relType.name()))
           .findFirst().orElse(nodeStart.createRelationshipTo(nodeEnd, relType));
-      AsyncLoggingService.logDebug("created relationship between " + nodeStart.getLabels().toString()
-          + " and " + nodeEnd.getLabels().toString());
       tx.success();
       return rel;
     } catch (Exception e) {

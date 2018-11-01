@@ -101,9 +101,12 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
   // main method for stand alone testing
   // use short file: short_human_intact.tsv
   public static void main(String[] args) {
+    Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_PPI_INTACT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer().accept(path, new IntactDataConsumer(RunMode.TEST)));
+    AsyncLoggingService.logInfo("read protein-protein interaction test file: "
+            + sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
 }
 

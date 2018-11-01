@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -7,21 +7,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.StringSubjectProperty;
 import org.neo4j.graphdb.Node;
-//import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.lib.FunctionLib;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.StringSubjectProperty;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
+//import edu.jhu.fcriscu1.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class SubjectPropertyConsumer extends GraphDataConsumer {
 
 
-  public SubjectPropertyConsumer(RunMode runMode) {super(runMode);}
+  public SubjectPropertyConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
 
   private Function<StringSubjectProperty, Node> completeSampleNodeFunction = (stringSubjectProperty) -> {
     String externalSampleId = stringSubjectProperty.externalSampleId();
@@ -63,7 +63,7 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("SUBJECT_PROPERTY_FILE")
-        .ifPresent(new SubjectPropertyConsumer(RunMode.PROD));
+        .ifPresent(new SubjectPropertyConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed subject properties file: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -71,6 +71,6 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
 
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_SUBJECT_PROPERTY_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SubjectPropertyConsumer(RunMode.TEST)));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SubjectPropertyConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 }

@@ -47,7 +47,8 @@ specified path
     public void accept(@Nonnull Path path) {
         new TsvRecordStreamSupplier(path).get().map(Pathway::parseCSVRecord)
                 .filter(pathway -> !pathway.uniprotId().startsWith("A") )
-                .filter(pathway-> Pathway.isHuman(pathway.species()) )// only human entries
+               // .filter(pathway-> Pathway.isHuman(pathway.species()) )// only human entries
+                .filter(pathway-> pathway.species().equalsIgnoreCase("Homo sapiens") )
                 .forEach(pathwayConsumer);
         lib.shutDown();
     }

@@ -11,6 +11,7 @@ public class TestUniprot2Reactome {
         .get()
         .map(Uniprot2Reactome::parseCSVRecord)
         .filter(u2r ->Uniprot2Reactome.isHuman(u2r.species()))
+            //.filter(u2r ->u2r.species().equalsIgnoreCase("Homo sapiens"))
         .limit(100)
         .forEach(System.out::println);
   }
