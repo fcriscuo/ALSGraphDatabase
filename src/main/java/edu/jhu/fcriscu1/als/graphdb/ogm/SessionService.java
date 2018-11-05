@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.ogm;
+package edu.jhu.fcriscu1.als.graphdb.ogm;
 
 import java.util.function.Supplier;
 
@@ -14,7 +14,7 @@ public enum SessionService implements Supplier<Session> {
       .credentials("neo4j", "fred3372")
       .build();
   private static SessionFactory sessionFactory = new SessionFactory(configuration,
-      "org.nygenome.als.graphdb.ogm");
+      "edu.jhu.fcriscu1.als.graphdb.ogm");
 
 
   @Override

@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.integration;
+package edu.jhu.fcriscu1.als.graphdb.integration;
 
 
 /*
@@ -12,12 +12,10 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.consumer.GraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
+
+import edu.jhu.fcriscu1.als.graphdb.consumer.GraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
 
 /*
 Test implemented as a BiConsumer that invokes a specified GraphDataConsumer subclass

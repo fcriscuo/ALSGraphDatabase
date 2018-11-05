@@ -1,7 +1,7 @@
-package org.nygenome.als.graphdb.value;
+package edu.jhu.fcriscu1.als.graphdb.value;
 
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 
 public class TestNeurobankSubjectTimepoint {
 

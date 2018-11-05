@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.function
+package edu.jhu.fcriscu1.als.graphdb.function
 
 import com.twitter.concurrent.{Broker, Offer}
 

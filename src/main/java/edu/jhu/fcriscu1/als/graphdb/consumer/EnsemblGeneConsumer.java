@@ -1,17 +1,18 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.EnsemblGene;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.EnsemblGene;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 
 /*
@@ -22,7 +23,7 @@ May create/update Gene Ontology Nodes as well
 public class EnsemblGeneConsumer extends GraphDataConsumer {
 
 
-  public EnsemblGeneConsumer(RunMode runMode) {
+  public EnsemblGeneConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
     super(runMode);
   }
 
@@ -65,7 +66,7 @@ public class EnsemblGeneConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_GENE_INFO_FILE")
-        .ifPresent(new EnsemblGeneConsumer(RunMode.PROD));
+        .ifPresent(new EnsemblGeneConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed ensembl gene info file: " +
         sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
@@ -74,6 +75,6 @@ public class EnsemblGeneConsumer extends GraphDataConsumer {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_ENSEMBL_GENE_INFO_FILE")
         .ifPresent(path -> new TestGraphDataConsumer()
-            .accept(path, new EnsemblGeneConsumer(RunMode.TEST)));
+            .accept(path, new EnsemblGeneConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 }

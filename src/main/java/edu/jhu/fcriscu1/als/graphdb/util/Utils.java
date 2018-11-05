@@ -1,18 +1,16 @@
-package org.nygenome.als.graphdb.util;
+package edu.jhu.fcriscu1.als.graphdb.util;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
 import org.parboiled.common.Preconditions;
 
 public class Utils {

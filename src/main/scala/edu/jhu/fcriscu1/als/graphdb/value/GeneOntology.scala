@@ -1,6 +1,6 @@
-package org.nygenome.als.graphdb.value
+package edu.jhu.fcriscu1.als.graphdb.value
 
-import org.nygenome.als.graphdb.util.StringUtils
+import edu.jhu.fcriscu1.als.graphdb.util.StringUtils
 
 case class GeneOntology (
                           goTermAccession:String,

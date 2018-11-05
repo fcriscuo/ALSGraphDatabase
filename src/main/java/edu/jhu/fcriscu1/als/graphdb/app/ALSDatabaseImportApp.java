@@ -1,31 +1,25 @@
 
-package org.nygenome.als.graphdb.app;
+package edu.jhu.fcriscu1.als.graphdb.app;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Suppliers;
+
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-import org.neo4j.graphdb.GraphDatabaseService;
+
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.consumer.AlsGeneConsumer;
-import org.nygenome.als.graphdb.consumer.AlsSnpConsumer;
-import org.nygenome.als.graphdb.consumer.DrugUniprotInfoConsumer;
-import org.nygenome.als.graphdb.consumer.GeneDiseaseAssociationDataConsumer;
-import org.nygenome.als.graphdb.consumer.IntactDataConsumer;
-import org.nygenome.als.graphdb.consumer.NeurobankCategoryConsumer;
-import org.nygenome.als.graphdb.consumer.NeurobankTimepointEventPropertyConsumer;
-import org.nygenome.als.graphdb.consumer.NeurobankSubjectPropertyConsumer;
-import org.nygenome.als.graphdb.consumer.PathwayInfoConsumer;
-import org.nygenome.als.graphdb.consumer.SampleVariantConsumer;
-import org.nygenome.als.graphdb.consumer.ShutdownConsumer;
-import org.nygenome.als.graphdb.consumer.SubjectPropertyConsumer;
-import org.nygenome.als.graphdb.consumer.UniProtValueConsumer;
-import org.nygenome.als.graphdb.consumer.VariantDiseaseAssociationDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.consumer.AlsGeneConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.AlsSnpConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.DrugUniprotInfoConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.GeneDiseaseAssociationDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.IntactDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.NeurobankCategoryConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.NeurobankTimepointEventPropertyConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.NeurobankSubjectPropertyConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.SampleVariantConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.ShutdownConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.SubjectPropertyConsumer;
+import edu.jhu.fcriscu1.als.graphdb.consumer.VariantDiseaseAssociationDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
 
 public enum ALSDatabaseImportApp {
   INSTANCE;

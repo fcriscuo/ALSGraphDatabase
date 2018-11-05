@@ -1,32 +1,30 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.DynamicRelationshipTypes;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordSplitIteratorSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.PsiMitab;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
-import org.nygenome.als.graphdb.value.PsiMitab;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<Path, Path> {
 
-  public IntactDataConsumer(RunMode runMode) {
+  public IntactDataConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
     super(runMode);
   }
 
@@ -93,7 +91,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("PPI_INTACT_FILE")
-        .ifPresent(new IntactDataConsumer(RunMode.PROD));
+        .ifPresent(new IntactDataConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("read protein-protein interaction file: "
         + sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
@@ -104,7 +102,7 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_PPI_INTACT_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path, new IntactDataConsumer(RunMode.TEST)));
+            new TestGraphDataConsumer().accept(path, new IntactDataConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
     AsyncLoggingService.logInfo("read protein-protein interaction test file: "
             + sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }

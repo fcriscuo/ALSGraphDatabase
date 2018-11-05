@@ -1,13 +1,7 @@
-package org.nygenome.als.graphdb.value;
+package edu.jhu.fcriscu1.als.graphdb.value;
 
-import com.twitter.logging.Logger;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 
 public class TestStringSubjectProperty {
 

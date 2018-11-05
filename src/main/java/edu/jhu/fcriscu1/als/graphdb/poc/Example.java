@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.poc;
+package edu.jhu.fcriscu1.als.graphdb.poc;
 
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;

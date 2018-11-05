@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.poc;
+package edu.jhu.fcriscu1.als.graphdb.poc;
 
 import static org.neo4j.driver.v1.Values.parameters;
 

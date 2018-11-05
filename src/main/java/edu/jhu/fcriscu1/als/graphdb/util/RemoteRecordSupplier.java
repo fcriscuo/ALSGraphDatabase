@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.util;
+package edu.jhu.fcriscu1.als.graphdb.util;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;

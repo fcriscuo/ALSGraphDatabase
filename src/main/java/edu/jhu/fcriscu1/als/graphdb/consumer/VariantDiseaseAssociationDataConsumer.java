@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -7,19 +7,19 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.VariantDiseaseAssociation;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.VariantDiseaseAssociation;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 
 public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
-  public VariantDiseaseAssociationDataConsumer(RunMode runMode) {super(runMode);}
+  public VariantDiseaseAssociationDataConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
 
   private Consumer<VariantDiseaseAssociation> variantDiseaseAssociationConsumer = (snp) ->{
     Node diseaseNode = resolveDiseaseNodeFunction.apply(snp.diseaseId());
@@ -46,7 +46,7 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("VARIANT_DISEASE_ASSOC_DISGENET_FILE")
-        .ifPresent(new VariantDiseaseAssociationDataConsumer(RunMode.PROD));
+        .ifPresent(new VariantDiseaseAssociationDataConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed variant disease associaton file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -54,7 +54,7 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_VARIANT_DISEASE_ASSOC_DISGENET_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path,new VariantDiseaseAssociationDataConsumer(RunMode.TEST)));
+            new TestGraphDataConsumer().accept(path,new VariantDiseaseAssociationDataConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 
 }

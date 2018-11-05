@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.value
+package edu.jhu.fcriscu1.als.graphdb.value
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer

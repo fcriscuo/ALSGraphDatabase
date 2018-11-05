@@ -1,18 +1,19 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.AlsodMutation;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.AlsodMutation;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -23,7 +24,7 @@ the neo4j database
 
 public class AlsodMutationConsumer extends GraphDataConsumer {
 
-  public AlsodMutationConsumer(RunMode runMode) {
+  public AlsodMutationConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
     super(runMode);
   }
 
@@ -77,7 +78,7 @@ public class AlsodMutationConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ALSOD_GENE_MUTATION_FILE")
-        .ifPresent(new AlsodMutationConsumer(RunMode.PROD));
+        .ifPresent(new AlsodMutationConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed alsod mustations file: " +
         sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
@@ -86,6 +87,6 @@ public class AlsodMutationConsumer extends GraphDataConsumer {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ALSOD_GENE_MUTATION_FILE")
         .ifPresent(path -> new TestGraphDataConsumer()
-            .accept(path, new AlsodMutationConsumer(RunMode.TEST)));
+            .accept(path, new AlsodMutationConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 }

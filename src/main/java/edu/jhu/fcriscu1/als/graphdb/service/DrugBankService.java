@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.service;
+package edu.jhu.fcriscu1.als.graphdb.service;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -10,11 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nonnull;
+
+import edu.jhu.fcriscu1.als.graphdb.value.DrugBankValue;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.impl.factory.Maps;
-import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.value.DrugBankValue;
+import edu.jhu.fcriscu1.als.graphdb.util.CsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
 
 public enum DrugBankService {
   INSTANCE;

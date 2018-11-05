@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.poc;
+package edu.jhu.fcriscu1.als.graphdb.poc;
 
 import org.apache.log4j.Logger;
 import java.io.InputStream;

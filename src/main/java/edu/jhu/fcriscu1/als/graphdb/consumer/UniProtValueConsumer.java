@@ -1,25 +1,26 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.GeneOntology;
+import edu.jhu.fcriscu1.als.graphdb.value.UniProtValue;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.StringUtils;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.GeneOntology;
-import org.nygenome.als.graphdb.value.UniProtValue;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.StringUtils;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 
 public class UniProtValueConsumer extends GraphDataConsumer {
 
-  public UniProtValueConsumer(RunMode runMode) {super(runMode);}
+  public UniProtValueConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
   @Override
   public void accept(Path path) {
     Preconditions.checkArgument(path != null);
@@ -110,7 +111,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIPROT_HUMAN_FILE")
-        .ifPresent(new UniProtValueConsumer(RunMode.PROD));
+        .ifPresent(new UniProtValueConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("read uniprot data: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds.");
   }
@@ -119,7 +120,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
 
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_UNIPROT_HUMAN_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path, new UniProtValueConsumer(RunMode.TEST)));
+            new TestGraphDataConsumer().accept(path, new UniProtValueConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 
 

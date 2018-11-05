@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.service;
+package edu.jhu.fcriscu1.als.graphdb.service;
 
 /*
 A singleton service to support
@@ -8,12 +8,13 @@ import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import javax.annotation.Nonnull;
+
+import edu.jhu.fcriscu1.als.graphdb.value.UniProtMapping;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.impl.factory.Lists;
 import org.eclipse.collections.impl.factory.Maps;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.value.UniProtMapping;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;

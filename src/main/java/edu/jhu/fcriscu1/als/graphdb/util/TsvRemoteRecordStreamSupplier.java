@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.util;
+package edu.jhu.fcriscu1.als.graphdb.util;
 
 import com.jcraft.jsch.JSch;
 import java.io.IOException;
@@ -6,11 +6,12 @@ import java.io.Reader;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+
+import edu.jhu.fcriscu1.als.graphdb.value.HumanTissueAtlas;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.Logger;
-import org.nygenome.als.graphdb.value.HumanTissueAtlas;
 
 /*
 A Supplier that will open a TSV file on a remote SFTP server and

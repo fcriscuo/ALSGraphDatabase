@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.service;
+package edu.jhu.fcriscu1.als.graphdb.service;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -10,11 +10,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+
+import edu.jhu.fcriscu1.als.graphdb.value.AlsAssociatedGene;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.impl.factory.Maps;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.AlsAssociatedGene;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 
 /*
 Java Singleton that supports a white list of genes that
@@ -29,7 +30,7 @@ public enum AlsAssociatedGeneService {
 private Path alsGeneFilePath = Paths.get(
     FrameworkPropertyService.INSTANCE.getStringProperty("ALSOD_GENE_WHITE_LIST_FILE"));
 
-  private final ImmutableMap<String,AlsAssociatedGene> alsAssociatedGeneMap =
+  private final ImmutableMap<String, AlsAssociatedGene> alsAssociatedGeneMap =
       Suppliers.memoize(new  AlsAssociateGeneMapSupplier(alsGeneFilePath)).get();
 
   public Predicate<String> alsAssociatedGenePredicate = (@Nonnull String name) ->

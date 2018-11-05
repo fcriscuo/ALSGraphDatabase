@@ -1,8 +1,8 @@
-package org.nygenome.als.graphdb.value;
+package edu.jhu.fcriscu1.als.graphdb.value;
 
 import com.twitter.logging.Logger;
 import java.nio.file.Paths;
-import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.CsvRecordStreamSupplier;
 
 public class TestDrugBankValue {
   private final Logger log = Logger.get(TestDrugBankValue.class);

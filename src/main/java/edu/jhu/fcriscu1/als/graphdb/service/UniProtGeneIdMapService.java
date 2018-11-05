@@ -1,10 +1,10 @@
-package org.nygenome.als.graphdb.service;
+package edu.jhu.fcriscu1.als.graphdb.service;
 
 import javax.annotation.Nonnull;
 import lombok.extern.log4j.Log4j;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.impl.factory.Maps;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;

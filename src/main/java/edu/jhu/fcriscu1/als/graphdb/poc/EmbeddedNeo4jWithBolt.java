@@ -1,16 +1,14 @@
-package org.nygenome.als.graphdb.poc;
+package edu.jhu.fcriscu1.als.graphdb.poc;
 
 import java.io.File;
 import java.io.IOException;
 
-import java.nio.file.Paths;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
-import org.neo4j.io.fs.FileUtils;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
 
 public class EmbeddedNeo4jWithBolt
 {

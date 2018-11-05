@@ -1,9 +1,9 @@
-package org.nygenome.als.graphdb.value;
+package edu.jhu.fcriscu1.als.graphdb.value;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 
 public class TestUniProtBlastResult {
 

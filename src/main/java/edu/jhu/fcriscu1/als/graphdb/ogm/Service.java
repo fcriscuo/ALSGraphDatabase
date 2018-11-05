@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.ogm;
+package edu.jhu.fcriscu1.als.graphdb.ogm;
 
 interface Service<T> {
 

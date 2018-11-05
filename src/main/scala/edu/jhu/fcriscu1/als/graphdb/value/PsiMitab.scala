@@ -1,8 +1,7 @@
-package org.nygenome.als.graphdb.value
+package edu.jhu.fcriscu1.als.graphdb.value
 
 import org.apache.commons.csv.CSVRecord
-import org.apache.spark.sql.{Encoder, Encoders}
-import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
+
 
 case class PsiMitab(interactorAId: String, interactorBId: String, altIdAList: List[String],
                     altIdBList: List[String], aliasAList: List[String], aliasBList: List[String],

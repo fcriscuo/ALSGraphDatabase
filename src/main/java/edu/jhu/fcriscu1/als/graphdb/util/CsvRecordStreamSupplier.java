@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.util;
+package edu.jhu.fcriscu1.als.graphdb.util;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;

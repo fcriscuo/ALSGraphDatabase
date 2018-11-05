@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.util;
+package edu.jhu.fcriscu1.als.graphdb.util;
 
 public interface UncheckedCloseable extends Runnable, AutoCloseable {
   default void run() {

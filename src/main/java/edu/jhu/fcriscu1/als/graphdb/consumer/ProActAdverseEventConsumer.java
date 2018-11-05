@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -6,20 +6,21 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.ProActAdverseEvent;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.value.ProActAdverseEvent;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.CsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
 import scala.Tuple2;
 import scala.Tuple3;
 
 public class ProActAdverseEventConsumer extends GraphDataConsumer {
 
-  public ProActAdverseEventConsumer(RunMode runMode) {super(runMode);}
+  public ProActAdverseEventConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
 
   /*
   Private Function to create the hierarchy of event categories
@@ -77,13 +78,13 @@ public class ProActAdverseEventConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("PROACT_ADVERSE_EVENT_FILE")
-        .ifPresent(new ProActAdverseEventConsumer(RunMode.PROD));
+        .ifPresent(new ProActAdverseEventConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed proact adverse event file: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_PROACT_ADVERSE_EVENT_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new ProActAdverseEventConsumer(RunMode.TEST)));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new ProActAdverseEventConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 }

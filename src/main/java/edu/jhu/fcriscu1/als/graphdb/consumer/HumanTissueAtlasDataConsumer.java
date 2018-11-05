@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
@@ -7,14 +7,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.HumanTissueAtlas;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.HumanTissueAtlas;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 
 /*
@@ -70,12 +71,12 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
   };
 
 
-  public HumanTissueAtlasDataConsumer(RunMode runMode) {super(runMode);}
+  public HumanTissueAtlasDataConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
 
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("HUMAN_TISSUE_ATLAS_FILE")
-        .ifPresent(new HumanTissueAtlasDataConsumer(RunMode.PROD));
+        .ifPresent(new HumanTissueAtlasDataConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("read the Human Tissue Atlas data: " +
         sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
@@ -84,7 +85,7 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("HUMAN_TISSUE_ATLAS_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path, new HumanTissueAtlasDataConsumer(RunMode.TEST)));
+            new TestGraphDataConsumer().accept(path, new HumanTissueAtlasDataConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 
   @Override

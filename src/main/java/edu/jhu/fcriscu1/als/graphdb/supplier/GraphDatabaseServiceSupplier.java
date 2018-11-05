@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.supplier;
+package edu.jhu.fcriscu1.als.graphdb.supplier;
 
 import com.google.common.base.Supplier;
 import java.io.IOException;
@@ -8,9 +8,9 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.Utils;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.Utils;
 
 public class GraphDatabaseServiceSupplier implements Supplier<GraphDatabaseService> {
 

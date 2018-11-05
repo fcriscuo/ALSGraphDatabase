@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -6,21 +6,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.UniProtBlastResult;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
-import org.nygenome.als.graphdb.value.UniProtBlastResult;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import scala.Tuple2;
 
 public class UniprotBlastResultConsumer extends GraphDataConsumer {
 
-  public UniprotBlastResultConsumer(RunMode runMode) {
+  public UniprotBlastResultConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
     super(runMode);
   }
 
@@ -56,7 +55,7 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("SEQ_SIM_FILE")
-        .ifPresent(new UniprotBlastResultConsumer(RunMode.PROD));
+        .ifPresent(new UniprotBlastResultConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed sequence similarity file : " +
         sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
@@ -66,7 +65,7 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_SEQ_SIM_FILE")
         .ifPresent(path -> new TestGraphDataConsumer()
-            .accept(path, new UniprotBlastResultConsumer(RunMode.TEST)));
+            .accept(path, new UniprotBlastResultConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 
 }

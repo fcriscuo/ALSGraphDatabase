@@ -1,19 +1,20 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.NeurobankEventTimepoint;
 import org.eclipse.collections.impl.factory.Lists;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.NeurobankEventTimepoint;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 
 /*
@@ -25,7 +26,7 @@ This supports temporal longitudinal data
  */
 public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
 
-  NeurobankTimepointEventConsumer(RunMode runMode) {super(runMode);}
+  NeurobankTimepointEventConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
 
   private Consumer<NeurobankEventTimepoint> neurobankSubjectTimepointConsumer = (timepoint) -> {
     Node subjectNode = resolveSubjectNodeFunction.apply(
@@ -57,7 +58,7 @@ public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_TIMEPOINT_FILE")
-        .ifPresent(new NeurobankTimepointEventConsumer(RunMode.PROD));
+        .ifPresent(new NeurobankTimepointEventConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed neurobank subject timepoint file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -65,6 +66,6 @@ public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_TIMEPOINT_FILE")
         .ifPresent(
-            path -> new TestGraphDataConsumer().accept(path, new NeurobankTimepointEventConsumer(RunMode.TEST)));
+            path -> new TestGraphDataConsumer().accept(path, new NeurobankTimepointEventConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 }

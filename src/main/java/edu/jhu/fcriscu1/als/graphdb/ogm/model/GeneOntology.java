@@ -1,12 +1,12 @@
-package org.nygenome.als.graphdb.ogm.model;
+package edu.jhu.fcriscu1.als.graphdb.ogm.model;
 
 import javax.annotation.Nonnull;
-import org.apache.commons.csv.CSVRecord;
+
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Property;
-import org.nygenome.als.graphdb.ogm.Entity;
+import edu.jhu.fcriscu1.als.graphdb.ogm.Entity;
 
 @NodeEntity
 public class GeneOntology extends Entity {
@@ -26,7 +26,7 @@ public class GeneOntology extends Entity {
   @Property(name="definition")
   private String definition;
 
-   public GeneOntology(@Nonnull org.nygenome.als.graphdb.value.GeneOntology go) {
+   public GeneOntology(@Nonnull edu.jhu.fcriscu1.als.graphdb.value.GeneOntology go) {
      this.accession = go.goTermAccession();
      this.domain = go.goDomain();
      this.name = go.goName();

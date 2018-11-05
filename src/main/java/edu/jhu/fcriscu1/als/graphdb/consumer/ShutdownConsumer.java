@@ -1,10 +1,11 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import java.nio.file.Path;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
+
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
 
 public class ShutdownConsumer extends GraphDataConsumer{
-  public ShutdownConsumer(RunMode runMode) {
+  public ShutdownConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
     super(runMode);
   }
 
@@ -13,6 +14,6 @@ public class ShutdownConsumer extends GraphDataConsumer{
   }
 
   public static void importProdData() {
-   new ShutdownConsumer(RunMode.READ_ONLY).lib.shutDown();
+   new ShutdownConsumer(GraphDatabaseServiceSupplier.RunMode.READ_ONLY).lib.shutDown();
   }
 }

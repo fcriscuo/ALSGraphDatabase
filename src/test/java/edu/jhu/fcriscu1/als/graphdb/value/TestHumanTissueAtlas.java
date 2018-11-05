@@ -1,6 +1,6 @@
-package org.nygenome.als.graphdb.value;
+package edu.jhu.fcriscu1.als.graphdb.value;
 
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import java.nio.file.Paths;
 
 public class TestHumanTissueAtlas {

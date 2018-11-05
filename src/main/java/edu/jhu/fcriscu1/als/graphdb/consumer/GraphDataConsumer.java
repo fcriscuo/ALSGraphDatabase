@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 
 import com.twitter.util.Function3;
@@ -8,19 +8,20 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
+
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.DynamicLabel;
+import edu.jhu.fcriscu1.als.graphdb.util.DynamicRelationshipTypes;
+import edu.jhu.fcriscu1.als.graphdb.value.GeneOntology;
+import edu.jhu.fcriscu1.als.graphdb.value.RnaTpmGene;
+import edu.jhu.fcriscu1.als.graphdb.value.SampleVariantSummary;
+import edu.jhu.fcriscu1.als.graphdb.value.UniProtValue;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.nygenome.als.graphdb.lib.FunctionLib;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.DynamicLabel;
-import org.nygenome.als.graphdb.util.DynamicRelationshipTypes;
-import org.nygenome.als.graphdb.util.StringUtils;
-import org.nygenome.als.graphdb.value.GeneOntology;
-import org.nygenome.als.graphdb.value.RnaTpmGene;
-import org.nygenome.als.graphdb.value.SampleVariantSummary;
-import org.nygenome.als.graphdb.value.UniProtValue;
+import edu.jhu.fcriscu1.als.graphdb.lib.FunctionLib;
+import edu.jhu.fcriscu1.als.graphdb.util.StringUtils;
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -117,13 +118,13 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final RelationshipType pubMedXrefRelType = new DynamicRelationshipTypes("HAS_PUBMED_XREF");
 
 
-  private RunMode runMode;
-  protected  GraphDataConsumer(@Nonnull RunMode runMode) {
+  private GraphDatabaseServiceSupplier.RunMode runMode;
+  protected  GraphDataConsumer(@Nonnull GraphDatabaseServiceSupplier.RunMode runMode) {
     this.lib = new FunctionLib(runMode);
     this.runMode = runMode;
   }
 
-  public Supplier<RunMode> consumerRunModeSupplier = () -> this.runMode;
+  public Supplier<GraphDatabaseServiceSupplier.RunMode> consumerRunModeSupplier = () -> this.runMode;
 
 
   protected Function<String,Node> resolveProactAdverseEventNode = (id) ->{

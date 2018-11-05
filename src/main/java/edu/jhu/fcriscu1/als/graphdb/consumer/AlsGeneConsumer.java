@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -6,14 +6,15 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.EnsemblAlsGene;
 import org.eclipse.collections.impl.factory.Sets;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.EnsemblAlsGene;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 
 /*
@@ -26,7 +27,7 @@ Additional ALS genes may be added to this collection manually
  */
 public class AlsGeneConsumer extends GraphDataConsumer{
 
-  public AlsGeneConsumer(RunMode runMode) {
+  public AlsGeneConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
     super(runMode);
   }
 
@@ -80,7 +81,7 @@ public class AlsGeneConsumer extends GraphDataConsumer{
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_ALS_GENES_FILE")
-        .ifPresent(new AlsGeneConsumer(RunMode.PROD));
+        .ifPresent(new AlsGeneConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed ensembl als genes file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -90,6 +91,6 @@ public class AlsGeneConsumer extends GraphDataConsumer{
    FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_ALS_GENES_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path, new AlsGeneConsumer(RunMode.TEST)));
+            new TestGraphDataConsumer().accept(path, new AlsGeneConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 }

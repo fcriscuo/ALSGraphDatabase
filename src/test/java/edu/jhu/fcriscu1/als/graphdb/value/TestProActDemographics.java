@@ -1,7 +1,7 @@
-package org.nygenome.als.graphdb.value;
+package edu.jhu.fcriscu1.als.graphdb.value;
 
-import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.CsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
 
 public class TestProActDemographics {
   public static void main(String[] args) {

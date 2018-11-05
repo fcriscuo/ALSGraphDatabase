@@ -1,21 +1,21 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Stopwatch;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.UniProtDrug;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.service.DrugBankService;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.CsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.value.UniProtDrug;
+import edu.jhu.fcriscu1.als.graphdb.app.ALSDatabaseImportApp;
+import edu.jhu.fcriscu1.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
+import edu.jhu.fcriscu1.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
+import edu.jhu.fcriscu1.als.graphdb.service.DrugBankService;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.CsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
 import scala.Tuple2;
 
 /*
@@ -28,7 +28,7 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer {
 
   private RelTypes eRelType;
 
-  public DrugUniprotInfoConsumer(RunMode runMode, ALSDatabaseImportApp.RelTypes eRelType) {
+  public DrugUniprotInfoConsumer(GraphDatabaseServiceSupplier.RunMode runMode, ALSDatabaseImportApp.RelTypes eRelType) {
     super(runMode);
     this.eRelType = eRelType;
   }
@@ -103,19 +103,19 @@ P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,H
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_TARGET_UNIRPOT_FILE")
-        .ifPresent(new DrugUniprotInfoConsumer(RunMode.PROD, RelTypes.DRUG_TARGET));
+        .ifPresent(new DrugUniprotInfoConsumer(GraphDatabaseServiceSupplier.RunMode.PROD, RelTypes.DRUG_TARGET));
     // Drug Enzyme
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_ENZYME_UNIRPOT_FILE")
-        .ifPresent(new DrugUniprotInfoConsumer(RunMode.PROD, RelTypes.DRUG_ENZYME));
+        .ifPresent(new DrugUniprotInfoConsumer(GraphDatabaseServiceSupplier.RunMode.PROD, RelTypes.DRUG_ENZYME));
     // Drug Transporter
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_TRANSPORTER_UNIRPOT_FILE")
-        .ifPresent(new DrugUniprotInfoConsumer(RunMode.PROD, RelTypes.DRUG_TRANSPORTER));
+        .ifPresent(new DrugUniprotInfoConsumer(GraphDatabaseServiceSupplier.RunMode.PROD, RelTypes.DRUG_TRANSPORTER));
     //Drug Carrier
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_CARRIER_UNIRPOT_FILE")
-        .ifPresent(new DrugUniprotInfoConsumer(RunMode.PROD, RelTypes.DRUG_CARRIER));
+        .ifPresent(new DrugUniprotInfoConsumer(GraphDatabaseServiceSupplier.RunMode.PROD, RelTypes.DRUG_CARRIER));
     AsyncLoggingService.logInfo("drug data import completed: "
         + sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
@@ -127,26 +127,26 @@ P45059,Peptidoglycan synthase FtsI,ftsI,1574687,L42023,P45059,FTSI_HAEIN,"",,,,H
         .getOptionalPathProperty("DRUG_TARGET_UNIRPOT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer()
-                .accept(path, new DrugUniprotInfoConsumer(RunMode.TEST, RelTypes.DRUG_TARGET)));
+                .accept(path, new DrugUniprotInfoConsumer(GraphDatabaseServiceSupplier.RunMode.TEST, RelTypes.DRUG_TARGET)));
     // Drug Enzyme
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_ENZYME_UNIRPOT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer()
-                .accept(path, new DrugUniprotInfoConsumer(RunMode.TEST, RelTypes.DRUG_ENZYME)));
+                .accept(path, new DrugUniprotInfoConsumer(GraphDatabaseServiceSupplier.RunMode.TEST, RelTypes.DRUG_ENZYME)));
     // Drug Transporter
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_TRANSPORTER_UNIRPOT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer()
                 .accept(path,
-                    new DrugUniprotInfoConsumer(RunMode.TEST, RelTypes.DRUG_TRANSPORTER)));
+                    new DrugUniprotInfoConsumer(GraphDatabaseServiceSupplier.RunMode.TEST, RelTypes.DRUG_TRANSPORTER)));
     //Drug Carrier
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("DRUG_CARRIER_UNIRPOT_FILE")
         .ifPresent(path ->
             new TestGraphDataConsumer()
-                .accept(path, new DrugUniprotInfoConsumer(RunMode.TEST, RelTypes.DRUG_CARRIER)));
+                .accept(path, new DrugUniprotInfoConsumer(GraphDatabaseServiceSupplier.RunMode.TEST, RelTypes.DRUG_CARRIER)));
   }
  // test mode
   public static void main(String[] args) {

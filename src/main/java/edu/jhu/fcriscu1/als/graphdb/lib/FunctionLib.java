@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.lib;
+package edu.jhu.fcriscu1.als.graphdb.lib;
 
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
+
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
 import org.apache.log4j.Logger;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -25,10 +27,8 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.app.ALSDatabaseImportApp.LabelTypes;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.collection.immutable.List;
@@ -37,7 +37,7 @@ public class FunctionLib {
 
   private static final Logger log = Logger.getLogger(FunctionLib.class);
   private GraphDatabaseService graphDb;
-  public FunctionLib(@Nonnull  RunMode runMode) {
+  public FunctionLib(@Nonnull GraphDatabaseServiceSupplier.RunMode runMode) {
     this.graphDb = new GraphDatabaseServiceSupplier(runMode).get();
   }
 
@@ -375,7 +375,7 @@ Protected BiConsumer that will add a property name/String value pair to a specif
   };
 
   public static void main(String... args) {
-    Path path = new FunctionLib(RunMode.READ_ONLY).readResourceFileFunction.apply
+    Path path = new FunctionLib(GraphDatabaseServiceSupplier.RunMode.READ_ONLY).readResourceFileFunction.apply
         ("intact.txt");
     log.info("File exists = " + path.toString());
     log.info("There are " + FunctionLib.generateLineStreamFromPath(path).count()

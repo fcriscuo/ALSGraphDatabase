@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -7,14 +7,14 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.RnaTpmGene;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.TsvRecordSplitIteratorSupplier;
-import org.nygenome.als.graphdb.value.RnaTpmGene;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordSplitIteratorSupplier;
 import scala.Tuple2;
 
 /*
@@ -25,7 +25,7 @@ a streamin utility based on a Splititerator is used
  */
 public class RnaTpmGeneConsumer extends GraphDataConsumer {
 
-  public RnaTpmGeneConsumer(RunMode runMode) {super(runMode);}
+  public RnaTpmGeneConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
 
   /*
   private Consumer to process a RnaTpmGene object
@@ -75,7 +75,7 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("RNA_TPM_GENE_FILE")
-        .ifPresent(new RnaTpmGeneConsumer(RunMode.PROD));
+        .ifPresent(new RnaTpmGeneConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("read rna tpm  data: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -89,7 +89,7 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
     FrameworkPropertyService.INSTANCE
            .getOptionalPathProperty("TEST_RNA_TPM_GENE_FILE")
             .ifPresent(path->
-                new TestGraphDataConsumer().accept(path,new RnaTpmGeneConsumer(RunMode.TEST)));
+                new TestGraphDataConsumer().accept(path,new RnaTpmGeneConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
     }
 
 

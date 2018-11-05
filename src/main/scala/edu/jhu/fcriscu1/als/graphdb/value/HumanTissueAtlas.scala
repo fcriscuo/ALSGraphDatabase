@@ -1,9 +1,9 @@
-package org.nygenome.als.graphdb.value
+package edu.jhu.fcriscu1.als.graphdb.value
 
 import java.util.Optional
 
+import edu.jhu.fcriscu1.als.graphdb.service.UniProtMappingService
 import org.apache.commons.csv.CSVRecord
-import org.nygenome.als.graphdb.service.UniProtMappingService
 /*
 TSV record header
 Gene	Gene name	Tissue	Cell type	Level	Reliability

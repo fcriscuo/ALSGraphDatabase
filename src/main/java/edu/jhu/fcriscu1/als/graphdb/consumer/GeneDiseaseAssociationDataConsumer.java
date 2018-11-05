@@ -1,23 +1,21 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.GeneDiseaseAssociation;
+import edu.jhu.fcriscu1.als.graphdb.value.UniProtMapping;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.Transaction;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp;
-import org.nygenome.als.graphdb.app.ALSDatabaseImportApp.RelTypes;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.value.UniProtMapping;
-import org.nygenome.als.graphdb.service.UniProtMappingService;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.value.GeneDiseaseAssociation;
+import edu.jhu.fcriscu1.als.graphdb.service.UniProtMappingService;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
 import scala.Tuple2;
 import java.nio.file.Path;
 
@@ -29,7 +27,7 @@ Data mapped to data structures for entry into Neo4j database
 
 public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
 
-  public GeneDiseaseAssociationDataConsumer(RunMode runMode) {super(runMode);}
+  public GeneDiseaseAssociationDataConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
 
   @Override
   public void accept(Path path) {
@@ -78,7 +76,7 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("GENE_DISEASE_ASSOC_DISGENET_FILE")
-        .ifPresent(new GeneDiseaseAssociationDataConsumer(RunMode.PROD));
+        .ifPresent(new GeneDiseaseAssociationDataConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed gene disease associaton file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -87,7 +85,7 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
   public static void main(String... args) {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_GENE_DISEASE_ASSOC_DISGENET_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path, new GeneDiseaseAssociationDataConsumer(RunMode.TEST)));
+            new TestGraphDataConsumer().accept(path, new GeneDiseaseAssociationDataConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
 
   }
 

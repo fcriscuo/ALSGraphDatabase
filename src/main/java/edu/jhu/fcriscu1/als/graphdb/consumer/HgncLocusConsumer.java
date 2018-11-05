@@ -1,4 +1,4 @@
-package org.nygenome.als.graphdb.consumer;
+package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -6,23 +6,24 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
+import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
+import edu.jhu.fcriscu1.als.graphdb.util.DynamicLabel;
+import edu.jhu.fcriscu1.als.graphdb.value.HgncLocus;
 import org.neo4j.graphdb.Node;
-import org.nygenome.als.graphdb.integration.TestGraphDataConsumer;
-import org.nygenome.als.graphdb.supplier.GraphDatabaseServiceSupplier.RunMode;
-import org.nygenome.als.graphdb.util.AsyncLoggingService;
-import org.nygenome.als.graphdb.util.DynamicLabel;
-import org.nygenome.als.graphdb.util.FrameworkPropertyService;
-import org.nygenome.als.graphdb.util.StringUtils;
-import org.nygenome.als.graphdb.util.TsvRecordStreamSupplier;
-import org.nygenome.als.graphdb.value.HgncLocus;
+import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
+import edu.jhu.fcriscu1.als.graphdb.util.StringUtils;
+import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
 import scala.Tuple2;
 
 public class HgncLocusConsumer  extends GraphDataConsumer{
 
-  public HgncLocusConsumer(RunMode runMode) { super(runMode);}
+  public HgncLocusConsumer(GraphDatabaseServiceSupplier.RunMode runMode) { super(runMode);}
 
 
-  private BiConsumer<Node,HgncLocus> resolveHgncLocusRelationshipsConsumer = (geNode, hgnc) -> {
+  private BiConsumer<Node, HgncLocus> resolveHgncLocusRelationshipsConsumer = (geNode, hgnc) -> {
     if (HgncLocus.isValidString(hgnc.uniprotId())) {
       Node proteinNode = resolveProteinNodeFunction.apply(hgnc.uniprotId());
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,geNode),encodedRelationType );
@@ -93,7 +94,7 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
     Stopwatch sw = Stopwatch.createStarted();
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("HGNC_COMPLETE_FILE")
-        .ifPresent(new HgncLocusConsumer(RunMode.PROD));
+        .ifPresent(new HgncLocusConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
     AsyncLoggingService.logInfo("processed HGNC locus file: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -101,6 +102,6 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_HGNC_COMPLETE_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new HgncLocusConsumer(RunMode.TEST)));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new HgncLocusConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 }
