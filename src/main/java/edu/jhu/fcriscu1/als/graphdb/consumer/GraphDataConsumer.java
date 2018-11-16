@@ -117,6 +117,15 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   protected final RelationshipType goMolFunctionRelType = new DynamicRelationshipTypes("HAS_GO_MOLECULAR_FUNCTION");
   protected final RelationshipType pubMedXrefRelType = new DynamicRelationshipTypes("HAS_PUBMED_XREF");
 
+    protected final RelationshipType eventValueSubjectRelType = new DynamicRelationshipTypes(
+            "HAS_PROPERTY");
+    protected final RelationshipType eventValueEventRelType = new DynamicRelationshipTypes(
+            "HAS_EVENT_OCCURRANCE"
+    );
+    protected final RelationshipType eventTimepointRelType = new DynamicRelationshipTypes(
+            "OCCURRED_AT"
+    );
+
 
   private GraphDatabaseServiceSupplier.RunMode runMode;
   protected  GraphDataConsumer(@Nonnull GraphDatabaseServiceSupplier.RunMode runMode) {

@@ -84,7 +84,7 @@ public class ProActAdverseEventConsumer extends GraphDataConsumer {
   }
   public static void main(String[] args) {
     FrameworkPropertyService.INSTANCE
-        .getOptionalPathProperty("TEST_PROACT_ADVERSE_EVENT_FILE")
+        .getOptionalResourcePath("TEST_PROACT_ADVERSE_EVENT_FILE")
         .ifPresent(path -> new TestGraphDataConsumer().accept(path, new ProActAdverseEventConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
   }
 }

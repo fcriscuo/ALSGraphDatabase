@@ -32,7 +32,9 @@ public enum FrameworkPropertyService {
     final static String PROPERTIES_FILE = "/framework.properties";
     private final ImmutableMap<String,String> propertiesMap =
             Suppliers.memoize(new PropertiesMapSupplier()).get();
-
+/*
+Public method to resolve a test file under the project's resources directory
+ */
     public Optional<Path> getOptionalResourcePath(@Nonnull  String propertyName) {
         if(propertiesMap.containsKey(propertyName)) {
             try {
@@ -44,7 +46,6 @@ public enum FrameworkPropertyService {
         }
             System.out.println("Property name " + propertyName + " is invalid");
             return Optional.empty();
-
     }
 
     /*
@@ -80,7 +81,10 @@ public enum FrameworkPropertyService {
         }
         return -1;
     }
-
+/*
+Inner class that will create a Map of property names & values from the defined
+Properties file
+ */
     class PropertiesMapSupplier implements Supplier<ImmutableMap<String,String>> {
         private MutableMap<String,String>  propertiesMap = Maps.mutable.empty();
 
@@ -110,7 +114,7 @@ public enum FrameworkPropertyService {
 
 // main method for stand alone testing
     public static void main(String... args) {
-        // lookup a property
+        // lookup a file sspecified in the properties file
         String propertyName = "PPI_INTACT_FILE";
         String filePath = FrameworkPropertyService.INSTANCE.getStringProperty(propertyName);
        AsyncLoggingService.logInfo("Property: " +propertyName +"  value:  "+filePath);
@@ -118,7 +122,6 @@ public enum FrameworkPropertyService {
         propertyName = "TEST_PROACT_ADVERSE_EVENT_FILE";
         FrameworkPropertyService.INSTANCE.getOptionalResourcePath(propertyName)
                 .ifPresent(path -> System.out.println("Resource path = " +path.toString()));
-
         // look up bad property - should get error message
         propertyName = "XXXXXXXXXX";
         String badValue =  FrameworkPropertyService.INSTANCE.getStringProperty(propertyName);

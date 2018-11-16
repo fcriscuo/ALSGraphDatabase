@@ -2,21 +2,19 @@ package edu.jhu.fcriscu1.als.graphdb.consumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
 import edu.jhu.fcriscu1.als.graphdb.integration.TestGraphDataConsumer;
 import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier;
-import edu.jhu.fcriscu1.als.graphdb.util.DynamicRelationshipTypes;
-import edu.jhu.fcriscu1.als.graphdb.value.NeurobankSubjectEventProperty;
-import org.eclipse.collections.impl.factory.Lists;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.RelationshipType;
 import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
 import edu.jhu.fcriscu1.als.graphdb.util.FrameworkPropertyService;
 import edu.jhu.fcriscu1.als.graphdb.util.TsvRecordStreamSupplier;
+import edu.jhu.fcriscu1.als.graphdb.value.NeurobankSubjectEventProperty;
+import org.eclipse.collections.impl.factory.Lists;
+import org.neo4j.graphdb.Node;
 import scala.Tuple2;
+
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class
 NeurobankTimepointEventPropertyConsumer extends GraphDataConsumer {
@@ -24,15 +22,6 @@ NeurobankTimepointEventPropertyConsumer extends GraphDataConsumer {
   public NeurobankTimepointEventPropertyConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
     super(runMode);
   }
-
-  private final RelationshipType eventValueSubjectRelType = new DynamicRelationshipTypes(
-      "HAS_PROPERTY");
-  private final RelationshipType eventValueEventRelType = new DynamicRelationshipTypes(
-      "HAS_EVENT_OCCURRANCE"
-  );
-  private final RelationshipType eventTimepointRelType = new DynamicRelationshipTypes(
-      "OCCURRED_AT"
-  );
 
   private Consumer<NeurobankSubjectEventProperty> neurobankSubjectEventPropertyConsumer =
       (property) -> {

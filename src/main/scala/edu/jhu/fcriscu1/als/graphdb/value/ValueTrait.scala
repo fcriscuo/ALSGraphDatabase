@@ -1,5 +1,7 @@
 package edu.jhu.fcriscu1.als.graphdb.value
 
+import javax.annotation.RegEx
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 trait ValueTrait {
@@ -41,7 +43,15 @@ trait ValueTrait {
 
   protected var reduceListToString: Function[List[String], String] =
     (list: List[String]) => list.mkString("|")
+
   val onlyDigitsRegex = "^\\d+$".r
+
+   val floatingPointRegEx = "[-+]?[0-9]*\\.?[0-9]+".r
+
+  def validFloatingPointString(s:String):Float = s match {
+    case floatingPointRegEx() => s.toFloat
+    case _ => "0".toFloat
+  }
 
   // filter out non-numeric values in numeric field
   def validIntegerString(s:String):Int = s match {
