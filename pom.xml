@@ -5,9 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>edu.jhu.fcriscu1</groupId>
-    <artifactId>ALSDatbase</artifactId>
+    <artifactId>ALSDatabase</artifactId>
     <version>1.0-SNAPSHOT</version>
-
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
