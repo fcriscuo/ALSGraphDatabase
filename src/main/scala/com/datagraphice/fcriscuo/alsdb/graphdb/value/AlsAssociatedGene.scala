@@ -1,5 +1,6 @@
 package edu.jhu.fcriscu1.als.graphdb.value
 
+import com.datagraphice.fcriscuo.alsdb.graphdb.value.ValueTrait
 import org.apache.commons.csv.CSVRecord
 
 case class AlsAssociatedGene(

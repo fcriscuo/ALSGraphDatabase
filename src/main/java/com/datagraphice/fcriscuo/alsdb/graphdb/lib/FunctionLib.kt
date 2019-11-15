@@ -1,8 +1,8 @@
-package edu.jhu.fcriscu1.als.graphdb.lib
+package com.datagraphice.fcriscuo.alsdb.graphdb.lib
 
 import com.google.common.base.Strings
-import edu.jhu.fcriscu1.als.graphdb.app.ALSDatabaseImportApp.LabelTypes
-import edu.jhu.fcriscu1.als.graphdb.supplier.GraphDatabaseServiceSupplier
+import com.datagraphice.fcriscuo.alsdb.graphdb.app.ALSDatabaseImportApp.LabelTypes
+import com.datagraphice.fcriscuo.alsdb.graphdb.supplier.GraphDatabaseServiceSupplier
 import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService
 import org.apache.log4j.Logger
 import org.neo4j.graphdb.*
@@ -349,7 +349,7 @@ Protected BiConsumer that will add a property name/String value pair to a specif
         fun main(args: Array<String>) {
             val path = FunctionLib(GraphDatabaseServiceSupplier.RunMode.READ_ONLY).readResourceFileFunction.apply("intact.txt")
             log.info("File exists = $path")
-            log.info("There are " + FunctionLib.generateLineStreamFromPath(path).count()
+            log.info("There are " + generateLineStreamFromPath(path).count()
                     + " lines in file " + path.toString())
 
         }
