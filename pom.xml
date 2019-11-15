@@ -14,22 +14,25 @@
         <bundle.symbolicName.prefix>edu.jhu.fcriscu1</bundle.symbolicName.prefix>
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
-        <jooq.version>3.12.1</jooq.version>
+        <jooq.version>3.12.3</jooq.version>
 		<apache.commons.lang3.version>3.9</apache.commons.lang3.version>
-        <rxjava2.version>2.2.13</rxjava2.version>
+		<apache.commons.io.version>2.6</apache.commons.io.version>
+		<apache.log4j.version>1.2.17</apache.log4j.version>
+		<apache.csv.version>1.7</apache.csv.version>
+        <rxjava2.version>2.2.14</rxjava2.version>
         <rxjava2.jdbc.version>0.7.16</rxjava2.jdbc.version>
         <guava.version>28.1-jre</guava.version>
         <eclipse.collections.version>10.0.0 </eclipse.collections.version>
         <scala_version>2.12.7</scala_version>
         <scalatest.version>3.2.0-SNAP10</scalatest.version>
         <eclipse.vertx.version>3.5.1</eclipse.vertx.version>
-        <neo4j.version>3.5.11</neo4j.version>
-        <neo4j.ogm.version>3.2.1</neo4j.ogm.version>
+        <neo4j.version>3.5.12</neo4j.version>
+        <neo4j.ogm.version>3.2.2</neo4j.ogm.version>
+		<neo4j.driver.version>1.7.5</neo4j.driver.version>
         <twitter.util.version>19.10.0</twitter.util.version>
         <lombok.version>1.18.10</lombok.version>
-        <spark.version>2.3.1</spark.version>
         <cfg4j.version>4.4.0</cfg4j.version>
-		<kotlin.version>1.3.50</kotlin.version>
+		<kotlin.version>1.3.60</kotlin.version>
 		<mockk.version>1.9.3</mockk.version>
 	</properties>
 
@@ -64,12 +67,6 @@
 			<version>${apache.commons.lang3.version}</version>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.9</version>
-		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
 		<dependency>
@@ -121,19 +118,11 @@
             <version>${neo4j.ogm.version}</version>
             <scope>runtime</scope>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/com.jcraft/jsch -->
         <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>0.1.54</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-core -->
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.11</artifactId>
-            <version>${spark.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
@@ -147,31 +136,26 @@
         <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>util-collection_2.12</artifactId>
-            <version>18.10.0</version>
+            <version>19.1.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.twitter/util-core -->
         <!-- https://mvnrepository.com/artifact/com.twitter/util-core -->
         <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>util-core_2.12</artifactId>
-            <version>18.10.0</version>
+            <version>19.11.0</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.twitter/util-logging -->
         <!-- https://mvnrepository.com/artifact/com.twitter/util-logging -->
         <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>util-logging_2.12</artifactId>
-            <version>18.10.0</version>
+            <version>19.11.0</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/org.scala-lang/scala-library -->
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${scala_version}</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/org.scalatest/scalatest -->
         <dependency>
             <groupId>org.scalatest</groupId>
@@ -179,14 +163,12 @@
             <version>${scalatest.version}</version>
             <scope>test</scope>
         </dependency>
-
         <!--  eclipse collections  -->
         <dependency>
             <groupId>org.eclipse.collections</groupId>
             <artifactId>eclipse-collections-api</artifactId>
             <version>${eclipse.collections.version}</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/org.eclipse.collections/eclipse-collections -->
         <dependency>
             <groupId>org.eclipse.collections</groupId>
@@ -203,22 +185,20 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.5</version>
+            <version>${apache.commons.io.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/log4j/log4j -->
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
+            <version>${apache.log4j.version}</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/org.neo4j/neo4j-kernel -->
         <dependency>
             <groupId>org.neo4j</groupId>
@@ -236,13 +216,13 @@
         <dependency>
             <groupId>org.neo4j.driver</groupId>
             <artifactId>neo4j-java-driver</artifactId>
-            <version>1.7.5</version>
+            <version>${neo4j.driver.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>1.5</version>
+            <version>${apache.csv.version}</version>
         </dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
