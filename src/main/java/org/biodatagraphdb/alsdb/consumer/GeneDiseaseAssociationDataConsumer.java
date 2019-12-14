@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 import java.nio.file.Path;
 
@@ -18,7 +18,8 @@ Consumer of gene disease association data from a specified file
 Data mapped to data structures for entry into Neo4j database
  */
 
-public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
+public class
+GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
 
   public GeneDiseaseAssociationDataConsumer(org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
 
@@ -45,23 +46,23 @@ public class GeneDiseaseAssociationDataConsumer extends GraphDataConsumer {
       String uniprotId = upm.uniProtId();
       Node geneNode = resolveEnsemblGeneNodeFunction.apply(upm.ensemblGeneId());
       Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(upm.ensemblTranscriptId());
-      lib.getNodePropertyValueConsumer().accept(geneNode, new Tuple2<>("HGNCSymbol", gda.geneSymbol()));
+      lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("HGNCSymbol", gda.geneSymbol()));
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
       Node diseaseNode = resolveDiseaseNodeFunction.apply(gda.diseaseId());
-      lib.getNodePropertyValueConsumer()
+      lib.nodePropertyValueConsumer
           .accept(diseaseNode, new Tuple2<>("DiseaseName", gda.diseaseName()));
       // create relationships between these nodes
       // protein <-> transcript
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode,transcriptNode),encodedRelationType);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,transcriptNode),encodedRelationType);
       // gene <-> transcript
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(geneNode, transcriptNode),transcribesRelationType );
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),transcribesRelationType );
       // protein - disease
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode,diseaseNode), implicatedInRelationType);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,diseaseNode), implicatedInRelationType);
       // gene <-> disease
-      Relationship rel = lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(geneNode, diseaseNode),
+      Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, diseaseNode),
          implicatedInRelationType);
-      lib.getRelationshipPropertyValueConsumer().accept(rel,new Tuple2<>("ConfidenceLevel", String.valueOf(gda.score())));
-      lib.getRelationshipPropertyValueConsumer().accept(rel, new Tuple2<>("Reference", gda.source()));
+      lib.relationshipPropertyValueConsumer.accept(rel,new Tuple2<>("ConfidenceLevel", String.valueOf(gda.score())));
+      lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Reference", gda.source()));
 
   };
 

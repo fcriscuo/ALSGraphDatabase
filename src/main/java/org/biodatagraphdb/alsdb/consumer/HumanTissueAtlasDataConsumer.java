@@ -12,7 +12,7 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 /*
@@ -41,7 +41,7 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
       (transcriptId, tissueId) -> {
         Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(transcriptId);
         Node tissueNode = resolveHumanTissueNodeFunction.apply(tissueId);
-        lib.getResolveNodeRelationshipFunction()
+        lib.resolveNodeRelationshipFunction
             .apply(new Tuple2<>(transcriptNode, tissueNode), tissueEnhancedRelationType);
         AsyncLoggingService.logInfo("created transcript-tissue relationship for transcript "
             + transcriptId + " tissue " + tissueId);
@@ -54,13 +54,13 @@ public class HumanTissueAtlasDataConsumer extends GraphDataConsumer {
    */
   private Consumer<org.biodatagraphdb.alsdb.value.HumanTissueAtlas> consumeHumanTissueAtlasObject = (ht) -> {
     Node tissueNode = resolveHumanTissueNodeFunction.apply(ht.resolveTissueCellTypeLabel());
-    lib.getNodePropertyValueConsumer().accept(tissueNode, new Tuple2<>("Tissue", ht.tissue()));
-    lib.getNodePropertyValueConsumer().accept(tissueNode, new Tuple2<>("CellType", ht.cellType()));
+    lib.nodePropertyValueConsumer.accept(tissueNode, new Tuple2<>("Tissue", ht.tissue()));
+    lib.nodePropertyValueConsumer.accept(tissueNode, new Tuple2<>("CellType", ht.cellType()));
     Node proteinNode = resolveProteinNodeFunction.apply(ht.uniprotId());
-    Relationship rel = lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, tissueNode),
+    Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, tissueNode),
         tissueEnhancedRelationType );
-   lib.getRelationshipPropertyValueConsumer().accept(rel, new Tuple2<>("Level", ht.level()));
-    lib.getRelationshipPropertyValueConsumer().accept(rel, new Tuple2<>("Reliability", ht.reliability()));
+   lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Level", ht.level()));
+    lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Reliability", ht.reliability()));
     if (!Strings.isNullOrEmpty(ht.ensemblTranscriptId())) {
       createTissueTranscriptRelationshipConsumer
           .accept(ht.ensemblTranscriptId(), ht.resolveTissueCellTypeLabel());

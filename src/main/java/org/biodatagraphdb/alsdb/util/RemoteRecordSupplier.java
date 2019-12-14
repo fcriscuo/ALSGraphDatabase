@@ -33,7 +33,7 @@ public abstract class RemoteRecordSupplier {
 
       return new BufferedReader((new InputStreamReader(stream)));
     } catch (Exception e) {
-      edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService.logError(e.getMessage());
+     AsyncLoggingService.logError(e.getMessage());
       e.printStackTrace();
     }
     return null;

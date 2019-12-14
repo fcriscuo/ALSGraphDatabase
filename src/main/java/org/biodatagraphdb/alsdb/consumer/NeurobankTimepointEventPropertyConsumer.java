@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import org.eclipse.collections.impl.factory.Lists;
 import org.neo4j.graphdb.Node;
 import scala.Tuple2;
@@ -30,38 +30,38 @@ NeurobankTimepointEventPropertyConsumer extends GraphDataConsumer {
         // event property node
         Node eventPropertyNode = resolveSubjectEventPropertyNodeFunction
             .apply(property.eventPropertyId());
-        lib.getNodePropertyValueConsumer()
+        lib.nodePropertyValueConsumer
             .accept(eventPropertyNode, new Tuple2<>("PropertyForm", property.formName()));
-        lib.getNodePropertyValueConsumer()
+        lib.nodePropertyValueConsumer
             .accept(eventPropertyNode, new Tuple2<>("PropertyCode", property.propertyCode()));
-        lib.getNodePropertyValueConsumer()
+        lib.nodePropertyValueConsumer
             .accept(eventPropertyNode, new Tuple2<>("PropertyName", property.propertyName()));
-        lib.getNodePropertyValueConsumer().accept(eventPropertyNode,
+        lib.nodePropertyValueConsumer.accept(eventPropertyNode,
             new Tuple2<>("Value", property.propertyValue()));
         // ensure that Neurobank-associated nodes are annotated
         Lists.mutable.of(subjectNode, timepointNode, eventNode, eventPropertyNode)
             .forEach(annotateNeurobankNodeConsumer);
         // complete Node Relationships
         // property value -> subject
-        lib.getResolveNodeRelationshipFunction()
+        lib.resolveNodeRelationshipFunction
             .apply(new Tuple2<>(eventPropertyNode, subjectNode), eventValueSubjectRelType
             );
         // property value -> event
-        lib.getResolveNodeRelationshipFunction().apply(
+        lib.resolveNodeRelationshipFunction.apply(
             new Tuple2(eventPropertyNode,eventNode), eventValueEventRelType
         );
 
         // event  <-> timepoint
-        lib.getResolveNodeRelationshipFunction()
+        lib.resolveNodeRelationshipFunction
             .apply(new Tuple2<>(eventNode, timepointNode), eventTimepointRelType
             );
         // associate nodes with categories
         Node propertyCategoryNode = resolveCategoryNode.apply(property.propertyCategory());
-        lib.getResolveNodeRelationshipFunction()
+        lib.resolveNodeRelationshipFunction
             .apply(new Tuple2<>(eventPropertyNode, propertyCategoryNode),
                 categorizesRelType);
         Node eventCategoryNode = resolveCategoryNode.apply(property.eventCategory());
-        lib.getResolveNodeRelationshipFunction().apply( new Tuple2<>(eventNode,eventCategoryNode),
+        lib.resolveNodeRelationshipFunction.apply( new Tuple2<>(eventNode,eventCategoryNode),
             categorizesRelType);
       };
 

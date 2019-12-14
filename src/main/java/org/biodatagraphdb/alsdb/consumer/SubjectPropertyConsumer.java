@@ -12,7 +12,7 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 //import ALSDatabaseImportApp.RelTypes;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class SubjectPropertyConsumer extends GraphDataConsumer {
@@ -24,21 +24,21 @@ public class SubjectPropertyConsumer extends GraphDataConsumer {
     String externalSampleId = stringSubjectProperty.externalSampleId();
     Node sampleNode = resolveSampleNodeFunction.apply(externalSampleId);
     // an existing Sample node may not have had these properties set
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(sampleNode, new Tuple2<>("ExternalSampleId", externalSampleId));
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(sampleNode, new Tuple2<>("SampleType", stringSubjectProperty.sampleType()));
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(sampleNode, new Tuple2<>("AnalyteType", stringSubjectProperty.analyteType()));
     return sampleNode;
   };
 
   private Consumer<org.biodatagraphdb.alsdb.value.StringSubjectProperty> stringSubjectPropertyConsumer = (subjectProperty) -> {
     Node subjectNode = resolveSubjectNodeFunction.apply(subjectProperty.subjectTuple());
-    lib.getNodePropertyValueConsumer().accept(subjectNode,
+    lib.nodePropertyValueConsumer.accept(subjectNode,
         new Tuple2<>(subjectProperty.propertyName(), subjectProperty.propertyValue()));
     Node sampleNode = completeSampleNodeFunction.apply(subjectProperty);
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(subjectNode,sampleNode),
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode,sampleNode),
         sampledFromRelationType );
   };
 

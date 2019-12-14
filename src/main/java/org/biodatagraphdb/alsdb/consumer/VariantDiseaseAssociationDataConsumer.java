@@ -12,7 +12,7 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
@@ -21,13 +21,13 @@ public class VariantDiseaseAssociationDataConsumer extends GraphDataConsumer{
   private Consumer<org.biodatagraphdb.alsdb.value.VariantDiseaseAssociation> variantDiseaseAssociationConsumer = (snp) ->{
     Node diseaseNode = resolveDiseaseNodeFunction.apply(snp.diseaseId());
     // set or reset disease name
-    lib.getNodePropertyValueConsumer().accept(diseaseNode, new Tuple2<>("DiseaseName", snp.diseaseName()));
+    lib.nodePropertyValueConsumer.accept(diseaseNode, new Tuple2<>("DiseaseName", snp.diseaseName()));
     Node snpNode = resolveSnpNodeFunction.apply(snp.snpId());
     // create  relationship between snp & disease
-    Relationship rel = lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(snpNode, diseaseNode),
+    Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(snpNode, diseaseNode),
         implicatedInRelationType);
-    lib.getRelationshipPropertyValueConsumer().accept(rel, new Tuple2<>("ConfidenceLevel",String.valueOf(snp.score())));
-    lib.getRelationshipPropertyValueConsumer().accept(rel, new Tuple2<>("Reference",snp.source()));
+    lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("ConfidenceLevel",String.valueOf(snp.score())));
+    lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Reference",snp.source()));
   };
   @Override
   public void accept(Path path) {

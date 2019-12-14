@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 /*
@@ -41,16 +41,16 @@ public class RnaTpmGeneConsumer extends GraphDataConsumer {
       Node proteinNode = resolveProteinNodeFunction
           .apply(tpm.uniProtMapping().get().uniProtId());
       // establish a relationship between the RNA node and the protein node
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, rnaNode),
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, rnaNode),
         expressionLevelRelationType);
       // TODO: add xref to HUGO
 //      lib.createBiDirectionalRelationship(proteinNode, hugoGeneNode,
 //          new Tuple2<>(tpm.uniProtMapping().get().uniProtId(),
 //              tpm.uniProtMapping().get().geneSymbol()), proteinXrefRelMap, RelTypes.REFERENCES,
 //          RelTypes.REFERENCES);
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, ensemblGeneNode),
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, ensemblGeneNode),
         encodedRelationType);
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, ensemblTranscriptNode),
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, ensemblTranscriptNode),
         encodedRelationType);
 
   };

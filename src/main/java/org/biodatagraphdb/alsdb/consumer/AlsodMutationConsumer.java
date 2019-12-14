@@ -10,7 +10,7 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -31,32 +31,32 @@ public class AlsodMutationConsumer extends GraphDataConsumer {
    */
   private Consumer<org.biodatagraphdb.alsdb.value.AlsodMutation> alsodMutationConsumer = (mutation) -> {
     Node mutationNode = resolveAlsodMutationNodeFunction.apply(mutation.id());
-    lib.getNovelLabelConsumer().accept(mutationNode, alsAssociatedLabel);
+    lib.novelLabelConsumer.accept(mutationNode, alsAssociatedLabel);
     // add properties
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(mutationNode, new Tuple2<>("MutationName", mutation.mutationName()));
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(mutationNode, new Tuple2<>("MutationType", mutation.mutationType()));
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(mutationNode, new Tuple2<>("ChromosomeLocation", mutation.chromosomeLocation()));
     // genetic change
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(mutationNode, new Tuple2<>("SeqChange", mutation.seqChange()));
     // amino acid change
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(mutationNode, new Tuple2<>("AA_Change", mutation.aaChange()));
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(mutationNode, new Tuple2<>("Exon/Intron", mutation.exonOrIntron()));
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(mutationNode, new Tuple2<>("HGVS_Nucleotide", mutation.hgvsNucleotide()));
-    lib.getNodePropertyValueConsumer()
+    lib.nodePropertyValueConsumer
         .accept(mutationNode, new Tuple2<>("HGVS_Protein", mutation.hgvsProtein()));
     // establish a relationship to an existing Genetic entity
     if (org.biodatagraphdb.alsdb.value.AlsodMutation.isValidString(mutation.gene())) {
       Tuple3<Label, String, String> tuple3 = new Tuple3<>(geneticEntityLabel, "GeneticEntityId",
           mutation.gene());
-      lib.getFindExistingGraphNodeFunction().apply(tuple3).ifPresent(geneNode ->
-          lib.getResolveNodeRelationshipFunction()
+      lib.findExistingGraphNodeFunction.apply(tuple3).ifPresent(geneNode ->
+          lib.resolveNodeRelationshipFunction
               .apply(new Tuple2<>(mutationNode, geneNode), encodedRelationType)
       );
     }

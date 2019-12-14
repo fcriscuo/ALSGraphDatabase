@@ -7,8 +7,6 @@ import org.apache.commons.csv.CSVRecord;
 import com.twitter.logging.Logger;
 
 import javax.annotation.Nonnull;
-import javax.validation.constraints.NotNull;
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -35,7 +33,7 @@ public class TsvRecordSplitIteratorSupplier implements Supplier<Stream<CSVRecord
   private  String[] columnHeadings;
 
 
-  public TsvRecordSplitIteratorSupplier(@NotNull Path aPath ,
+  public TsvRecordSplitIteratorSupplier(@org.jetbrains.annotations.NotNull Path aPath ,
       @Nonnull String...headings) {
     this.filePath = aPath;
     this.columnHeadings = headings;

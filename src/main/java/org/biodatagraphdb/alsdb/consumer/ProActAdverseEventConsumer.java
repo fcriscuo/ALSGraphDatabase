@@ -11,7 +11,7 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -23,22 +23,22 @@ public class ProActAdverseEventConsumer extends GraphDataConsumer {
   Private Function to create the hierarchy of event categories
    */
   private Function<org.biodatagraphdb.alsdb.value.ProActAdverseEvent,Node>  resolveEventCategoryNodeFunction = (event) -> {
-    Node socNode = lib.getResolveGraphNodeFunction().apply(new Tuple3<>(
+    Node socNode = lib.resolveGraphNodeFunction.apply(new Tuple3<>(
         systemOrganClassLabel, "SystemOrganClassCode",event.socCode()));
-    lib.getNodePropertyValueConsumer().accept(socNode, new Tuple2<>("SystemOrganClass", event.systemOrganClass()));
-    lib.getNodePropertyValueConsumer().accept(socNode, new Tuple2<>("SOCAbbreviation", event.socAbbreviation()));
+    lib.nodePropertyValueConsumer.accept(socNode, new Tuple2<>("SystemOrganClass", event.systemOrganClass()));
+    lib.nodePropertyValueConsumer.accept(socNode, new Tuple2<>("SOCAbbreviation", event.socAbbreviation()));
 
-    Node hiLevelGrpTermNode = lib.getResolveGraphNodeFunction().apply( new Tuple3<>(
+    Node hiLevelGrpTermNode = lib.resolveGraphNodeFunction.apply( new Tuple3<>(
         highLevelGroupTermLabel,"HighLevelGroupTerm",event.highLevelGroupTerm()));
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(hiLevelGrpTermNode,socNode),childRelationType);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(hiLevelGrpTermNode,socNode),childRelationType);
 
-    Node hiLevelTermNode = lib.getResolveGraphNodeFunction().apply( new Tuple3<>(
+    Node hiLevelTermNode = lib.resolveGraphNodeFunction.apply( new Tuple3<>(
         highLevelTermLabel,"HighLevelTerm",event.highLevelTerm()));
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(hiLevelTermNode,hiLevelGrpTermNode),childRelationType);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(hiLevelTermNode,hiLevelGrpTermNode),childRelationType);
 
-    Node preferredTermNode = lib.getResolveGraphNodeFunction().apply( new Tuple3<>(
+    Node preferredTermNode = lib.resolveGraphNodeFunction.apply( new Tuple3<>(
         preferredTermLabel,"PreferredTerm",event.preferredTerm()));
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(preferredTermNode,hiLevelTermNode),childRelationType);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(preferredTermNode,hiLevelTermNode),childRelationType);
 
 //    Node lowestLevelTermNode = lib.resolveGraphNodeFunction.apply( new Tuple3<>(
 //        lowestLevelTermLabel,"LowestLevelTerm",event.lowestLevelTerm()));
@@ -50,16 +50,16 @@ public class ProActAdverseEventConsumer extends GraphDataConsumer {
   private Consumer<org.biodatagraphdb.alsdb.value.ProActAdverseEvent> proactAdverseEventConsumer = (event) -> {
     Node lowestLevelTermNode = resolveEventCategoryNodeFunction.apply(event);
     Node subjectNode  = resolveSubjectNodeFunction.apply(event.subjectTuple());
-    lib.getNovelLabelConsumer().accept(subjectNode, alsAssociatedLabel);
-    lib.getNovelLabelConsumer().accept(subjectNode,proactLabel);
+    lib.novelLabelConsumer.accept(subjectNode, alsAssociatedLabel);
+    lib.novelLabelConsumer.accept(subjectNode,proactLabel);
     // establish  relationship between subject and adverse event
-    Relationship rel = lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(subjectNode, lowestLevelTermNode),
+    Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode, lowestLevelTermNode),
         categorizesRelType);
     // add properties to the relationship
-    lib.getRelationshipPropertyValueConsumer().accept(rel, new Tuple2<>("Severity",event.severity()));
-    lib.getRelationshipPropertyValueConsumer().accept(rel, new Tuple2<>("Outcome",event.outcome()));
-    lib.getSetRelationshipIntegerProperty().accept(rel, new Tuple2<>("StartDateDelta",event.startDateDelta()));
-    lib.getSetRelationshipIntegerProperty().accept(rel, new Tuple2<>("EndDateDelta",event.endDateDelta()));
+    lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Severity",event.severity()));
+    lib.relationshipPropertyValueConsumer.accept(rel, new Tuple2<>("Outcome",event.outcome()));
+    lib.setRelationshipIntegerProperty.accept(rel, new Tuple2<>("StartDateDelta",event.startDateDelta()));
+    lib.setRelationshipIntegerProperty.accept(rel, new Tuple2<>("EndDateDelta",event.endDateDelta()));
   };
 
   @Override

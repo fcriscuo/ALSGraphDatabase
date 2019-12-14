@@ -8,7 +8,7 @@ import java.util.function.BiConsumer;
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 /*
@@ -30,16 +30,16 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer {
     String drugInteractionType = eRelType.name();
     switch (drugInteractionType) {
       case ("DRUG_TARGET"):
-        lib.getNovelLabelConsumer().accept(node, org.biodatagraphdb.alsdb.app.ALSDatabaseImportApp.LabelTypes.Drug_Target);
+        lib.novelLabelConsumer.accept(node, org.biodatagraphdb.alsdb.app.ALSDatabaseImportApp.LabelTypes.Drug_Target);
         break;
       case ("DRUG_ENZYME"):
-        lib.getNovelLabelConsumer().accept(node, org.biodatagraphdb.alsdb.app.ALSDatabaseImportApp.LabelTypes.Drug_Enzyme);
+        lib.novelLabelConsumer.accept(node, org.biodatagraphdb.alsdb.app.ALSDatabaseImportApp.LabelTypes.Drug_Enzyme);
         break;
       case ("DRUG_TRANSPORTER"):
-        lib.getNovelLabelConsumer().accept(node, org.biodatagraphdb.alsdb.app.ALSDatabaseImportApp.LabelTypes.Drug_Transporter);
+        lib.novelLabelConsumer.accept(node, org.biodatagraphdb.alsdb.app.ALSDatabaseImportApp.LabelTypes.Drug_Transporter);
         break;
       case ("DRUG_CARRIER"):
-        lib.getNovelLabelConsumer().accept(node, org.biodatagraphdb.alsdb.app.ALSDatabaseImportApp.LabelTypes.Drug_Carrier);
+        lib.novelLabelConsumer.accept(node, org.biodatagraphdb.alsdb.app.ALSDatabaseImportApp.LabelTypes.Drug_Carrier);
         break;
       default:
         AsyncLoggingService.logError(drugInteractionType + " is an invalid drug type");
@@ -52,12 +52,12 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer {
   private BiConsumer<String, Node> completeDrugBankNodeProperties = (id, node) -> {
     org.biodatagraphdb.alsdb.service.DrugBankService.INSTANCE.getDrugBankValueById(id)
         .ifPresent(dbv -> {
-          lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("DrugId", dbv.drugBankId()));
-          lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("DrugName", dbv.drugName()));
-          lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("DrugType", dbv.drugType()));
-          lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("CASNumber", dbv.casNumber()));
-          lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("RxListLink", dbv.rxListLink()));
-          lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("NDCLink", dbv.ndcLink()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugId", dbv.drugBankId()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugName", dbv.drugName()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("DrugType", dbv.drugType()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("CASNumber", dbv.casNumber()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("RxListLink", dbv.rxListLink()));
+          lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("NDCLink", dbv.ndcLink()));
         });
   };
 
@@ -72,7 +72,7 @@ public class DrugUniprotInfoConsumer extends GraphDataConsumer {
       drug.drugIdList().forEach((id) -> {
         Node drugNode = resolveDrugBankNode.apply(id);
         completeDrugBankNodeProperties.accept(drug.id(), drugNode);
-        lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, drugNode),
+        lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, drugNode),
             drugRelType);
       });
 

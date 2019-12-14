@@ -11,7 +11,7 @@ import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.eclipse.collections.impl.factory.Lists;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 /*
@@ -33,12 +33,12 @@ public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
     Lists.mutable.of(subjectNode, timepointNode)
         .forEach(annotateNeurobankNodeConsumer);
     // establish a Relationship between these 2 Nodes
-    Relationship rel = lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(subjectNode, timepointNode),
+    Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode, timepointNode),
        subjectEventRelationType);
     // add properties to this Relationship
-    lib.getRelationshipPropertyValueConsumer().accept(rel,
+    lib.relationshipPropertyValueConsumer.accept(rel,
         new Tuple2<>("Timepoint",String.valueOf(timepoint.timepoint())));
-    lib.getRelationshipPropertyValueConsumer().accept(rel,
+    lib.relationshipPropertyValueConsumer.accept(rel,
         new Tuple2<>("Interval", String.valueOf(timepoint.timepointInterval())));
   };
 

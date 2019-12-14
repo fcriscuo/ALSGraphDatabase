@@ -12,7 +12,7 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 /*
 Java Consumer responsible for importing sample variant data
@@ -32,16 +32,16 @@ public class SampleVariantConsumer extends GraphDataConsumer{
    Node geneNode = resolveEnsemblGeneNodeFunction.apply(svc.ensemblGeneId());
    Node sampleNode = resolveSampleNodeFunction.apply(svc.extSampleId());
    Node sampleVariantNode = resolveSampleVariantNode.apply(svc);
-   if (lib.getIsAlsAssociatedPredicate().test(geneNode)) {
-     lib.getNovelLabelConsumer().accept(sampleVariantNode, alsAssociatedLabel);
-     lib.getNovelLabelConsumer().accept(sampleNode, alsAssociatedLabel);
+   if (lib.isAlsAssociatedPredicate.test(geneNode)) {
+     lib.novelLabelConsumer.accept(sampleVariantNode, alsAssociatedLabel);
+     lib.novelLabelConsumer.accept(sampleNode, alsAssociatedLabel);
    }
    // create sample <-> sampleVariant relationship
-   Relationship sampleToSampleVariantRel = lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(sampleNode,sampleVariantNode),
+   Relationship sampleToSampleVariantRel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleNode,sampleVariantNode),
        new org.biodatagraphdb.alsdb.util.DynamicRelationshipTypes("sample_variant"));
-   lib.getSetRelationshipIntegerProperty().accept(sampleToSampleVariantRel, new Tuple2<>("VariantCount", svc.numVariants()));
+   lib.setRelationshipIntegerProperty.accept(sampleToSampleVariantRel, new Tuple2<>("VariantCount", svc.numVariants()));
 
-   lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(sampleVariantNode,geneNode),
+   lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleVariantNode,geneNode),
       encodedRelationType);
  };
 

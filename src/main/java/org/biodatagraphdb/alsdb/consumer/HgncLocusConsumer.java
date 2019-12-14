@@ -9,10 +9,10 @@ import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
-import edu.jhu.fcriscu1.als.graphdb.util.DynamicLabel;
+import org.biodatagraphdb.alsdb.util.DynamicLabel;
 import org.neo4j.graphdb.Node;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
-import edu.jhu.fcriscu1.als.graphdb.util.StringUtils;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.StringUtils;
 import scala.Tuple2;
 
 public class HgncLocusConsumer  extends GraphDataConsumer{
@@ -23,14 +23,14 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
   private BiConsumer<Node, org.biodatagraphdb.alsdb.value.HgncLocus> resolveHgncLocusRelationshipsConsumer = (geNode, hgnc) -> {
     if (org.biodatagraphdb.alsdb.value.HgncLocus.isValidString(hgnc.uniprotId())) {
       Node proteinNode = resolveProteinNodeFunction.apply(hgnc.uniprotId());
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode,geNode),encodedRelationType );
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode,geNode),encodedRelationType );
     }
 
     if (org.biodatagraphdb.alsdb.value.HgncLocus.isValidString(hgnc.ensemblGeneId())) {
       Node geneNode = resolveGeneticEntityNodeFunction.apply(hgnc.ensemblGeneId());
-      lib.getNovelLabelConsumer().accept(geneNode,ensemblLabel);
-      lib.getNovelLabelConsumer().accept(geneNode, geneLabel);
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(geNode,geneNode),xrefRelationType);
+      lib.novelLabelConsumer.accept(geneNode,ensemblLabel);
+      lib.novelLabelConsumer.accept(geneNode, geneLabel);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geNode,geneNode),xrefRelationType);
     }
     // HGNC Xref
     registerXrefRelationshipFunction.apply(geNode, hgncLabel, hgnc.hugoSymbol());
@@ -65,12 +65,12 @@ public class HgncLocusConsumer  extends GraphDataConsumer{
    */
   private Consumer<org.biodatagraphdb.alsdb.value.HgncLocus> hgncLocusConsumer = (hgnc) -> {
     Node geNode = resolveGeneticEntityNodeFunction.apply(hgnc.id());
-    lib.getNovelLabelConsumer().accept(geNode,hgncLabel);
-    lib.getNovelLabelConsumer().accept(geNode,new DynamicLabel(hgnc.hgncLocusGroup()));
-    lib.getNodePropertyValueConsumer().accept(geNode, new Tuple2<>("EntityType",hgnc.hgncLocusType()));
-    lib.getNodePropertyValueConsumer().accept(geNode, new Tuple2<>("EntityName",hgnc.hgncName()));
-    lib.getNodePropertyValueConsumer().accept(geNode, new Tuple2<>("EntityLocation",hgnc.hgncLocation()));
-    lib.getNodePropertyValueConsumer().accept(geNode, new Tuple2<>("GeneFamily",hgnc.geneFamily()));
+    lib.novelLabelConsumer.accept(geNode,hgncLabel);
+    lib.novelLabelConsumer.accept(geNode,new DynamicLabel(hgnc.hgncLocusGroup()));
+    lib.nodePropertyValueConsumer.accept(geNode, new Tuple2<>("EntityType",hgnc.hgncLocusType()));
+    lib.nodePropertyValueConsumer.accept(geNode, new Tuple2<>("EntityName",hgnc.hgncName()));
+    lib.nodePropertyValueConsumer.accept(geNode, new Tuple2<>("EntityLocation",hgnc.hgncLocation()));
+    lib.nodePropertyValueConsumer.accept(geNode, new Tuple2<>("GeneFamily",hgnc.geneFamily()));
     // resolve relationships
     resolveHgncLocusRelationshipsConsumer.accept(geNode, hgnc);
 

@@ -100,7 +100,7 @@ Properties file
                     propertiesMap.put(key, p.getProperty(key));
                 }
             } catch (IOException e ) {
-                edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService.logError(e.getMessage());
+               AsyncLoggingService.logError(e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -116,7 +116,7 @@ Properties file
         // lookup a file sspecified in the properties file
         String propertyName = "PPI_INTACT_FILE";
         String filePath = FrameworkPropertyService.INSTANCE.getStringProperty(propertyName);
-       edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService.logInfo("Property: " +propertyName +"  value:  "+filePath);
+       AsyncLoggingService.logInfo("Property: " +propertyName +"  value:  "+filePath);
        // look up a resource file
         propertyName = "TEST_PROACT_ADVERSE_EVENT_FILE";
         FrameworkPropertyService.INSTANCE.getOptionalResourcePath(propertyName)

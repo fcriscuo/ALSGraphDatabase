@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import org.neo4j.graphdb.Node;
 import scala.Tuple2;
 
@@ -26,27 +26,27 @@ public class EnsemblGeneConsumer extends GraphDataConsumer {
 
   private Consumer<org.biodatagraphdb.alsdb.value.EnsemblGene> ensemblGeneConsumer = (gene) -> {
     Node geneNode = resolveEnsemblGeneNodeFunction.apply(gene.ensemblGeneId());
-    lib.getNodePropertyValueConsumer().accept(geneNode, new Tuple2<>("Chromosome", gene.chromosome()));
-    lib.getNodeIntegerPropertyValueConsumer()
+    lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("Chromosome", gene.chromosome()));
+    lib.nodeIntegerPropertyValueConsumer
         .accept(geneNode, new Tuple2<>("GeneStart", gene.geneStart()));
-    lib.getNodeIntegerPropertyValueConsumer().accept(geneNode, new Tuple2<>("GeneEnd", gene.geneEnd()));
-    lib.getNodeIntegerPropertyValueConsumer().accept(geneNode, new Tuple2<>("Strand", gene.stand()));
+    lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("GeneEnd", gene.geneEnd()));
+    lib.nodeIntegerPropertyValueConsumer.accept(geneNode, new Tuple2<>("Strand", gene.stand()));
     Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(gene.ensemblTranscriptId());
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(geneNode, transcriptNode),
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),
         transcribesRelationType);
     // gene - protein relationship
     if (org.biodatagraphdb.alsdb.value.EnsemblGene.isValidString(gene.uniprotId())) {
       Node proteinNode = resolveProteinNodeFunction.apply(gene.uniprotId());
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(geneNode, proteinNode),
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, proteinNode),
           transcribesRelationType);
     }
     // gene - gene ontology relationship
     Node goNode = resolveGeneOntologyNodeFunction.apply(gene.goEntry());
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(geneNode, goNode), xrefRelationType);
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, goNode), xrefRelationType);
     // gene - hgnc xref
     if (org.biodatagraphdb.alsdb.value.EnsemblGene.isValidString(gene.hugoSymbol())) {
       Node hgncNode = resolveXrefNode.apply(hgncLabel, gene.hugoSymbol());
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(geneNode, hgncNode), xrefRelationType);
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, hgncNode), xrefRelationType);
     }
   };
 

@@ -10,7 +10,7 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
@@ -20,15 +20,15 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
   private Consumer<org.biodatagraphdb.alsdb.value.NeurobankSubjectProperty> neurobankSubjectPropertyConsumer = (property)-> {
     // resolve new or existing subject node
     Node subjectNode = resolveSubjectNodeFunction.apply(property.subjectTuple());
-    lib.getNovelLabelConsumer().accept(subjectNode, alsAssociatedLabel);
-    lib.getNovelLabelConsumer().accept(subjectNode,neurobankLabel);
+    lib.novelLabelConsumer.accept(subjectNode, alsAssociatedLabel);
+    lib.novelLabelConsumer.accept(subjectNode,neurobankLabel);
     // resolve new or existing subject property node
     Node subjectPropertyNode = resolveSubjectPropertyNode.apply(property.id());
-    lib.getNodePropertyValueConsumer().accept(subjectPropertyNode, new Tuple2<>("PropertyCode",property.eventPropertyCode()));
-    lib.getNodePropertyValueConsumer().accept(subjectPropertyNode, new Tuple2<>("PropertyName",property.eventPropertyName()));
-    Relationship rel = lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(subjectNode, subjectPropertyNode),
+    lib.nodePropertyValueConsumer.accept(subjectPropertyNode, new Tuple2<>("PropertyCode",property.eventPropertyCode()));
+    lib.nodePropertyValueConsumer.accept(subjectPropertyNode, new Tuple2<>("PropertyName",property.eventPropertyName()));
+    Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode, subjectPropertyNode),
         propertyRelationType);
-    lib.getRelationshipPropertyValueConsumer().accept(rel,new Tuple2<>("propertyValue", property.eventPropertyValue()));
+    lib.relationshipPropertyValueConsumer.accept(rel,new Tuple2<>("propertyValue", property.eventPropertyValue()));
   };
 
   @Override

@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.neo4j.graphdb.Node;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
@@ -24,10 +24,10 @@ public class PathwayInfoConsumer extends GraphDataConsumer implements Consumer<P
     Node pathwayNode = resolvePathwayNodeFunction.apply(pathway.id());
     // if this is the first time we've seen this Pathway we need to set the
     // pathway name
-      lib.getNodePropertyValueConsumer()
+      lib.nodePropertyValueConsumer
           .accept(pathwayNode, new Tuple2<>("Pathway", pathway.eventName()));
     Node proteinNode = resolveProteinNodeFunction.apply(pathway.uniprotId());
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, pathwayNode),pathwayRelationshipType );
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, pathwayNode),pathwayRelationshipType );
   };
 
 /*

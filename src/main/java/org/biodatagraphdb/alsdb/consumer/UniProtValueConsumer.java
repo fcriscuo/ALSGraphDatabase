@@ -10,8 +10,8 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
-import edu.jhu.fcriscu1.als.graphdb.util.StringUtils;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.StringUtils;
 import scala.Tuple2;
 
 public class UniProtValueConsumer extends GraphDataConsumer {
@@ -32,7 +32,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
       Node goNode = resolveGeneOntologyNodeFunction.apply(go);
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
 
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, goNode),
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, goNode),
           relType);
       AsyncLoggingService.logInfo("Created relationship between protein " + uniprotId
           + " and GO id: " + go.goTermAccession());
@@ -65,11 +65,11 @@ public class UniProtValueConsumer extends GraphDataConsumer {
 
   private Consumer<org.biodatagraphdb.alsdb.value.UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
       Node node = resolveProteinNodeFunction.apply(upv.uniprotId());
-      lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
-      lib.getNodePropertyValueListConsumer().accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
-      lib.getNodePropertyValueListConsumer().accept(node, new Tuple2<>("GeneSymbol", upv.geneNameList()));
-      lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("Mass", upv.mass()));
-    lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("Length", upv.length()));
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
+      lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
+      lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("GeneSymbol", upv.geneNameList()));
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Mass", upv.mass()));
+    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Length", upv.length()));
       AsyncLoggingService.logInfo(">>>Created Protein node for " +upv.uniprotId());
 
   };
@@ -87,7 +87,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     StringUtils.convertToJavaString(upv.pubMedIdList())
         .stream()
         .map(pubMedId ->resolveXrefNode.apply(pubMedLabel,pubMedId))
-        .forEach(xrefNode -> lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, xrefNode),
+        .forEach(xrefNode -> lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, xrefNode),
             pubMedXrefRelType));
   };
 

@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 /*
@@ -25,7 +25,7 @@ public class NeurobankCategoryConsumer extends GraphDataConsumer {
     Node categoryNode = resolveCategoryNode.apply(category.category());
     if(!category.isSelfReferential()){
       Node parentCategoryNode = resolveCategoryNode.apply(category.parentCategory());
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(parentCategoryNode, categoryNode),
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(parentCategoryNode, categoryNode),
           childRelationType);
     }
   };

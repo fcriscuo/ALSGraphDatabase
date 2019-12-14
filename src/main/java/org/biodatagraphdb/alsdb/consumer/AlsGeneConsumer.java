@@ -11,7 +11,7 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.eclipse.collections.impl.factory.Sets;
 import org.neo4j.graphdb.Node;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 /*
@@ -38,28 +38,28 @@ public class AlsGeneConsumer extends GraphDataConsumer{
        // label this genetic entity as a Gene
 
        // add ALS label if these nodes have not been already labeled
-       lib.getNovelLabelConsumer().accept(geneNode, alsAssociatedLabel);
+       lib.novelLabelConsumer.accept(geneNode, alsAssociatedLabel);
        // set/reset gene properties
-       lib.getNodePropertyValueConsumer()
+       lib.nodePropertyValueConsumer
            .accept(geneNode, new Tuple2<>("Chromosome", alsGene.chromosome()));
-       lib.getNodeIntegerPropertyValueConsumer()
+       lib.nodeIntegerPropertyValueConsumer
            .accept(geneNode, new Tuple2<>("GeneStart", alsGene.geneStart()));
-       lib.getNodeIntegerPropertyValueConsumer()
+       lib.nodeIntegerPropertyValueConsumer
            .accept(geneNode, new Tuple2<>("GeneEnd", alsGene.geneEnd()));
-       lib.getNodePropertyValueConsumer().accept(geneNode, new Tuple2<>("Strand", alsGene.strand()));
+       lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("Strand", alsGene.strand()));
        processedAlsGeneSet.add(alsGene.ensemblGeneId());
        AsyncLoggingService.logInfo("Added new ALS-associated gene: " +alsGene.hugoName());
      }
      Node transcriptNode =  resolveGeneticEntityNodeFunction.apply(alsGene.ensemblTranscriptId());
-    lib.getNovelLabelConsumer().accept(transcriptNode, alsAssociatedLabel);
+    lib.novelLabelConsumer.accept(transcriptNode, alsAssociatedLabel);
      Node proteinNode = resolveProteinNodeFunction.apply(alsGene.uniprotId());
-    lib.getNovelLabelConsumer().accept(proteinNode, alsAssociatedLabel);
+    lib.novelLabelConsumer.accept(proteinNode, alsAssociatedLabel);
     // define relationships: gene - transcript - protein - gene
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(geneNode, transcriptNode),
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),
         transcribesRelationType );
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, transcriptNode),
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, transcriptNode),
         geneticEntityRelationType);
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, geneNode),
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, geneNode),
         geneticEntityRelationType);
   });
 

@@ -10,23 +10,23 @@ import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
-import edu.jhu.fcriscu1.als.graphdb.util.DynamicLabel;
+import org.biodatagraphdb.alsdb.util.DynamicLabel;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import edu.jhu.fcriscu1.als.graphdb.util.StringUtils;
+import org.biodatagraphdb.alsdb.util.StringUtils;
 import scala.Tuple2;
 import scala.Tuple3;
+import  org.biodatagraphdb.alsdb.lib.FunctionLib;
 
 public abstract class GraphDataConsumer implements Consumer<Path> {
-
-
 
   protected final String HUMAN_SPECIES = "homo sapiens";
 
   // defined Labels
-  protected org.biodatagraphdb.alsdb.lib.FunctionLib lib;
+  protected
+  FunctionLib lib;
   protected final Label alsAssociatedLabel = new DynamicLabel("ALS-associated");
   protected final Label subjectLabel  = new DynamicLabel("Subject");
   protected final Label sampleLabel  = new DynamicLabel("Sample");
@@ -123,7 +123,7 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
 
   private GraphDatabaseServiceSupplier.RunMode runMode;
   protected  GraphDataConsumer(@Nonnull GraphDatabaseServiceSupplier.RunMode runMode) {
-    this.lib = new org.biodatagraphdb.alsdb.lib.FunctionLib(runMode);
+    this.lib = new FunctionLib(runMode);
     this.runMode = runMode;
   }
 
@@ -131,10 +131,10 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
 
 
   protected Function<String,Node> resolveProactAdverseEventNode = (id) ->{
-   Node aeNode = lib.getResolveGraphNodeFunction().apply(new Tuple3<>(proactAdverseEventLabel,
+   Node aeNode = lib.resolveGraphNodeFunction.apply(new Tuple3<>(proactAdverseEventLabel,
      "AdverseEventId",id  ));
-   lib.getNovelLabelConsumer().accept(aeNode, alsAssociatedLabel);
-   lib.getNovelLabelConsumer().accept(aeNode, proactLabel);
+   lib.novelLabelConsumer.accept(aeNode, alsAssociatedLabel);
+   lib.novelLabelConsumer.accept(aeNode, proactLabel);
    return aeNode;
  };
 
@@ -143,42 +143,42 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
   Consumer that ensures that an ALS-associated Node is properly annotated
    */
   protected Consumer<Node> annotateNeurobankNodeConsumer = (node)-> {
-    lib.getNovelLabelConsumer().accept(node, neurobankLabel);
-    lib.getNovelLabelConsumer().accept(node, alsAssociatedLabel);
+    lib.novelLabelConsumer.accept(node, neurobankLabel);
+    lib.novelLabelConsumer.accept(node, alsAssociatedLabel);
   };
 
   protected Function<org.biodatagraphdb.alsdb.value.GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)-> {
-    Node goNode = lib.getResolveGraphNodeFunction()
+    Node goNode = lib.resolveGraphNodeFunction
         .apply(new Tuple3<>(geneOntologyLabel,"GeneOntology",go.goTermAccession()));
-    lib.getNovelLabelConsumer().accept(goNode,xrefLabel);
+    lib.novelLabelConsumer.accept(goNode,xrefLabel);
     if (org.biodatagraphdb.alsdb.value.GeneOntology.isValidString(go.goDomain())) {
-      lib.getNovelLabelConsumer().accept(goNode, new DynamicLabel(go.goDomain()));
+      lib.novelLabelConsumer.accept(goNode, new DynamicLabel(go.goDomain()));
     }
-    lib.getNodePropertyValueConsumer().accept(goNode, new Tuple2<>("GeneOntologyTermAccession", go.goTermAccession()));
-    lib.getNodePropertyValueConsumer().accept(goNode, new Tuple2<>("GeneOntologyDomain",
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermAccession", go.goTermAccession()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyDomain",
         go.goDomain()));
-    lib.getNodePropertyValueConsumer().accept(goNode, new Tuple2<>("GeneOntologyTermName", go.goName()));
-    lib.getNodePropertyValueConsumer().accept(goNode, new Tuple2<>("GeneOntologyTermDefinition", go.goDefinition()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermName", go.goName()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermDefinition", go.goDefinition()));
     return goNode;
   };
 
   protected Function<String,Node> resolveAlsodMutationNodeFunction  = (id)->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(alsodMutationLabel, "ALSoDMutationCode", id));
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(alsodMutationLabel, "ALSoDMutationCode", id));
 
   protected Function<String,Node> resolveSubjectEventPropertyValueNodeFunction = (id) ->
-      lib.getResolveGraphNodeFunction()
+      lib.resolveGraphNodeFunction
           .apply(new Tuple3<>(subjectEventPropertyValueLabel,"EventPropertyValue",id));
 
   protected Function<String,Node> resolveSubjectEventPropertyNodeFunction = (id) ->
-    lib.getResolveGraphNodeFunction().apply(new Tuple3<>(subjectEventPropertyLabel,"EventProperty",id));
+    lib.resolveGraphNodeFunction.apply(new Tuple3<>(subjectEventPropertyLabel,"EventProperty",id));
 
   /*
   Function to find or create a new Xref Node
   Requires a secondary Label to identify the xref source
    */
   protected BiFunction<Label,String,Node> resolveXrefNode = (label, id)-> {
-    Node node = lib.getResolveGraphNodeFunction().apply(new Tuple3<>(xrefLabel, "XrefId", id));
-    lib.getNovelLabelConsumer().accept(node, label);
+    Node node = lib.resolveGraphNodeFunction.apply(new Tuple3<>(xrefLabel, "XrefId", id));
+    lib.novelLabelConsumer.accept(node, label);
     return node;
   };
 
@@ -193,97 +193,97 @@ be created and returned
     @Override
     public Relationship apply(Node sourceNode, Label secondaryLabel, String xrefId) {
       Node xrefNode = resolveXrefNode.apply(xrefLabel,xrefId);
-      lib.getNovelLabelConsumer().accept(xrefNode,secondaryLabel);
-      return lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(sourceNode,xrefNode),xrefRelationType);
+      lib.novelLabelConsumer.accept(xrefNode,secondaryLabel);
+      return lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sourceNode,xrefNode),xrefRelationType);
     }
   };
 
   protected Function<Tuple2<String,String>, Node>  resolveEventTimepointNodeFunction = (tuple) ->{
-    Node node =  lib.getResolveGraphNodeFunction().apply(new Tuple3<>(alsStudyTimepointLabel,"TimepointId",tuple._1()));
-    lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("TimepintName",tuple._2()));
+    Node node =  lib.resolveGraphNodeFunction.apply(new Tuple3<>(alsStudyTimepointLabel,"TimepointId",tuple._1()));
+    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("TimepintName",tuple._2()));
     return node;
   };
   /*
   resolveSubjectEventNodeFunction.apply(property.subjectEventTuple());
    */
   protected Function<Tuple2<String,String>,Node> resolveSubjectEventNodeFunction = (tuple) -> {
-    Node node = lib.getResolveGraphNodeFunction().apply(new Tuple3<>(alsStudyTimepointEventLabel,
+    Node node = lib.resolveGraphNodeFunction.apply(new Tuple3<>(alsStudyTimepointEventLabel,
         "EventCategory",tuple._1()));
-    lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("FormName", tuple._2()));
+    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("FormName", tuple._2()));
     return node;
   };
 
 
 
   protected Function<String,Node> resolveSubjectPropertyNode = (id) ->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(subjectPropertyLabel, "Id",id));
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(subjectPropertyLabel, "Id",id));
 
   protected Function<String,Node> resolveCategoryNode = (category) ->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(neurobankCategoryLabel, "Category",category));
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(neurobankCategoryLabel, "Category",category));
 
   protected Function<Tuple2<String,String>, Node> resolveSubjectNodeFunction =
       (subjectTuple) -> {
-        Node node = lib.getResolveGraphNodeFunction().apply(new Tuple3<>(subjectLabel,
+        Node node = lib.resolveGraphNodeFunction.apply(new Tuple3<>(subjectLabel,
             "SubjectGuid", subjectTuple._2()));
-        lib.getNodePropertyValueConsumer().accept(node, new Tuple2<>("SubjectId", subjectTuple._1()));
+        lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("SubjectId", subjectTuple._1()));
         return node;
       };
 
 
 
   protected Function<String, Node> resolveHumanTissueNodeFunction = (tissueId) ->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(tissueLabel,
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(tissueLabel,
           "TissueId",tissueId));
 
   protected Function<String, Node> resolvePathwayNodeFunction = (pathwayId) ->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(pathwayLabel,
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(pathwayLabel,
           "PathwayId",pathwayId));
 
 
   protected Function<String, Node> resolveDiseaseNodeFunction = (diseaseId) ->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(diseaseLabel,
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(diseaseLabel,
           "DiseaseId",diseaseId));
 
   protected Function<org.biodatagraphdb.alsdb.value.RnaTpmGene, Node> resolveRnaTpmGeneNode = (rnaTpmGene) -> {
-    Node node = lib.getResolveGraphNodeFunction().apply(new Tuple3<>(rnaTpmLabel,
+    Node node = lib.resolveGraphNodeFunction.apply(new Tuple3<>(rnaTpmLabel,
         "RnaTpmId", rnaTpmGene.id()));
     if (node != null ) {
       // persist tpm value as a String
-      lib.getNodePropertyValueConsumer()
+      lib.nodePropertyValueConsumer
           .accept(node, new Tuple2<>("TPM", String.valueOf(rnaTpmGene.tpm())));
     }
     return node;
   };
 
   protected Function<String,Node> resolveSampleNodeFunction = (sampleId) ->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(sampleLabel, "SampleId", sampleId));
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(sampleLabel, "SampleId", sampleId));
 
 
   protected Function<String, Node> resolveGeneticEntityNodeFunction = (geneticEntityId) ->
-     lib.getResolveGraphNodeFunction()
+     lib.resolveGraphNodeFunction
          .apply(new Tuple3<>(geneticEntityLabel,"GeneticEntityId", geneticEntityId));
   /*
   Protected Function that resolves a Protein Node for a specified UniProt id
   by either finding an existing Node or by creating a new one
    */
   protected Function<String, Node> resolveProteinNodeFunction = (uniprotId) ->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(proteinLabel,"UniProtKBID", uniprotId));
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(proteinLabel,"UniProtKBID", uniprotId));
 
 
   protected Function<String, Node> resolveDrugBankNode = (dbId) ->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(drugBankLabel,"DrugBankId", dbId));
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(drugBankLabel,"DrugBankId", dbId));
 
   protected Function<String, Node> resolveEnsemblTranscriptNodeFunction =
       transcriptId -> {
         Node node = resolveGeneticEntityNodeFunction.apply(transcriptId);
-        lib.getNovelLabelConsumer().accept(node,transcriptLabel);
+        lib.novelLabelConsumer.accept(node,transcriptLabel);
         return node;
       };
 
   protected Function<String, Node> resolveEnsemblGeneNodeFunction =
       geneId -> {
         Node node = resolveGeneticEntityNodeFunction.apply(geneId);
-        lib.getNovelLabelConsumer().accept(node,geneLabel);
+        lib.novelLabelConsumer.accept(node,geneLabel);
         return node;
       };
 
@@ -293,21 +293,21 @@ be created and returned
       Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(transcriptId);
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
       Tuple2<String, String> key = new Tuple2<>(uniprotId, transcriptId);
-      lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(proteinNode, transcriptNode),
+      lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, transcriptNode),
           encodedRelationType );
     });
   }
 protected Function<org.biodatagraphdb.alsdb.value.SampleVariantSummary,Node> resolveSampleVariantNode = (svc) -> {
 
-  Node svNode = lib.getResolveGraphNodeFunction()
+  Node svNode = lib.resolveGraphNodeFunction
       .apply(new Tuple3<>(sampleVariantLabel,"SampleVariantId", svc.id()));
   // persist the list of variants
-  lib.getNodePropertyValueStringArrayConsumer().accept(svNode,new Tuple2<>("Variants", svc.variantList()));
+  lib.nodePropertyValueStringArrayConsumer.accept(svNode,new Tuple2<>("Variants", svc.variantList()));
   return svNode;
 };
 
   protected Function<String, Node> resolveSnpNodeFunction = (snpId) ->
-      lib.getResolveGraphNodeFunction().apply(new Tuple3<>(snpLabel,"SNP",snpId));
+      lib.resolveGraphNodeFunction.apply(new Tuple3<>(snpLabel,"SNP",snpId));
 
 }
 

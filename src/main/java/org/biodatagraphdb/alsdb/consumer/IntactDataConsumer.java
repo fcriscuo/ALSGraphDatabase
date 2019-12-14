@@ -15,7 +15,7 @@ import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<Path, Path> {
@@ -40,22 +40,22 @@ public class IntactDataConsumer extends GraphDataConsumer implements BiConsumer<
     RelationshipType interactionType = new org.biodatagraphdb.alsdb.util.DynamicRelationshipTypes(
         ppi.interactionTypeList().head()
     );
-    Relationship ppRel = lib.getResolveNodeRelationshipFunction()
+    Relationship ppRel = lib.resolveNodeRelationshipFunction
         .apply(new Tuple2<>(proteinNodeA, proteinNodeB), interactionType);
     AsyncLoggingService.logInfo("Created new PPI between Protein: " + ppi.interactorAId()
         + "  and Protein: " + ppi.interactorBId() + "   rel type: " + interactionType.name());
     // set ppi relationship properties
-    lib.getRelationshipPropertyValueConsumer().accept(ppRel, new Tuple2<>("Interaction_method_detection",
+    lib.relationshipPropertyValueConsumer.accept(ppRel, new Tuple2<>("Interaction_method_detection",
         ppi.detectionMethodList().mkString("|") ));
-    lib.getRelationshipPropertyValueConsumer().accept(ppRel, new Tuple2<>(
+    lib.relationshipPropertyValueConsumer.accept(ppRel, new Tuple2<>(
         "References",
             ppi.publicationIdList().mkString("|")
         ));
-    lib.getRelationshipPropertyValueConsumer().accept(ppRel,
+    lib.relationshipPropertyValueConsumer.accept(ppRel,
         new Tuple2<>("Neagtive", String.valueOf(ppi.negative())));
 
     if (null != ppi.confidenceValuesList() && ppi.confidenceValuesList().size() > 0) {
-      lib.getRelationshipPropertyValueConsumer().accept(ppRel,
+      lib.relationshipPropertyValueConsumer.accept(ppRel,
           new Tuple2<>("Confidence_level",
               ppi.confidenceValuesList().last()));
     }

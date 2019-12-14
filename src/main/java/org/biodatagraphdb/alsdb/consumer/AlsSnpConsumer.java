@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 /*
@@ -28,14 +28,14 @@ public class AlsSnpConsumer  extends GraphDataConsumer{
   private Consumer<org.biodatagraphdb.alsdb.value.EnsemblAlsSnp> alsSnpConsumer = (snp)-> {
     Node snpNode = resolveSnpNodeFunction.apply(snp.variantId());
     // add ALS label if these nodes have not been already labeled
-    lib.getNovelLabelConsumer().accept(snpNode, alsAssociatedLabel);
+    lib.novelLabelConsumer.accept(snpNode, alsAssociatedLabel);
     // set/reset SNP properties
-    lib.getNodeIntegerPropertyValueConsumer().accept(snpNode, new Tuple2<>("DistanceToTranscript", snp.distance()));
-    lib.getNodePropertyValueConsumer().accept(snpNode, new Tuple2<>("VariantAlleles", snp.alleleVariation()));
+    lib.nodeIntegerPropertyValueConsumer.accept(snpNode, new Tuple2<>("DistanceToTranscript", snp.distance()));
+    lib.nodePropertyValueConsumer.accept(snpNode, new Tuple2<>("VariantAlleles", snp.alleleVariation()));
     // this will create a Transcript Node if run in stand-alone test mode
     Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(snp.ensemblTranscriptId());
     // establish a relationship between transcript and snp
-    lib.getResolveNodeRelationshipFunction().apply(new Tuple2<>(transcriptNode,snpNode) ,
+    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(transcriptNode,snpNode) ,
         geneticEntityRelationType);
   };
 

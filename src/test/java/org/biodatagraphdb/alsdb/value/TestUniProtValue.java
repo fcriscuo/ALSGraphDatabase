@@ -1,12 +1,10 @@
 package org.biodatagraphdb.alsdb.value;
 
-
 import java.util.function.BiConsumer;
 import org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier;
-import edu.jhu.fcriscu1.als.graphdb.util.StringUtils;
 import scala.Tuple2;
 import scala.collection.immutable.List;
-
+import org.biodatagraphdb.alsdb.util.StringUtils;
 
 public class TestUniProtValue {
 

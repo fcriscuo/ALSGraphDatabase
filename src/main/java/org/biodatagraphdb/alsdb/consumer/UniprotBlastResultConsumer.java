@@ -11,7 +11,7 @@ import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import edu.jhu.fcriscu1.als.graphdb.util.AsyncLoggingService;
+import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
 
 public class UniprotBlastResultConsumer extends GraphDataConsumer {
@@ -27,12 +27,12 @@ public class UniprotBlastResultConsumer extends GraphDataConsumer {
       Tuple2<String, String> keyTuple = new Tuple2<>(blastResult.sourceUniprotId(),
           blastResult.hitUniprotId());
       // create or find existing Relationship pair
-      Relationship rel = lib.getResolveNodeRelationshipFunction()
+      Relationship rel = lib.resolveNodeRelationshipFunction
           .apply(new Tuple2<>(sourceNode, hitNode),
               seqSimRelationType);
-      lib.getRelationshipPropertyValueConsumer().accept(rel,
+      lib.relationshipPropertyValueConsumer.accept(rel,
           new Tuple2<>("BLAST_score", String.valueOf(blastResult.score())));
-      lib.getRelationshipPropertyValueConsumer().accept(rel,
+      lib.relationshipPropertyValueConsumer.accept(rel,
           new Tuple2<>("eValue", blastResult.eValue()));
 
   };
