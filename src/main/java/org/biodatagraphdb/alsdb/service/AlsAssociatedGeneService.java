@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
+import org.biodatagraphdb.alsdb.model.AlsAssociatedGene;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.impl.factory.Maps;
 
@@ -27,20 +28,20 @@ public enum AlsAssociatedGeneService {
 private Path alsGeneFilePath = Paths.get(
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE.getStringProperty("ALSOD_GENE_WHITE_LIST_FILE"));
 
-  private final ImmutableMap<String, org.biodatagraphdb.alsdb.value.AlsAssociatedGene> alsAssociatedGeneMap =
+  private final ImmutableMap<String, org.biodatagraphdb.alsdb.model.AlsAssociatedGene> alsAssociatedGeneMap =
       Suppliers.memoize(new  AlsAssociateGeneMapSupplier(alsGeneFilePath)).get();
 
   public Predicate<String> alsAssociatedGenePredicate = (@Nonnull String name) ->
       alsAssociatedGeneMap.containsKey(name.toUpperCase());
 
-  public Function<String, Optional<org.biodatagraphdb.alsdb.value.AlsAssociatedGene>> resolveAlsAssociatedGeneFunction =
+  public Function<String, Optional<org.biodatagraphdb.alsdb.model.AlsAssociatedGene>> resolveAlsAssociatedGeneFunction =
       (@Nonnull String name) ->
           (alsAssociatedGenePredicate.test(name))
       ? Optional.of(alsAssociatedGeneMap.get(name.toUpperCase()))
               : Optional.empty();
 
-  class AlsAssociateGeneMapSupplier implements Supplier<ImmutableMap<String, org.biodatagraphdb.alsdb.value.AlsAssociatedGene>> {
-    private final Map<String, org.biodatagraphdb.alsdb.value.AlsAssociatedGene> alsGeneMap  = Maps.mutable.empty();
+  class AlsAssociateGeneMapSupplier implements Supplier<ImmutableMap<String, org.biodatagraphdb.alsdb.model.AlsAssociatedGene>> {
+    private final Map<String, org.biodatagraphdb.alsdb.model.AlsAssociatedGene> alsGeneMap  = Maps.mutable.empty();
 
     AlsAssociateGeneMapSupplier(@Nonnull Path tsvFilePath) {
       generateMap(tsvFilePath);
@@ -49,12 +50,12 @@ private Path alsGeneFilePath = Paths.get(
     private void generateMap(Path tsvFilePath) {
       new org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier(tsvFilePath)
           .get()
-          .map(org.biodatagraphdb.alsdb.value.AlsAssociatedGene::parseCSVRecord)
-          .forEach(gene -> alsGeneMap.put(gene.geneSymbol(),gene));
+          .map(AlsAssociatedGene.Companion::parseCSVRecord)
+          .forEach(gene -> alsGeneMap.put(gene.getGeneSymbol(),gene));
     }
 
     @Override
-    public ImmutableMap<String, org.biodatagraphdb.alsdb.value.AlsAssociatedGene> get() {
+    public ImmutableMap<String, org.biodatagraphdb.alsdb.model.AlsAssociatedGene> get() {
      return Maps.immutable.ofMap(this.alsGeneMap);
     }
   }

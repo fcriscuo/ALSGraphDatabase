@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
+import org.biodatagraphdb.alsdb.model.GeneOntology;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
@@ -27,7 +28,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     lib.shutDown();
   }
 
-  private void createProteinGeneOntologyRealtionship(String uniprotId, org.biodatagraphdb.alsdb.value.GeneOntology go, RelationshipType relType) {
+  private void createProteinGeneOntologyRealtionship(String uniprotId, org.biodatagraphdb.alsdb.model.GeneOntology go, RelationshipType relType) {
     // establish relationship to the protein node
       Node goNode = resolveGeneOntologyNodeFunction.apply(go);
       Node proteinNode = resolveProteinNodeFunction.apply(uniprotId);
@@ -35,7 +36,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, goNode),
           relType);
       AsyncLoggingService.logInfo("Created relationship between protein " + uniprotId
-          + " and GO id: " + go.goTermAccession());
+          + " and GO id: " + go.getGoTermAccession());
   }
 
   private Consumer<org.biodatagraphdb.alsdb.value.UniProtValue> geneOntologyListConsumer = (upv) -> {
@@ -43,13 +44,13 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     // biological process
     StringUtils.convertToJavaString(upv.goBioProcessList())
         .stream()
-        .map(goEntry -> org.biodatagraphdb.alsdb.value.GeneOntology.parseGeneOntologyEntry("Gene Ontology (bio process)", goEntry))
+        .map(goEntry -> GeneOntology.Companion.parseGeneOntologyEntry("Gene Ontology (bio process)", goEntry))
         .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go,
            goBioProcessRelType));
     // cellular  component
     StringUtils.convertToJavaString(upv.goCellComponentList())
         .stream()
-        .map(goEntry -> org.biodatagraphdb.alsdb.value.GeneOntology
+        .map(goEntry -> GeneOntology.Companion
             .parseGeneOntologyEntry("Gene Ontology (cellular component)", goEntry))
         .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go,
             goCellComponentRelType));
@@ -57,7 +58,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
     StringUtils.convertToJavaString(upv.goMolFuncList())
         .stream()
         .map(
-            goEntry -> org.biodatagraphdb.alsdb.value.GeneOntology.parseGeneOntologyEntry("Gene Ontology (mol function)", goEntry))
+            goEntry -> GeneOntology.Companion.parseGeneOntologyEntry("Gene Ontology (mol function)", goEntry))
         .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go,
             goMolFunctionRelType));
 

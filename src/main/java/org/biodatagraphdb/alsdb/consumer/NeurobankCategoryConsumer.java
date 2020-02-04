@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
+import org.biodatagraphdb.alsdb.model.AlsPropertyCategory;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.neo4j.graphdb.Node;
 import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
@@ -21,10 +22,10 @@ public class NeurobankCategoryConsumer extends GraphDataConsumer {
 
   public NeurobankCategoryConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
 
-  private Consumer<org.biodatagraphdb.alsdb.value.AlsPropertyCategory> neurobankCategoryConsumer = (category) -> {
-    Node categoryNode = resolveCategoryNode.apply(category.category());
+  private Consumer<org.biodatagraphdb.alsdb.model.AlsPropertyCategory> neurobankCategoryConsumer = (category) -> {
+    Node categoryNode = resolveCategoryNode.apply(category.getCategory());
     if(!category.isSelfReferential()){
-      Node parentCategoryNode = resolveCategoryNode.apply(category.parentCategory());
+      Node parentCategoryNode = resolveCategoryNode.apply(category.getParentCategory());
       lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(parentCategoryNode, categoryNode),
           childRelationType);
     }
@@ -34,7 +35,7 @@ public class NeurobankCategoryConsumer extends GraphDataConsumer {
   public void accept(Path path) {
     Preconditions.checkArgument(path != null);
     new org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier(path).get()
-        .map(org.biodatagraphdb.alsdb.value.AlsPropertyCategory::parseCSVRecord)
+        .map(AlsPropertyCategory.Companion::parseCSVRecord)
         .forEach(neurobankCategoryConsumer);
     lib.shutDown();
   }

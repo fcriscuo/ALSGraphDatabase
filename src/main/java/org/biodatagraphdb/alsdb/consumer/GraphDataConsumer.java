@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
+import org.biodatagraphdb.alsdb.model.GeneOntology;
 import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.biodatagraphdb.alsdb.util.DynamicLabel;
 import org.neo4j.graphdb.Label;
@@ -137,8 +138,6 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
    lib.novelLabelConsumer.accept(aeNode, proactLabel);
    return aeNode;
  };
-
-
   /*
   Consumer that ensures that an ALS-associated Node is properly annotated
    */
@@ -147,18 +146,18 @@ public abstract class GraphDataConsumer implements Consumer<Path> {
     lib.novelLabelConsumer.accept(node, alsAssociatedLabel);
   };
 
-  protected Function<org.biodatagraphdb.alsdb.value.GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)-> {
+  protected Function<org.biodatagraphdb.alsdb.model.GeneOntology,Node> resolveGeneOntologyNodeFunction = (go)-> {
     Node goNode = lib.resolveGraphNodeFunction
-        .apply(new Tuple3<>(geneOntologyLabel,"GeneOntology",go.goTermAccession()));
+        .apply(new Tuple3<>(geneOntologyLabel,"GeneOntology",go.getGoTermAccession()));
     lib.novelLabelConsumer.accept(goNode,xrefLabel);
-    if (org.biodatagraphdb.alsdb.value.GeneOntology.isValidString(go.goDomain())) {
-      lib.novelLabelConsumer.accept(goNode, new DynamicLabel(go.goDomain()));
+    if (GeneOntology.Companion.isValidString(go.getGoDomain())) {
+      lib.novelLabelConsumer.accept(goNode, new DynamicLabel(go.getGoDomain()));
     }
-    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermAccession", go.goTermAccession()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermAccession", go.getGoTermAccession()));
     lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyDomain",
-        go.goDomain()));
-    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermName", go.goName()));
-    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermDefinition", go.goDefinition()));
+        go.getGoDomain()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermName", go.getGoName()));
+    lib.nodePropertyValueConsumer.accept(goNode, new Tuple2<>("GeneOntologyTermDefinition", go.getGoDefinition()));
     return goNode;
   };
 
