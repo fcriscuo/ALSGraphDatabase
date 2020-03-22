@@ -8,7 +8,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
+import org.biodatagraphdb.alsdb.model.EnsemblAlsGene;
+
+import org.biodatagraphdb.alsdb.service.graphdb.*;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+import org.biodatagraphdb.alsdb.service.property.FrameworkPropertiesService;
+import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceLegacySupplier;
 import org.eclipse.collections.impl.factory.Sets;
 import org.neo4j.graphdb.Node;
 import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
@@ -24,7 +29,7 @@ Additional ALS genes may be added to this collection manually
  */
 public class AlsGeneConsumer extends GraphDataConsumer{
 
-  public AlsGeneConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
+  public AlsGeneConsumer(org.biodatagraphdb.alsdb.service.graphdb.RunMode runMode) {
     super(runMode);
   }
 
@@ -32,27 +37,27 @@ public class AlsGeneConsumer extends GraphDataConsumer{
   // repetitive property setting
   private Set<String> processedAlsGeneSet = Sets.mutable.empty();
 
-  private Consumer<org.biodatagraphdb.alsdb.value.EnsemblAlsGene> alsGeneConsumer = (alsGene -> {
-     Node geneNode = resolveGeneticEntityNodeFunction.apply(alsGene.ensemblGeneId());
-     if(!processedAlsGeneSet.contains(alsGene.ensemblGeneId())) {
+  private Consumer<org.biodatagraphdb.alsdb.model.EnsemblAlsGene> alsGeneConsumer = (alsGene -> {
+     Node geneNode = resolveGeneticEntityNodeFunction.apply(alsGene.getEnsemblGeneId());
+     if(!processedAlsGeneSet.contains(alsGene.getEnsemblGeneId())) {
        // label this genetic entity as a Gene
 
        // add ALS label if these nodes have not been already labeled
        lib.novelLabelConsumer.accept(geneNode, alsAssociatedLabel);
        // set/reset gene properties
        lib.nodePropertyValueConsumer
-           .accept(geneNode, new Tuple2<>("Chromosome", alsGene.chromosome()));
+           .accept(geneNode, new Tuple2<>("Chromosome", alsGene.getChromosome()));
        lib.nodeIntegerPropertyValueConsumer
-           .accept(geneNode, new Tuple2<>("GeneStart", alsGene.geneStart()));
+           .accept(geneNode, new Tuple2<>("GeneStart", alsGene.getGeneStart()));
        lib.nodeIntegerPropertyValueConsumer
-           .accept(geneNode, new Tuple2<>("GeneEnd", alsGene.geneEnd()));
-       lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("Strand", alsGene.strand()));
-       processedAlsGeneSet.add(alsGene.ensemblGeneId());
-       AsyncLoggingService.logInfo("Added new ALS-associated gene: " +alsGene.hugoName());
+           .accept(geneNode, new Tuple2<>("GeneEnd", alsGene.getGeneEnd()));
+       lib.nodePropertyValueConsumer.accept(geneNode, new Tuple2<>("Strand", alsGene.getStrand()));
+       processedAlsGeneSet.add(alsGene.getEnsemblGeneId());
+       AsyncLoggingService.logInfo("Added new ALS-associated gene: " +alsGene.getHugoName());
      }
-     Node transcriptNode =  resolveGeneticEntityNodeFunction.apply(alsGene.ensemblTranscriptId());
+     Node transcriptNode =  resolveGeneticEntityNodeFunction.apply(alsGene.getEnsemblTranscriptId());
     lib.novelLabelConsumer.accept(transcriptNode, alsAssociatedLabel);
-     Node proteinNode = resolveProteinNodeFunction.apply(alsGene.uniprotId());
+     Node proteinNode = resolveProteinNodeFunction.apply(alsGene.getUniprotId());
     lib.novelLabelConsumer.accept(proteinNode, alsAssociatedLabel);
     // define relationships: gene - transcript - protein - gene
     lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(geneNode, transcriptNode),
@@ -67,7 +72,7 @@ public class AlsGeneConsumer extends GraphDataConsumer{
   public void accept(Path path) {
     Preconditions.checkArgument(path != null);
     new org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier(path).get()
-        .map(org.biodatagraphdb.alsdb.value.EnsemblAlsGene::parseCSVRecord)
+        .map(EnsemblAlsGene.Companion::parseCSVRecord)
         .forEach(alsGeneConsumer);
     lib.shutDown();
     AsyncLoggingService.logInfo("ALS-associated gene count = " +processedAlsGeneSet.size());
@@ -76,9 +81,11 @@ public class AlsGeneConsumer extends GraphDataConsumer{
 
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
+     FrameworkPropertiesService.INSTANCE.resolvePropertyAsPathOption("ENSEMBL_ALS_GENES_FILE")
+            .map(path-> new AlsGeneConsumer(RunMode.PROD));
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_ALS_GENES_FILE")
-        .ifPresent(new AlsGeneConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
+        .ifPresent(new AlsGeneConsumer(org.biodatagraphdb.alsdb.service.graphdb.RunMode.PROD));
     AsyncLoggingService.logInfo("processed ensembl als genes file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -88,6 +95,6 @@ public class AlsGeneConsumer extends GraphDataConsumer{
    org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_ALS_GENES_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path, new AlsGeneConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
+            new TestGraphDataConsumer().accept(path, new AlsGeneConsumer(org.biodatagraphdb.alsdb.service.graphdb.RunMode.TEST)));
   }
 }

@@ -1,13 +1,13 @@
 package org.biodatagraphdb.alsdb.model
 
-import io.kotlintest.specs.WordSpec
+import io.kotlintest.specs.AbstractWordSpec
 
 
 /**
  * Created by fcriscuo on 2/3/20.
  * Test class for GeneOntology model object
  */
-class GeneOntologyTest:  WordSpec() {
+class GeneOntologyTest:  AbstractWordSpec() {
     init {
         val goTermAccession = "GO:0072686"
         val goDomain = "Biological function"

@@ -1,5 +1,6 @@
 package org.biodatagraphdb.alsdb.value;
 
+import org.biodatagraphdb.alsdb.model.AlsodMutation;
 import org.biodatagraphdb.alsdb.util.FrameworkPropertyService;
 import org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier;
 
@@ -9,7 +10,7 @@ public class TestAlsodMutation {
        .ifPresent( path ->
            new TsvRecordStreamSupplier(path)
        .get()
-       .map(org.biodatagraphdb.alsdb.value.AlsodMutation::parseCSVRecord)
+       .map(AlsodMutation.Companion::parseCSVRecord)
        .limit(500)
        .forEach(System.out::println));
  }

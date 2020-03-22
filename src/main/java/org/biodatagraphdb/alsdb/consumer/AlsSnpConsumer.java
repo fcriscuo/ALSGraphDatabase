@@ -7,7 +7,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
+import org.biodatagraphdb.alsdb.model.EnsemblAlsSnp;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceLegacySupplier;
 import org.neo4j.graphdb.Node;
 import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
@@ -21,19 +23,19 @@ have been created
  */
 public class AlsSnpConsumer  extends GraphDataConsumer{
 
-  public AlsSnpConsumer(GraphDatabaseServiceSupplier.RunMode runMode){
+  public AlsSnpConsumer(RunMode runMode){
     super(runMode);
   }
 
-  private Consumer<org.biodatagraphdb.alsdb.value.EnsemblAlsSnp> alsSnpConsumer = (snp)-> {
-    Node snpNode = resolveSnpNodeFunction.apply(snp.variantId());
+  private Consumer<org.biodatagraphdb.alsdb.model.EnsemblAlsSnp> alsSnpConsumer = (snp)-> {
+    Node snpNode = resolveSnpNodeFunction.apply(snp.getVariantId());
     // add ALS label if these nodes have not been already labeled
     lib.novelLabelConsumer.accept(snpNode, alsAssociatedLabel);
     // set/reset SNP properties
-    lib.nodeIntegerPropertyValueConsumer.accept(snpNode, new Tuple2<>("DistanceToTranscript", snp.distance()));
-    lib.nodePropertyValueConsumer.accept(snpNode, new Tuple2<>("VariantAlleles", snp.alleleVariation()));
+    lib.nodeIntegerPropertyValueConsumer.accept(snpNode, new Tuple2<>("DistanceToTranscript", snp.getDistance()));
+    lib.nodePropertyValueConsumer.accept(snpNode, new Tuple2<>("VariantAlleles", snp.getAlleleVariation()));
     // this will create a Transcript Node if run in stand-alone test mode
-    Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(snp.ensemblTranscriptId());
+    Node transcriptNode = resolveEnsemblTranscriptNodeFunction.apply(snp.getEnsemblTranscriptId());
     // establish a relationship between transcript and snp
     lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(transcriptNode,snpNode) ,
         geneticEntityRelationType);
@@ -43,7 +45,7 @@ public class AlsSnpConsumer  extends GraphDataConsumer{
   public void accept(Path path) {
     Preconditions.checkArgument(path != null);
     new org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier(path).get()
-        .map(org.biodatagraphdb.alsdb.value.EnsemblAlsSnp::parseCSVRecord)
+        .map(EnsemblAlsSnp.Companion::parseCSVRecord)
         .forEach(alsSnpConsumer);
     lib.shutDown();
   }
@@ -51,7 +53,7 @@ public class AlsSnpConsumer  extends GraphDataConsumer{
     Stopwatch sw = Stopwatch.createStarted();
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ENSEMBL_ALS_SNP_FILE")
-        .ifPresent(new AlsSnpConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
+        .ifPresent(new AlsSnpConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed ensembl als snp file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -60,6 +62,6 @@ public class AlsSnpConsumer  extends GraphDataConsumer{
   public static void main(String[] args) {
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_ENSEMBL_ALS_SNP_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new AlsSnpConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new AlsSnpConsumer(RunMode.TEST)));
   }
 }

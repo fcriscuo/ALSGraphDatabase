@@ -2,6 +2,8 @@ package org.biodatagraphdb.alsdb.value;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import org.biodatagraphdb.alsdb.model.SampleVariantSummary;
 import org.biodatagraphdb.alsdb.util.FrameworkPropertyService;
 import org.biodatagraphdb.alsdb.util.TsvRecordSplitIteratorSupplier;
 
@@ -12,14 +14,14 @@ public class TestSampleVariantSummary {
     Path testPath = (args.length>0) ? Paths.get(args[0])
         :Paths.get(default_test_file);
     System.out.println("Processing sample variants summary  file: " + testPath.toString());
-    new TsvRecordSplitIteratorSupplier(testPath, org.biodatagraphdb.alsdb.value.SampleVariantSummary.columnHeadings())
+    new TsvRecordSplitIteratorSupplier(testPath, SampleVariantSummary.Companion.getColumnHeadings())
         .get()
         .limit(100)
-        .map(org.biodatagraphdb.alsdb.value.SampleVariantSummary::parseCSVRecord)
+        .map(SampleVariantSummary.Companion::parseCSVRecord)
         .forEach(var -> {
-          System.out.println("id: "+ var.id()  + "   " +
-              var.hugoGeneName() +" number of variants= " +
-              var.numVariants());
+          System.out.println("id: "+ var.getId()  + "   " +
+              var.getHugoGeneName() +" number of variants= " +
+              var.getNumVariants());
 
         });
 

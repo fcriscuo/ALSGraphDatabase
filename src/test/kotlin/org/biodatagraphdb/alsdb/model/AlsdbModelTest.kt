@@ -2,9 +2,9 @@ package org.biodatagraphdb.alsdb.model
 
 import io.kotlintest.matchers.collections.shouldHaveElementAt
 import io.kotlintest.matchers.collections.shouldHaveSize
-import io.kotlintest.specs.WordSpec
+import io.kotlintest.specs.AbstractWordSpec
 
-class AlsdbModelTest: AlsdbModel, WordSpec() {
+class AlsdbModelTest: AlsdbModel, AbstractWordSpec() {
     init {
         val testSemicolonString = "PartA;PartB;PartC;PartD"
         "Parse by semi colon function" should {
@@ -17,7 +17,7 @@ class AlsdbModelTest: AlsdbModel, WordSpec() {
         }
         val testColonString = "Item1:Item2:Item3:Item4:Item5"
         "Parse by colon function" should {
-            "should creat a list with" {
+            "should create a list with" {
                 parseStringOnColon(testColonString).shouldHaveSize(5)
             }
             "have Item2"{

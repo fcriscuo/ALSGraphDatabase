@@ -10,8 +10,8 @@ import org.eclipse.collections.impl.factory.Maps;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,8 +37,9 @@ Public method to resolve a test file under the project's resources directory
     public Optional<Path> getOptionalResourcePath(@Nonnull  String propertyName) {
         if(propertiesMap.containsKey(propertyName)) {
             try {
-                URL resource =  org.biodatagraphdb.alsdb.poc.ReadResourceFileTest.class.getResource(propertiesMap.get(propertyName));
-                return Optional.of( Paths.get(resource.toURI()));
+                URI resource = new URI(propertiesMap.get(propertyName));
+                //URL resource =  org.biodatagraphdb.alsdb.poc.ReadResourceFileTest.class.getResource(propertiesMap.get(propertyName));
+                return Optional.of( Paths.get(resource));
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }

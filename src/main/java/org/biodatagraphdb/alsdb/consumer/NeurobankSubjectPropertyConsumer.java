@@ -7,7 +7,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
+import org.biodatagraphdb.alsdb.model.NeurobankSubjectProperty;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceLegacySupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
@@ -15,27 +17,27 @@ import scala.Tuple2;
 
 public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
 
-  public NeurobankSubjectPropertyConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
+  public NeurobankSubjectPropertyConsumer(RunMode runMode) {super(runMode);}
 
-  private Consumer<org.biodatagraphdb.alsdb.value.NeurobankSubjectProperty> neurobankSubjectPropertyConsumer = (property)-> {
+  private Consumer<org.biodatagraphdb.alsdb.model.NeurobankSubjectProperty> neurobankSubjectPropertyConsumer = (property)-> {
     // resolve new or existing subject node
-    Node subjectNode = resolveSubjectNodeFunction.apply(property.subjectTuple());
+    Node subjectNode = resolveSubjectNodeFunction.apply(property.getSubjectIdPair());
     lib.novelLabelConsumer.accept(subjectNode, alsAssociatedLabel);
     lib.novelLabelConsumer.accept(subjectNode,neurobankLabel);
     // resolve new or existing subject property node
-    Node subjectPropertyNode = resolveSubjectPropertyNode.apply(property.id());
-    lib.nodePropertyValueConsumer.accept(subjectPropertyNode, new Tuple2<>("PropertyCode",property.eventPropertyCode()));
-    lib.nodePropertyValueConsumer.accept(subjectPropertyNode, new Tuple2<>("PropertyName",property.eventPropertyName()));
+    Node subjectPropertyNode = resolveSubjectPropertyNode.apply(property.getId());
+    lib.nodePropertyValueConsumer.accept(subjectPropertyNode, new Tuple2<>("PropertyCode",property.getEventPropertyCode()));
+    lib.nodePropertyValueConsumer.accept(subjectPropertyNode, new Tuple2<>("PropertyName",property.getEventPropertyName()));
     Relationship rel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(subjectNode, subjectPropertyNode),
         propertyRelationType);
-    lib.relationshipPropertyValueConsumer.accept(rel,new Tuple2<>("propertyValue", property.eventPropertyValue()));
+    lib.relationshipPropertyValueConsumer.accept(rel,new Tuple2<>("propertyValue", property.getEventPropertyValue()));
   };
 
   @Override
   public void accept(Path path) {
     Preconditions.checkArgument(path != null);
     new org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier(path).get()
-        .map(org.biodatagraphdb.alsdb.value.NeurobankSubjectProperty::parseCSVRecord)
+        .map(NeurobankSubjectProperty.Companion::parseCSVRecord)
         .forEach(neurobankSubjectPropertyConsumer);
     lib.shutDown();
   }
@@ -43,7 +45,7 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_PROPERTY_FILE")
-        .ifPresent(new NeurobankSubjectPropertyConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
+        .ifPresent(new NeurobankSubjectPropertyConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed neurobank category file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -51,6 +53,6 @@ public class NeurobankSubjectPropertyConsumer extends GraphDataConsumer {
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_NEUROBANK_SUBJECT_PROPERTY_FILE")
         .ifPresent(
-            path -> new TestGraphDataConsumer().accept(path, new NeurobankSubjectPropertyConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
+            path -> new TestGraphDataConsumer().accept(path, new NeurobankSubjectPropertyConsumer(RunMode.TEST)));
   }
 }

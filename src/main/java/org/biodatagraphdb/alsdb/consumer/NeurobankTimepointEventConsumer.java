@@ -7,7 +7,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
+import org.biodatagraphdb.alsdb.model.NeurobankEventTimepoint;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceLegacySupplier;
 import org.eclipse.collections.impl.factory.Lists;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -23,12 +25,12 @@ This supports temporal longitudinal data
  */
 public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
 
-  NeurobankTimepointEventConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
+  NeurobankTimepointEventConsumer(RunMode runMode) {super(runMode);}
 
-  private Consumer<org.biodatagraphdb.alsdb.value.NeurobankEventTimepoint> neurobankSubjectTimepointConsumer = (timepoint) -> {
+  private Consumer<org.biodatagraphdb.alsdb.model.NeurobankEventTimepoint> neurobankSubjectTimepointConsumer = (timepoint) -> {
     Node subjectNode = resolveSubjectNodeFunction.apply(
-      timepoint.subjectTuple() );
-    Node timepointNode = resolveEventTimepointNodeFunction.apply(timepoint.timepointTuple());
+      timepoint.getSubjectIdPair() );
+    Node timepointNode = resolveEventTimepointNodeFunction.apply(timepoint.getTimepointIdPair());
     // ensure that these nodes have the ALS and Neurobank labels
     Lists.mutable.of(subjectNode, timepointNode)
         .forEach(annotateNeurobankNodeConsumer);
@@ -37,16 +39,16 @@ public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
        subjectEventRelationType);
     // add properties to this Relationship
     lib.relationshipPropertyValueConsumer.accept(rel,
-        new Tuple2<>("Timepoint",String.valueOf(timepoint.timepoint())));
+        new Tuple2<>("Timepoint",String.valueOf(timepoint.getTimepoint())));
     lib.relationshipPropertyValueConsumer.accept(rel,
-        new Tuple2<>("Interval", String.valueOf(timepoint.timepointInterval())));
+        new Tuple2<>("Interval", String.valueOf(timepoint.getTimepointInterval())));
   };
 
   @Override
   public void accept(Path path) {
     Preconditions.checkArgument(path != null);
     new org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier(path).get()
-        .map(org.biodatagraphdb.alsdb.value.NeurobankEventTimepoint::parseCSVRecord)
+        .map(NeurobankEventTimepoint.Companion::parseCSVRecord)
         .forEach(neurobankSubjectTimepointConsumer);
     lib.shutDown();
   }
@@ -55,7 +57,7 @@ public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_TIMEPOINT_FILE")
-        .ifPresent(new NeurobankTimepointEventConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
+        .ifPresent(new NeurobankTimepointEventConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed neurobank subject timepoint file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -63,6 +65,6 @@ public class NeurobankTimepointEventConsumer extends GraphDataConsumer {
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("NEUROBANK_SUBJECT_TIMEPOINT_FILE")
         .ifPresent(
-            path -> new TestGraphDataConsumer().accept(path, new NeurobankTimepointEventConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
+            path -> new TestGraphDataConsumer().accept(path, new NeurobankTimepointEventConsumer(RunMode.TEST)));
   }
 }

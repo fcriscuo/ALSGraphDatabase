@@ -21,6 +21,13 @@ interface AlsdbModel {
 
     fun parseStringOnTab(s: String): List<String> = parseStringOnDelimiter(s, "\t")
 
+    fun parseStringOnEquals(s:String): Pair<String,String>? {
+        val list = parseStringOnDelimiter(s,"=")
+        if ( list.size == 2)
+            return Pair(list[0], list[1])
+        return null
+    }
+
     private fun parseStringOnDelimiter(s: String, delimiter: String): List<String> =
             s.split(delimiter).map { it.trim() }
 
@@ -36,10 +43,16 @@ interface AlsdbModel {
     fun reduceListToPipeDelimitedString(list: List<String>) = reduceListToDelimitedString(list, "|")
 
     /*
+    Function to return last element in a List
+    Needed to support Java clients
+     */
+    fun <T> getLastListElement(list: List<T>): T = list.last()
+
+    /*
     Function to return the individual ontologies form a  pipe joined String
     without their enclosing parenthesis
      */
-    fun parseOntologyListFunction(s: String): List<String> {
+    fun parseOntologyList(s: String): List<String> {
         val ontologyList = mutableListOf<String>()
         parseStringOnPipe(s).forEach {
             ontologyList += it.substring(it.indexOf('(' + 1), it.length - 1)
@@ -68,11 +81,12 @@ interface AlsdbModel {
             when (Regex(" \"^\\\\d+\$\"").matches(s)) {
                 true -> s.toInt()
                 else -> 0
-
             }
 
     fun generateProActGuid(id:Int):String =
             "PROACT" + "%08d".format(id)
+
+
 
 }
 

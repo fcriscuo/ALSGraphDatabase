@@ -1,5 +1,6 @@
 package org.biodatagraphdb.alsdb.value;
 
+import org.biodatagraphdb.alsdb.model.NeurobankSubjectTimepointProperty;
 import org.biodatagraphdb.alsdb.util.FrameworkPropertyService;
 import org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier;
 
@@ -9,8 +10,8 @@ public class TestNeurobankSubjectTimepointProperty {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("NEUROBANK_SUBJECT_TIMEPOINT_PROPERTY_FILE")
         .ifPresent((path) -> new TsvRecordStreamSupplier(path)
             .get()
-            .map(org.biodatagraphdb.alsdb.value.NeurobankSubjectTimepointProperty::parseCSVRecord)
-            .limit(2000)
+            .map(NeurobankSubjectTimepointProperty.Companion::parseCSVRecord)
+            .limit(100)
             .forEach(System.out::println)
         );
   }

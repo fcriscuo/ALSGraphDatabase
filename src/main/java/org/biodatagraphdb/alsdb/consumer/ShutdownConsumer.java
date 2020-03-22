@@ -2,10 +2,11 @@ package org.biodatagraphdb.alsdb.consumer;
 
 import java.nio.file.Path;
 
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceLegacySupplier;
 
 public class ShutdownConsumer extends GraphDataConsumer{
-  public ShutdownConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
+  public ShutdownConsumer(RunMode runMode) {
     super(runMode);
   }
 
@@ -14,6 +15,6 @@ public class ShutdownConsumer extends GraphDataConsumer{
   }
 
   public static void importProdData() {
-   new ShutdownConsumer(GraphDatabaseServiceSupplier.RunMode.READ_ONLY).lib.shutDown();
+   new ShutdownConsumer(RunMode.READ_ONLY).lib.shutDown();
   }
 }

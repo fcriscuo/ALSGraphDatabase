@@ -9,7 +9,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
+import org.biodatagraphdb.alsdb.model.SampleVariantSummary;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceLegacySupplier;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
@@ -23,14 +25,14 @@ and a List of variants as a CSV String
 
 public class SampleVariantConsumer extends GraphDataConsumer{
 
-  public SampleVariantConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
+  public SampleVariantConsumer(RunMode runMode) {super(runMode);}
 
- private Consumer<org.biodatagraphdb.alsdb.value.SampleVariantSummary> sampleVariantSummaryConsumer = (svc) -> {
+ private Consumer<SampleVariantSummary> sampleVariantSummaryConsumer = (svc) -> {
 
    // this is the only class that will create SampleVariant nodes and
    // their relationships
-   Node geneNode = resolveEnsemblGeneNodeFunction.apply(svc.ensemblGeneId());
-   Node sampleNode = resolveSampleNodeFunction.apply(svc.extSampleId());
+   Node geneNode = resolveEnsemblGeneNodeFunction.apply(svc.getEnsemblGeneId());
+   Node sampleNode = resolveSampleNodeFunction.apply(svc.getExtSampleId());
    Node sampleVariantNode = resolveSampleVariantNode.apply(svc);
    if (lib.isAlsAssociatedPredicate.test(geneNode)) {
      lib.novelLabelConsumer.accept(sampleVariantNode, alsAssociatedLabel);
@@ -38,8 +40,8 @@ public class SampleVariantConsumer extends GraphDataConsumer{
    }
    // create sample <-> sampleVariant relationship
    Relationship sampleToSampleVariantRel = lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleNode,sampleVariantNode),
-       new org.biodatagraphdb.alsdb.util.DynamicRelationshipTypes("sample_variant"));
-   lib.setRelationshipIntegerProperty.accept(sampleToSampleVariantRel, new Tuple2<>("VariantCount", svc.numVariants()));
+       new org.biodatagraphdb.alsdb.lib.DynamicRelationshipTypes("sample_variant"));
+   lib.setRelationshipIntegerProperty.accept(sampleToSampleVariantRel, new Tuple2<>("VariantCount", svc.getNumVariants()));
 
    lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(sampleVariantNode,geneNode),
       encodedRelationType);
@@ -49,9 +51,9 @@ public class SampleVariantConsumer extends GraphDataConsumer{
   public void accept(Path path) {
     Preconditions.checkArgument(null != path
         && Files.exists(path, LinkOption.NOFOLLOW_LINKS));
-    new org.biodatagraphdb.alsdb.util.TsvRecordSplitIteratorSupplier(path, org.biodatagraphdb.alsdb.value.SampleVariantSummary.columnHeadings())
+    new org.biodatagraphdb.alsdb.util.TsvRecordSplitIteratorSupplier(path, SampleVariantSummary.Companion.getColumnHeadings())
         .get()
-        .map(org.biodatagraphdb.alsdb.value.SampleVariantSummary::parseCSVRecord)
+        .map(SampleVariantSummary.Companion::parseCSVRecord)
         .forEach(sampleVariantSummaryConsumer);
     lib.shutDown();
 
@@ -60,14 +62,14 @@ public class SampleVariantConsumer extends GraphDataConsumer{
     Stopwatch sw = Stopwatch.createStarted();
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("SAMPLE_VARIANT_SUMUMMARY_FILE")
-        .ifPresent(new SampleVariantConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
+        .ifPresent(new SampleVariantConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed complete sample variant file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
   public static void main(String[] args) {
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("TEST_SAMPLE_VARIANT_SUMUMMARY_FILE")
-        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SampleVariantConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
+        .ifPresent(path -> new TestGraphDataConsumer().accept(path, new SampleVariantConsumer(RunMode.TEST)));
   }
 
 }

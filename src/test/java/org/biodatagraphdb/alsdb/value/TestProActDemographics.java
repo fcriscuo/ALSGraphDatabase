@@ -1,5 +1,6 @@
 package org.biodatagraphdb.alsdb.value;
 
+import org.biodatagraphdb.alsdb.model.ProActDemographics;
 import org.biodatagraphdb.alsdb.util.CsvRecordStreamSupplier;
 import org.biodatagraphdb.alsdb.util.FrameworkPropertyService;
 
@@ -9,9 +10,9 @@ public class TestProActDemographics {
         .getOptionalPathProperty("PROACT_DEMOGRAPHICS_FILE")
         .ifPresent((path) -> new CsvRecordStreamSupplier(path)
             .get()
-            .map(org.biodatagraphdb.alsdb.value.ProActDemographics::parseCSVRecord)
-            .limit(4000)
-            .forEach(demo -> System.out.println(demo.subjectGuid()))
+            .map(ProActDemographics.Companion::parseCSVRecord)
+            .limit(400)
+            .forEach(demo -> System.out.println(demo.getSubjectGuid()))
         );
   }
 }

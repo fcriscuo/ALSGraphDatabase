@@ -8,21 +8,22 @@ import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.model.GeneOntology;
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
+import org.biodatagraphdb.alsdb.model.UniProtValue;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
-import org.biodatagraphdb.alsdb.util.StringUtils;
 import scala.Tuple2;
 
 public class UniProtValueConsumer extends GraphDataConsumer {
 
-  public UniProtValueConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
+  public UniProtValueConsumer(RunMode runMode) {super(runMode);}
   @Override
   public void accept(Path path) {
     Preconditions.checkArgument(path != null);
     new org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier(path).get()
-        .map(org.biodatagraphdb.alsdb.value.UniProtValue::parseCSVRecord)
+        .map(UniProtValue.Companion::parseCSVRecord)
         //.filter(upv->UniProtValue.isValidString(upv.uniprotId()))
         .forEach(uniProtValueConsumer);
     lib.shutDown();
@@ -39,60 +40,60 @@ public class UniProtValueConsumer extends GraphDataConsumer {
           + " and GO id: " + go.getGoTermAccession());
   }
 
-  private Consumer<org.biodatagraphdb.alsdb.value.UniProtValue> geneOntologyListConsumer = (upv) -> {
+  private Consumer<org.biodatagraphdb.alsdb.model.UniProtValue> geneOntologyListConsumer = (upv) -> {
     // complete the association with gene ontology links
     // biological process
-    StringUtils.convertToJavaString(upv.goBioProcessList())
+    upv.getGoBioProcessList()
         .stream()
         .map(goEntry -> GeneOntology.Companion.parseGeneOntologyEntry("Gene Ontology (bio process)", goEntry))
-        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go,
+        .forEach(go -> createProteinGeneOntologyRealtionship(upv.getUniprotId(), go,
            goBioProcessRelType));
     // cellular  component
-    StringUtils.convertToJavaString(upv.goCellComponentList())
+    upv.getGoCellComponentList()
         .stream()
         .map(goEntry -> GeneOntology.Companion
             .parseGeneOntologyEntry("Gene Ontology (cellular component)", goEntry))
-        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go,
+        .forEach(go -> createProteinGeneOntologyRealtionship(upv.getUniprotId(), go,
             goCellComponentRelType));
     // molecular function
-    StringUtils.convertToJavaString(upv.goMolFuncList())
+    upv.getGoMolFuncList()
         .stream()
         .map(
             goEntry -> GeneOntology.Companion.parseGeneOntologyEntry("Gene Ontology (mol function)", goEntry))
-        .forEach(go -> createProteinGeneOntologyRealtionship(upv.uniprotId(), go,
+        .forEach(go -> createProteinGeneOntologyRealtionship(upv.getUniprotId(), go,
             goMolFunctionRelType));
 
   };
 
-  private Consumer<org.biodatagraphdb.alsdb.value.UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
-      Node node = resolveProteinNodeFunction.apply(upv.uniprotId());
-      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.uniprotName()));
-      lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.proteinNameList()));
-      lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("GeneSymbol", upv.geneNameList()));
-      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Mass", upv.mass()));
-    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Length", upv.length()));
-      AsyncLoggingService.logInfo(">>>Created Protein node for " +upv.uniprotId());
+  private Consumer<UniProtValue> uniProtValueToProteinNodeConsumer = (upv) -> {
+      Node node = resolveProteinNodeFunction.apply(upv.getUniprotId());
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("UniProtName", upv.getUniprotName()));
+      lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("ProteinName", upv.getProteinNameList()));
+      lib.nodePropertyValueListConsumer.accept(node, new Tuple2<>("GeneSymbol", upv.getGeneNameList()));
+      lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Mass", upv.getMass()));
+    lib.nodePropertyValueConsumer.accept(node, new Tuple2<>("Length", upv.getLength()));
+      AsyncLoggingService.logInfo(">>>Created Protein node for " +upv.getUniprotId());
 
   };
 
   // create drugbank nodes associated with this protein
   // to protein - drug relationships are determined by other
   // source files
-  private Consumer<org.biodatagraphdb.alsdb.value.UniProtValue> drugBankIdConsumer = (upv) ->
-      StringUtils.convertToJavaString(upv.drugBankIdList())
+  private Consumer<UniProtValue> drugBankIdConsumer = upv ->
+      upv.getDrugBankIdList()
       .forEach(dbId ->resolveDrugBankNode.apply(dbId));
 
-  private Consumer<org.biodatagraphdb.alsdb.value.UniProtValue> pubMedXrefConsumer = (upv) -> {
+  private Consumer<UniProtValue> pubMedXrefConsumer = upv -> {
     // PubMed Xrefs
-    Node proteinNode = resolveProteinNodeFunction.apply(upv.uniprotId());
-    StringUtils.convertToJavaString(upv.pubMedIdList())
+    Node proteinNode = resolveProteinNodeFunction.apply(upv.getUniprotId());
+    upv.getPubMedIdList()
         .stream()
         .map(pubMedId ->resolveXrefNode.apply(pubMedLabel,pubMedId))
         .forEach(xrefNode -> lib.resolveNodeRelationshipFunction.apply(new Tuple2<>(proteinNode, xrefNode),
             pubMedXrefRelType));
   };
 
-  private Consumer<org.biodatagraphdb.alsdb.value.UniProtValue> uniProtValueConsumer = (upv -> {
+  private Consumer<org.biodatagraphdb.alsdb.model.UniProtValue> uniProtValueConsumer = (upv -> {
     // create the protein node for this uniprot entry
     uniProtValueToProteinNodeConsumer.accept(upv);
     // add Gene Ontology associations
@@ -108,7 +109,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
   public static void importProdData() {
     Stopwatch sw = Stopwatch.createStarted();
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE.getOptionalPathProperty("UNIPROT_HUMAN_FILE")
-        .ifPresent(new UniProtValueConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
+        .ifPresent(new UniProtValueConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("read uniprot data: " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds.");
   }
@@ -117,7 +118,7 @@ public class UniProtValueConsumer extends GraphDataConsumer {
 
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE.getOptionalPathProperty("TEST_UNIPROT_HUMAN_FILE")
         .ifPresent(path ->
-            new TestGraphDataConsumer().accept(path, new UniProtValueConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
+            new TestGraphDataConsumer().accept(path, new UniProtValueConsumer(RunMode.TEST)));
   }
 
 

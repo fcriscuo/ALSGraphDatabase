@@ -8,7 +8,8 @@ import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.model.AlsodMutation;
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceLegacySupplier;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
@@ -22,7 +23,7 @@ the neo4j database
 
 public class AlsodMutationConsumer extends GraphDataConsumer {
 
-  public AlsodMutationConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {
+  public AlsodMutationConsumer(RunMode runMode) {
     super(runMode);
   }
 
@@ -76,7 +77,7 @@ public class AlsodMutationConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ALSOD_GENE_MUTATION_FILE")
-        .ifPresent(new AlsodMutationConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
+        .ifPresent(new AlsodMutationConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed alsod mustations file: " +
         sw.elapsed(TimeUnit.SECONDS) + " seconds");
   }
@@ -85,6 +86,6 @@ public class AlsodMutationConsumer extends GraphDataConsumer {
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ALSOD_GENE_MUTATION_FILE")
         .ifPresent(path -> new TestGraphDataConsumer()
-            .accept(path, new AlsodMutationConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
+            .accept(path, new AlsodMutationConsumer(RunMode.TEST)));
   }
 }

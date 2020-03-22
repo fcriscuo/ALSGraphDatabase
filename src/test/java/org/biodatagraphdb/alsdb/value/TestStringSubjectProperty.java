@@ -1,5 +1,6 @@
 package org.biodatagraphdb.alsdb.value;
 
+import org.biodatagraphdb.alsdb.model.StringSubjectProperty;
 import org.biodatagraphdb.alsdb.util.FrameworkPropertyService;
 import org.biodatagraphdb.alsdb.util.TsvRecordStreamSupplier;
 
@@ -10,7 +11,7 @@ public class TestStringSubjectProperty {
     FrameworkPropertyService.INSTANCE.getOptionalPathProperty("SUBJECT_PROPERTY_FILE")
         .ifPresent((path) -> new TsvRecordStreamSupplier(path)
             .get()
-            .map(org.biodatagraphdb.alsdb.value.StringSubjectProperty::parseCSVRecord)
+            .map(StringSubjectProperty.Companion::parseCSVRecord)
             .limit(50)
             .forEach(System.out::println)
         );

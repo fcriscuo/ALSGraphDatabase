@@ -8,7 +8,8 @@ import java.util.function.Consumer;
 
 import org.biodatagraphdb.alsdb.integration.TestGraphDataConsumer;
 import org.biodatagraphdb.alsdb.model.AlsPropertyCategory;
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceLegacySupplier;
 import org.neo4j.graphdb.Node;
 import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
 import scala.Tuple2;
@@ -20,7 +21,7 @@ This Consumer should be invoked before other Neurobank data are loaded
  */
 public class NeurobankCategoryConsumer extends GraphDataConsumer {
 
-  public NeurobankCategoryConsumer(GraphDatabaseServiceSupplier.RunMode runMode) {super(runMode);}
+  public NeurobankCategoryConsumer(RunMode runMode) {super(runMode);}
 
   private Consumer<org.biodatagraphdb.alsdb.model.AlsPropertyCategory> neurobankCategoryConsumer = (category) -> {
     Node categoryNode = resolveCategoryNode.apply(category.getCategory());
@@ -43,7 +44,7 @@ public class NeurobankCategoryConsumer extends GraphDataConsumer {
     Stopwatch sw = Stopwatch.createStarted();
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ALS_PROPERTY_CATEGORY_FILE")
-        .ifPresent(new NeurobankCategoryConsumer(GraphDatabaseServiceSupplier.RunMode.PROD));
+        .ifPresent(new NeurobankCategoryConsumer(RunMode.PROD));
     AsyncLoggingService.logInfo("processed neurobank category file : " +
         sw.elapsed(TimeUnit.SECONDS) +" seconds");
   }
@@ -53,6 +54,6 @@ public class NeurobankCategoryConsumer extends GraphDataConsumer {
     org.biodatagraphdb.alsdb.util.FrameworkPropertyService.INSTANCE
         .getOptionalPathProperty("ALS_PROPERTY_CATEGORY_FILE")
         .ifPresent(
-            path -> new TestGraphDataConsumer().accept(path, new NeurobankCategoryConsumer(GraphDatabaseServiceSupplier.RunMode.TEST)));
+            path -> new TestGraphDataConsumer().accept(path, new NeurobankCategoryConsumer(RunMode.TEST)));
   }
 }

@@ -1,12 +1,15 @@
 package org.biodatagraphdb.alsdb.lib;
 
 import com.google.common.base.Strings;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -18,6 +21,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import org.apache.log4j.Logger;
+import org.biodatagraphdb.alsdb.service.graphdb.AlsGraphDatabaseSupplier;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.MultipleFoundException;
@@ -26,23 +31,25 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.biodatagraphdb.alsdb.util.AsyncLoggingService;
+import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import scala.Tuple2;
 import scala.Tuple3;
-import scala.collection.immutable.List;
-import  org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier;
 import org.biodatagraphdb.alsdb.app.ALSDatabaseImportApp.LabelTypes;
 
 public class FunctionLib {
 
+	private File DEFAULT_TEST_DATABSE_DIRECTORY = new File("target/test-als-graph-db");
 	private static final Logger log = Logger.getLogger(FunctionLib.class);
 	private GraphDatabaseService graphDb;
-	public FunctionLib(@Nonnull GraphDatabaseServiceSupplier.RunMode runMode) {
-		this.graphDb = new GraphDatabaseServiceSupplier(runMode).get();
+	public FunctionLib(@Nonnull RunMode runMode) {
+		this.graphDb = new AlsGraphDatabaseSupplier(DEFAULT_TEST_DATABSE_DIRECTORY,
+				GraphDatabaseSettings.DEFAULT_DATABASE_NAME,runMode).get();
 	}
 
 	public void shutDown() {
 		AsyncLoggingService.logInfo("Shutting down database ...");
-		graphDb.shutdown();
+		//TODO: fix shut down issue
+		//graphDb.beginTx();
 	}
 	/*
 	ppRel.setProperty("Interaction_method_detection",
@@ -71,7 +78,7 @@ public class FunctionLib {
 
 	private final Supplier<Node> unknownNodeSupplier = () -> {
 		try (Transaction tx = graphDb.beginTx()) {
-			return this.graphDb.createNode(LabelTypes.Unknown);
+			return tx.createNode(LabelTypes.Unknown);
 		}
 	};
 
@@ -80,23 +87,21 @@ public class FunctionLib {
 	Returns an Optional to accommodate non-existent Nodes
 	 */
 	public Function<Tuple3<Label, String, String>, Optional<Node>> findExistingGraphNodeFunction = (tuple3) -> {
-		Label label = tuple3._1();
-		String property = tuple3._2();
-		String value = tuple3._3();
+		final Label label = tuple3._1();
+		final String property = tuple3._2();
+		final String value = tuple3._3();
 		Transaction tx = this.graphDb.beginTx();
 		try {
-			Node node = this.graphDb
+			Node node = tx
 				.findNode(label, property, value);
-			tx.success();
+			tx.commit();
 			return (node != null) ? Optional.of(node) : Optional.empty();
 		} catch (MultipleFoundException e) {
-			tx.failure();
+			tx.rollback();
 			AsyncLoggingService.logError("ERROR: multiple instances of Node " + label
 				+ "  " + property + "  " + value);
 			AsyncLoggingService.logError(e.getMessage());
 			e.printStackTrace();
-		} finally {
-			tx.close();
 		}
 		return Optional.empty();
 	};
@@ -111,12 +116,10 @@ public class FunctionLib {
 		Transaction tx = this.graphDb.beginTx();
 		try {
 			return (
-				this.graphDb.findNode(tuple3._1(), tuple3._2(), tuple3._3())
+				tx.findNode(tuple3._1(), tuple3._2(), tuple3._3())
 					!= null);
 		} catch (MultipleFoundException e) {
 			e.printStackTrace();
-		} finally {
-			tx.close();
 		}
 		return false;
 	};
@@ -132,18 +135,16 @@ public class FunctionLib {
 		String value = tuple3._3();
 		Transaction tx = this.graphDb.beginTx();
 		try {
-			Node node = this.graphDb.createNode(label);
+			Node node = tx.createNode(label);
 			node.setProperty(property, value);
-			tx.success();
+			tx.commit();
 			return node;
 		} catch (Exception e) {
-			tx.failure();
+			tx.rollback();
 			AsyncLoggingService.logError("ERROR: creating Node " + label
 				+ "  " + property + "  " + value);
 			AsyncLoggingService.logError(e.getMessage());
 			e.printStackTrace();
-		} finally {
-			tx.close();
 		}
 		return unknownNodeSupplier.get();
 	};
@@ -173,12 +174,10 @@ public class FunctionLib {
 				.noneMatch(label -> label.name().equalsIgnoreCase(newLabel.name()))) {
 				node.addLabel(newLabel);
 			}
-			tx.success();
+			tx.commit();
 		} catch (Exception e) {
-			tx.failure();
+			tx.rollback();
 			e.printStackTrace();
-		} finally {
-			tx.close();
 		}
 	};
 
@@ -187,15 +186,13 @@ public class FunctionLib {
 		try {
 			if (StreamSupport.stream(node.getLabels().spliterator(), false)
 				.anyMatch(label -> label.name().equalsIgnoreCase("ALS-associated"))) {
-				tx.success();
+				tx.commit();
 				return true;
 			}
-			tx.success();
+			tx.commit();
 		} catch (Exception e) {
-			tx.failure();
+			tx.rollback();
 			e.printStackTrace();
-		} finally {
-			tx.close();
 		}
 		return false;
 	};
@@ -204,12 +201,10 @@ public class FunctionLib {
 		Transaction tx = this.graphDb.beginTx();
 		try {
 			rel.setProperty(tuple._1(), tuple._2());
-			tx.success();
+			tx.commit();
 		} catch (Exception e) {
-			tx.failure();
+			tx.rollback();
 			e.printStackTrace();
-		} finally {
-			tx.close();
 		}
 	};
 
@@ -227,13 +222,11 @@ public class FunctionLib {
 				.filter(relationship -> relationship.getEndNodeId() == nodeEnd.getId())
 				.filter(relationship -> relationship.getType().name().equalsIgnoreCase(relType.name()))
 				.findFirst().orElse(nodeStart.createRelationshipTo(nodeEnd, relType));
-			tx.success();
+			tx.commit();
 			return rel;
 		} catch (Exception e) {
-			tx.failure();
+			tx.rollback();
 			e.printStackTrace();
-		} finally {
-			tx.close();
 		}
 		return null;
 	};
@@ -262,12 +255,10 @@ public class FunctionLib {
 			Transaction tx = this.graphDb.beginTx();
 			try {
 				node.setProperty(propertyTuple._1(), propertyTuple._2());
-				tx.success();
+				tx.commit();
 			} catch (Exception e) {
-				tx.failure();
+				tx.rollback();
 				AsyncLoggingService.logError(e.getMessage());
-			} finally {
-				tx.close();
 			}
 		}
 	};
@@ -277,12 +268,10 @@ public class FunctionLib {
 			Transaction tx = this.graphDb.beginTx();
 			try {
 				relationship.setProperty(propertyTuple._1(), propertyTuple._2());
-				tx.success();
+				tx.commit();
 			} catch (Exception e) {
-				tx.failure();
+				tx.rollback();
 				AsyncLoggingService.logError(e.getMessage());
-			} finally {
-				tx.close();
 			}
 		}
 	};
@@ -295,12 +284,10 @@ public class FunctionLib {
 			Transaction tx = this.graphDb.beginTx();
 			try {
 				node.setProperty(propertyTuple._1(), propertyTuple._2());
-				tx.success();
+				tx.commit();
 			} catch (Exception e) {
-				tx.failure();
+				tx.rollback();
 				AsyncLoggingService.logError(e.getMessage());
-			} finally {
-				tx.close();
 			}
 		}
 	};
@@ -309,17 +296,15 @@ public class FunctionLib {
 	Property values are persisted as Strings
 	 */
 	public BiConsumer<Node, Tuple2<String, List<String>>> nodePropertyValueListConsumer = (node, propertyListTuple) -> {
-		if (propertyListTuple._2() != null && propertyListTuple._2().size() > 0) {
+		if (!propertyListTuple._2().isEmpty()) {
 			Transaction tx = this.graphDb.beginTx();
 			try {
-				node.setProperty(propertyListTuple._1(), propertyListTuple._2().head());
-				tx.success();
+				node.setProperty(propertyListTuple._1(), propertyListTuple._2().get(0));
+				tx.commit();
 			} catch (Exception e) {
-				tx.failure();
+				tx.rollback();
 				AsyncLoggingService.logError(e.getMessage());
-			} finally {
-				tx.close();
-			}
+			} 
 		}
 	};
 
@@ -331,16 +316,29 @@ public class FunctionLib {
 			Transaction tx = this.graphDb.beginTx();
 			try {
 				node.setProperty(propertyListTuple._1(), propertyListTuple._2());
-				tx.success();
+				tx.commit();
 			} catch (Exception e) {
-				tx.failure();
+				tx.rollback();
 				AsyncLoggingService.logError(e.getMessage());
-			} finally {
-				tx.close();
-			}
+			} 
 		}
 	};
 
+	/*
+	Protected BiConsumer to register a List of Strings as a property values for a specified node
+	 */
+	public BiConsumer<Node, Tuple2<String, java.util.List<String>>> nodePropertyValueStringListConsumer = (node, propertyListTuple) -> {
+		if (!propertyListTuple._2().isEmpty()) {
+			Transaction tx = this.graphDb.beginTx();
+			try {
+				node.setProperty(propertyListTuple._1(), propertyListTuple._2());
+				tx.commit();
+			} catch (Exception e) {
+				tx.rollback();
+				AsyncLoggingService.logError(e.getMessage());
+			} 
+		}
+	};
 
 	public Function<String, Path> readResourceFileFunction = (fileName) -> {
 		try {
@@ -371,8 +369,8 @@ public class FunctionLib {
 	};
 
 	public static void main(String... args) {
-		Path path = new FunctionLib(GraphDatabaseServiceSupplier.RunMode.READ_ONLY).readResourceFileFunction.apply
-			("intact.txt");
+		Path path = new FunctionLib(RunMode.READ_ONLY).readResourceFileFunction.apply
+			("testhumanintact.txt");
 		log.info("File exists = " + path.toString());
 		log.info("There are " + FunctionLib.generateLineStreamFromPath(path).count()
 			+ " lines in file " + path.toString());

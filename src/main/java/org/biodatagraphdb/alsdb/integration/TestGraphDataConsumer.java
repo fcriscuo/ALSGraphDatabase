@@ -7,13 +7,14 @@ package org.biodatagraphdb.alsdb.integration;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
+import org.biodatagraphdb.alsdb.service.graphdb.RunMode;
+
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import org.biodatagraphdb.alsdb.supplier.GraphDatabaseServiceSupplier.RunMode;
 
 /*
 Test implemented as a BiConsumer that invokes a specified GraphDataConsumer subclass

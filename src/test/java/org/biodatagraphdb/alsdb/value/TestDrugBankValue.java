@@ -2,6 +2,8 @@ package org.biodatagraphdb.alsdb.value;
 
 import com.twitter.logging.Logger;
 import java.nio.file.Paths;
+
+import org.biodatagraphdb.alsdb.model.DrugBankValue;
 import org.biodatagraphdb.alsdb.util.CsvRecordStreamSupplier;
 
 public class TestDrugBankValue {
@@ -11,7 +13,7 @@ public class TestDrugBankValue {
     new CsvRecordStreamSupplier(Paths.get("/data/als/DrugBank/druglinks.csv"))
         .get()
         .limit(50)
-        .map(org.biodatagraphdb.alsdb.value.DrugBankValue::parseCSVRecord)
+        .map(DrugBankValue.Companion::parseCSVRecord)
         .forEach(System.out::println);
   }
 
