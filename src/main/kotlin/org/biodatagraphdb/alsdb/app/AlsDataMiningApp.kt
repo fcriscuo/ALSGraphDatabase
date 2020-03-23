@@ -16,9 +16,8 @@ import org.biodatagraphdb.alsdb.service.property.DatafilesPropertiesService
  */
 val logger = KotlinLogging.logger {}
 
-//TODO: make async coroutine
-fun resolveDataSource(url: String) {
-    val result = AlsFileUtils.retrieveRemoteFileByFtpUrl(url)
+fun resolveDataSource(propertyPair: Pair<String,String>) {
+    val result = AlsFileUtils.retrieveRemoteFileByDatafileProperty(propertyPair)
     when (result) {
         is Either.Right -> logger.info { "Success: ${result.b}" }
         is Either.Left -> logger.error { "ERROR: ${result.a.message}" }

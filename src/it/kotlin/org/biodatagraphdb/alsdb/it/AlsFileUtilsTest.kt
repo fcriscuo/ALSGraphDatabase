@@ -13,6 +13,6 @@ import org.biodatagraphdb.alsdb.service.property.DatafilesPropertiesService
 fun main() {
     DatafilesPropertiesService.filterProperties("disgenet").forEach {
         println("URL: $it")
-        println(AlsFileUtils.retrieveRemoteFileByFtpUrl(it))
+        println(AlsFileUtils.retrieveRemoteFileByDatafileProperty(it))
     }
 }

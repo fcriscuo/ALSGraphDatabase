@@ -1,5 +1,6 @@
 package org.biodatagraphdb.alsdb.service.property
 
+import arrow.core.Either
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
@@ -13,16 +14,31 @@ import java.util.*
  * Created by fcriscuo on 3/19/20.
  */
 abstract class AbstractPropertiesService {
-    val properties: Properties = Properties() 
+    val properties: Properties = Properties()
     val logger = KotlinLogging.logger {}
+
 
     fun resolveFrameworkProperties(propertiesFile: String) {
         val stream = AbstractPropertiesService::class.java.getResourceAsStream(propertiesFile)
         //val p = Properties()
         properties.load(stream)
-       
     }
-    
+
+    fun resolvePropertyAsStringPair(propertyName: String): Either<Exception, Pair<String, String>> =
+        if( properties.contains(propertyName))
+             Either.right(Pair(propertyName, properties.getProperty(propertyName).toString()))
+         else Either.left(Exception("property name $propertyName not found"))
+
+    fun resolvePropertyAsString(propertyName: String): String? =
+            if (properties.containsKey(propertyName)) {
+                logger.info("Property Value: ${properties.getProperty(propertyName)}")
+                properties.getProperty(propertyName).toString()
+            } else {
+                logger.warn { "$propertyName is an invalid property name " }
+                null
+            }
+
+
     fun resolvePropertyAsStringOption(propertyName: String): Option<String> =
             if (properties.containsKey(propertyName)) {
                 logger.info("Property Value: ${properties.getProperty(propertyName)}")
@@ -57,13 +73,12 @@ abstract class AbstractPropertiesService {
         return None
     }
 
-    fun filterProperties(filter: String): List<String> {
-        var tmpList = mutableListOf<String>()
+    fun filterProperties(filter: String): List<Pair<String,String>> {
+        var tmpList = mutableListOf<Pair<String,String>>()
         properties.keys.filter{ it -> it.toString().contains(filter) }
-                .map { key -> tmpList.add(properties.get(key).toString()) }
+                .map { key -> tmpList.add(Pair(key.toString(),properties.get(key).toString())) }
 
         return tmpList.toList()
-
     }
 
     fun displayProperties() {
