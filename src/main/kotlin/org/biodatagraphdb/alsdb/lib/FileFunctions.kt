@@ -3,6 +3,7 @@ package org.biodatagraphdb.alsdb.lib
 import arrow.core.Either
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
+import org.biodatagraphdb.alsdb.lib.AlsFileUtils.retrieveRemoteFileByDatafileProperty
 import org.biodatagraphdb.alsdb.service.property.DatafilesPropertiesService
 import java.io.File
 import java.io.FileInputStream
@@ -21,6 +22,7 @@ object AlsFileUtils {
     val BASE_DATA_DIRECTORY = DatafilesPropertiesService.resolvePropertyAsString("base.data.path") ?: "/tmp"
     val BASE_SUBDIRECTORY_NAME = DatafilesPropertiesService.resolvePropertyAsString("base.subdirectory.name") ?: "data"
     val fileSeparator = System.getProperty("file.separator")
+    val compressedFileExtensions = listOf<String>("gz","zip")
 
     @JvmStatic
 /*
@@ -52,7 +54,6 @@ Function to delete a directory recursively
         }
     }
 
-    //   ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_33/gencode.v33.long_noncoding_RNAs.gff3.gz
     fun resolveLocalFileNameFromPropertyPair(propertyPair: Pair<String, String>): Either<Exception, String> {
         if (BASE_DATA_DIRECTORY != null) {
             val subdirectory = resolveDataSubDirectoryFromPropertyName(propertyPair.first)
@@ -82,7 +83,6 @@ Function to delete a directory recursively
     fun readFileAsLinesUsingGetResourceAsStream(fileName: String) =
             this::class.java.getResourceAsStream(fileName).bufferedReader().readLines()
 
-
     /*
     Function to access a remote file via anonymous FTP and copy its contents to
     the local filesystem at a specified location.
@@ -98,7 +98,7 @@ Function to delete a directory recursively
                 urlConnection.openConnection()
                 try {
                     FileUtils.copyInputStreamToFile(urlConnection.openStream(), File(localFilePath))
-                    if (FilenameUtils.getExtension(localFilePath) == "gz") {
+                    if (FilenameUtils.getExtension(localFilePath) in compressedFileExtensions) {
                         gunzipFile(localFilePath)
                     }
                     return Either.right("${propertyPair.second} downloaded to  $localFilePath")
@@ -112,7 +112,7 @@ Function to delete a directory recursively
 
     /*
     unzip a compressed file
-    the expanded file is given the same filename without the .gz extension
+    the expanded file is given the same filename without the .gz or .zip extension
     and the compressed file is deleted
     this code is a simple refactoring of a Java example
      */
@@ -140,5 +140,15 @@ Function to delete a directory recursively
             gzis.close()
             out.close()
         }
+    }
+}
+
+fun main() {
+    ///data.disgenet.curated.gene-disease.associations=https://www.disgenet.org/static/disgenet_ap1/files/downloads/curated_gene_disease_associations.tsv.gz
+    val result = retrieveRemoteFileByDatafileProperty(Pair("data.mint.human",
+            "http://www.ebi.ac.uk/Tools/webservices/psicquic/mint/webservices/current/search/query/species:human" ))
+    when (result){
+        is Either.Right -> println(result.b)
+        is Either.Left -> println(result.a.message)
     }
 }

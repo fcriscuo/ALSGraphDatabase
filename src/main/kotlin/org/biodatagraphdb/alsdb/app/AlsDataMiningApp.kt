@@ -1,9 +1,11 @@
 package org.biodatagraphdb.alsdb.app
 
 import arrow.core.Either
+import com.google.common.base.Stopwatch
 import mu.KotlinLogging
 import org.biodatagraphdb.alsdb.lib.AlsFileUtils
 import org.biodatagraphdb.alsdb.service.property.DatafilesPropertiesService
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by fcriscuo on 3/21/20.
@@ -16,12 +18,14 @@ import org.biodatagraphdb.alsdb.service.property.DatafilesPropertiesService
  */
 val logger = KotlinLogging.logger {}
 
-fun resolveDataSource(propertyPair: Pair<String,String>) {
+fun copySourceDataToLocalFile(propertyPair: Pair<String,String>) {
+    val stopwatch = Stopwatch.createStarted()
     val result = AlsFileUtils.retrieveRemoteFileByDatafileProperty(propertyPair)
     when (result) {
         is Either.Right -> logger.info { "Success: ${result.b}" }
         is Either.Left -> logger.error { "ERROR: ${result.a.message}" }
     }
+    logger.info("++++ Data retrieval required: ${stopwatch.elapsed(TimeUnit.SECONDS).toDouble()} seconds")
 }
 
 fun main(args: Array<String>) {
@@ -33,6 +37,6 @@ fun main(args: Array<String>) {
     dataSourceList
             .map { source ->
                 DatafilesPropertiesService.filterProperties(source)
-                        .forEach { resolveDataSource(it) }
+                        .forEach { copySourceDataToLocalFile(it) }
             }
 }

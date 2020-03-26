@@ -67,7 +67,7 @@ Function to access a remote file via anonymous FTP and copy its contents to
 the local filesystem at a specified location.
 Parameters: ftpUrl - Complete URL for remote file
             localFilePath - local filesystem location
-Returns: the number of lines in the retrieved file
+Returns: An Either - Left is an Exception, Right is a success message
  */
 fun retrieveRemoteFileByFtpUrl(ftpUrl: String, localFilePath: RefinedFilePath): Either<Exception, String> {
     val urlConnection = URL(ftpUrl)
@@ -75,7 +75,7 @@ fun retrieveRemoteFileByFtpUrl(ftpUrl: String, localFilePath: RefinedFilePath): 
     // the FileUtils method closes the input stream
     try {
         FileUtils.copyInputStreamToFile(urlConnection.openStream(), localFilePath.getPath().toFile())
-        if (FilenameUtils.getExtension(localFilePath.filePathName) == "gz") {
+        if (FilenameUtils.getExtension(localFilePath.filePathName) in AlsFileUtils.compressedFileExtensions) {
            AlsFileUtils.gunzipFile(localFilePath.filePathName)
         }
         return Either.right("$ftpUrl downloaded to  $localFilePath")
