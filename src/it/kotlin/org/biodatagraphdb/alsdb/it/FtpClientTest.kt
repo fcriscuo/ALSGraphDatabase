@@ -37,7 +37,7 @@ private fun testFtpClientDataClass(server: String, remoteFilePath: String, desti
                     .forEach { line -> logger.info{line} }
             localPath.deleteFile()
         } else {
-            logger.error { retEither.map { e -> e.toString() } }
+            logger.error { retEither.map { e -> e } }
         }
     } else {
         logger.error{"Invalid file path specified"}
@@ -46,15 +46,19 @@ private fun testFtpClientDataClass(server: String, remoteFilePath: String, desti
 
 fun main() {
     // valid test
-    val ftpUrl = "https://www.uniprot.org/uniprot/?query=reviewed:yes+AND+organism:9606&columns=id,database(HGNC),datbase(IntAct),database(DisGeNET),database(Reactome),database(RefSeq)&format=tab"
-    val validPath = "/tmp/gencodeV33.lncRNA.gz"
-    testFtpClient(ftpUrl,validPath )
+    //val ftpUrl = "ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_33/gencode.v33.long_noncoding_RNAs.gff3.gz"
+    //val validPath = "/tmp/gencodeV33.lncRNA.gz"
+//    val ftpUrl = "https://amp.pharm.mssm.edu/static/hdfs/harmonizome/data/cosmiccnv/gene_list_terms.txt.gz"
+//    val validPath = "/tmp/GO/gene_list_terms.txt.gz"
+//    testFtpClient(ftpUrl,validPath )
     // test should fail - bad destination file
-    val invalidPath01 = "bad_file.txt"
-    testFtpClient(ftpUrl,invalidPath01 )
-    val invalidPath02 = "/tmp"
-    testFtpClient(ftpUrl,invalidPath02 )
-    // Test FtpClient class
-    testFtpClientDataClass("ftp.ebi.ac.uk","/pub/databases/gencode/Gencode_human/release_33/gencode.v33.metadata.HGNC.gz",
-        "/tmp/gencodev33_hgnc.gz")
+//    val invalidPath01 = "bad_file.txt"
+//    testFtpClient(ftpUrl,invalidPath01 )
+//    val invalidPath02 = "/tmp"
+//    testFtpClient(ftpUrl,invalidPath02 )
+//    // Test FtpClient class
+//    testFtpClientDataClass("ftp.ebi.ac.uk","/pub/databases/gencode/Gencode_human/release_33/gencode.v33.metadata.HGNC.gz",
+//        "/tmp/gencodev33_hgnc.gz")
+       testFtpClientDataClass("amp.pharm.mssm.edu","/static/hdfs/harmonizome/data/cosmiccnv/gene_list_terms.txt.gz",
+        "/tmp/gene_list_terms.txt.gz")
 }
