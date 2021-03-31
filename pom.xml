@@ -21,7 +21,7 @@
 		<apache.csv.version>1.7</apache.csv.version>
         <rxjava2.version>2.2.14</rxjava2.version>
         <rxjava2.jdbc.version>0.7.16</rxjava2.jdbc.version>
-        <guava.version>28.1-jre</guava.version>
+        <guava.version>29.0-jre</guava.version>
         <eclipse.collections.version>10.0.0 </eclipse.collections.version>
         <scala_version>2.12.7</scala_version>
         <scalatest.version>3.2.0-SNAP10</scalatest.version>
