@@ -16,7 +16,7 @@
         <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
         <jooq.version>3.12.3</jooq.version>
 		<apache.commons.lang3.version>3.9</apache.commons.lang3.version>
-		<apache.commons.io.version>2.6</apache.commons.io.version>
+		<apache.commons.io.version>2.7</apache.commons.io.version>
 		<apache.log4j.version>1.2.17</apache.log4j.version>
 		<apache.csv.version>1.7</apache.csv.version>
         <rxjava2.version>2.2.14</rxjava2.version>
